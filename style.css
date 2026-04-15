@@ -11,7 +11,30 @@ header {
   justify-content: space-between;
   align-items: center;
   padding: 15px 30px;
-  background: #000;
+
+}
+/* HERO COM BACKGROUND */
+.hero {
+  background: url("https://upload.wikimedia.org/wikipedia/commons/e/ef/StarfieldSimulation004.gif") center no-repeat;
+  background-size: 100%; /* diminui o zoom */
+  background-color: black; /* fundo pra não ficar vazio */
+}
+  display: flex;
+  align-items: center;
+
+/* camada escura */
+.hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+}
+
+/* deixa o conteúdo na frente */
+.hero header {
+  position: relative;
+  z-index: 2;
+  width: 100%;
 }
 
 /* LOGO */
@@ -20,11 +43,12 @@ header {
   color: #ffd000; /* amarelo pato */
   cursor: pointer;
   font-weight: bold;
+  align-items: center;   /* centraliza vertical */
 }
 .logo img {
-  height: 180px; /* ajusta aqui se quiser maior */
+  height: 300px; /* ajusta aqui se quiser maior */
   cursor: pointer;
-  height: 180px;
+  height: 300px;
   filter: drop-shadow(0 0 5px #ffd000);
 }
 
@@ -33,11 +57,12 @@ header {
   flex: 1;
   display: flex;
   justify-content: center;
+  
 }
 
 .busca-box {
   display: flex;
-  width: 600px; /* MAIOR */
+  width: 800px; /* MAIOR */
 }
 
 .busca-box input {
