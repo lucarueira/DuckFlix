@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>DuckFlix 🦆</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header>
+
+  <!-- LOGO -->
+  <div class="logo" id="logo">
+  <img src="img/9c2da08b-b04e-43ad-b574-f345af98f2a0.png" alt="DuckFlix Logo">
+    DuckFlix
+</div>
+
+  <!-- BUSCA MAIOR -->
+  <div class="busca-container">
+    <div class="busca-box">
+      <input type="text" id="busca" placeholder="Buscar filmes, séries...">
+      <button id="btnBusca">🔍</button>
+    </div>
+  </div>
+
+</header>
+
+<!-- PLAYER -->
+<section id="area-player">
+
+  <div class="player-topo">
+    <h2 id="tituloPlayer"></h2>
+    <button id="fecharPlayer">✖</button>
+  </div>
+
+  <div id="player"></div>
+
+  <div id="infoFilme"></div>
+
+</section>
+
+<!-- CATEGORIAS -->
+<h2>Filmes</h2>
+<main id="filmes"></main>
+
+<h2>Séries</h2>
+<main id="series"></main>
+
+<h2>Animes</h2>
+<main id="animes"></main>
+
+<h2>Desenhos</h2>
+<main id="desenhos"></main>
+
+<footer>
+  <p>© 2026 DuckFlix 🦆</p>
+</footer>
+
+<script src="script.js"></script>
+</body>
+</html>
