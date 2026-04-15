@@ -1,64 +1,100 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <title>DuckFlix 🦆</title>
-
-  <link href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DuckFlix 🦆</title>
+<link rel="stylesheet" href="style.css">
 </head>
+
 <body>
 
+<!-- HERO -->
 <section class="hero">
-
   <header>
 
-    <div class="logo" id="logo">
+    <div class="logo">
       <img src="img/logo_duckflix.png">
     </div>
 
-    <div class="busca-container">
-      <div class="busca-box">
-        <input type="text" id="busca">
-        <button id="btnBusca">🔍</button>
-      </div>
+    <div class="busca">
+      <input id="busca" placeholder="Buscar filmes...">
+      <button id="btnBusca">🔍 </button>
     </div>
 
-  </header>
+    <button id="btnFav">⭐ Favoritos</button>
 
+  </header>
 </section>
 
 <!-- PLAYER -->
-<section id="area-player">
+<section id="playerArea" class="hidden">
 
-  <div class="player-topo">
+  <div class="playerTop">
     <h2 id="tituloPlayer"></h2>
     <button id="fecharPlayer">✖</button>
   </div>
 
   <div id="player"></div>
 
-  <div id="infoFilme"></div>
+</section>
+
+<!-- FAVORITOS -->
+<section id="favPage" class="hidden">
+
+  <div class="favHeader">
+    <h2>⭐ Favoritos</h2>
+    <button id="closeFav">✖ Sair</button>
+  </div>
+
+  <div id="favList"></div>
 
 </section>
 
-<!-- CATEGORIAS -->
+<!-- BUSCA PAGE -->
+<section id="searchPage" class="hidden">
+
+  <div class="favHeader">
+    <h2>🔎 Resultados da Busca ... </h2>
+    <button id="closeSearch">✖ Sair</button>
+  </div>
+
+  <div id="searchList"></div>
+
+</section>
+
+<!-- CARROSSEIS -->
 <h2>Filmes</h2>
-<main id="filmes"></main>
+<div class="carousel">
+  <button class="scroll-btn left" onclick="scrollLeft('filmes')">‹</button>
+  <div class="row" id="filmes"></div>
+  <button class="scroll-btn right" onclick="scrollRight('filmes')">›</button>
+</div>
 
 <h2>Séries</h2>
-<main id="series"></main>
+<div class="carousel">
+  <button class="scroll-btn left" onclick="scrollLeft('series')">‹</button>
+  <div class="row" id="series"></div>
+  <button class="scroll-btn right" onclick="scrollRight('series')">›</button>
+</div>
 
 <h2>Animes</h2>
-<main id="animes"></main>
+<div class="carousel">
+  <button class="scroll-btn left" onclick="scrollLeft('animes')">‹</button>
+  <div class="row" id="animes"></div>
+  <button class="scroll-btn right" onclick="scrollRight('animes')">›</button>
+</div>
 
 <h2>Desenhos</h2>
-<main id="desenhos"></main>
+<div class="carousel">
+  <button class="scroll-btn left" onclick="scrollLeft('desenhos')">‹</button>
+  <div class="row" id="desenhos"></div>
+  <button class="scroll-btn right" onclick="scrollRight('desenhos')">›</button>
+</div>
 
-<footer>
-  <p>© 2026 DuckFlix 🦆</p>
-</footer>
+<footer> © DuckFlix for Mamutinho 🦆 </footer>
 
 <script src="script.js"></script>
+
 </body>
 </html>
