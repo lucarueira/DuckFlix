@@ -66,10 +66,10 @@ body {
   box-shadow: 0 2px 10px rgba(0,0,0,0.5);
 }
 #btnTopo.visivel { opacity: 1; pointer-events: all; }
-#btnTopo:hover   { transform: scale(1.12); }
+#btnTopo:hover { transform: scale(1.12); }
 
 /* ========================
-   BOTÃO ROLETA
+   BOTÃO FLUTUANTE ROLETA
 ======================== */
 #btnRoleta {
   position: fixed;
@@ -89,11 +89,7 @@ body {
   align-items: center;
   gap: 8px;
 }
-#btnRoleta::after {
-  content: "Surpreenda-me";
-  font-size: 14px;
-  font-weight: bold;
-}
+#btnRoleta::after { content: "Surpreenda-me"; font-size: 14px; font-weight: bold; }
 #btnRoleta:hover {
   transform: scale(1.07);
   box-shadow: 0 6px 28px rgba(233,30,140,0.7);
@@ -141,36 +137,18 @@ body {
   cursor: pointer;
   transition: all 0.2s;
 }
-.cat-btn:hover,
-.cat-btn.selecionado {
+.cat-btn:hover, .cat-btn.selecionado {
   background: linear-gradient(135deg, #e91e8c, #9b27af);
   border-color: transparent;
   transform: scale(1.05);
 }
 
-/* Loading spinner dentro da roleta */
-.roleta-loading {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
-  padding: 20px 0;
-  color: #aaa;
-  font-size: 14px;
-}
-.roleta-spinner-icon {
-  width: 36px;
-  height: 36px;
-  border: 3px solid #333;
-  border-top-color: #e91e8c;
-  border-radius: 50%;
-  animation: spinRoleta 0.7s linear infinite;
-}
-@keyframes spinRoleta { to { transform: rotate(360deg); } }
-
 #roletaDisplay { margin: 16px 0; }
 
-#roletaSpinner { position: relative; display: inline-block; }
+#roletaSpinner {
+  position: relative;
+  display: inline-block;
+}
 #roletaSpinner img {
   width: 160px;
   height: 240px;
@@ -194,10 +172,12 @@ body {
   font-weight: bold;
   margin: 10px 0 4px;
 }
-#roletaNota { font-size: 13px; color: gold; }
+#roletaNota {
+  font-size: 13px;
+  color: gold;
+}
 
-#btnAssistirRoleta,
-#btnSortearNovamente {
+#btnAssistirRoleta, #btnSortearNovamente {
   margin: 8px 4px 0;
   padding: 10px 20px;
   border: none;
@@ -207,10 +187,15 @@ body {
   cursor: pointer;
   transition: transform 0.2s;
 }
-#btnAssistirRoleta  { background: #cceb20; color: black; }
-#btnSortearNovamente { background: #333; color: white; }
-#btnAssistirRoleta:hover,
-#btnSortearNovamente:hover { transform: scale(1.05); }
+#btnAssistirRoleta {
+  background: #cceb20;
+  color: black;
+}
+#btnSortearNovamente {
+  background: #333;
+  color: white;
+}
+#btnAssistirRoleta:hover, #btnSortearNovamente:hover { transform: scale(1.05); }
 
 #fecharRoleta {
   display: block;
@@ -307,7 +292,10 @@ header {
   flex: 1;
   max-width: 600px;
 }
-.busca { display: flex; gap: 5px; }
+.busca {
+  display: flex;
+  gap: 5px;
+}
 .busca input {
   padding: 10px 16px;
   border-radius: 50px;
@@ -368,7 +356,7 @@ header {
 }
 
 /* HEADER BTNS */
-.header-btns { display: flex; gap: 8px; align-items: center; }
+.header-btns { display: flex; gap: 8px; }
 #btnFav {
   background: gold;
   border: none;
@@ -393,8 +381,8 @@ header {
 }
 .cat-header h2 { margin: 0; font-size: 22px; }
 .cat-icon {
-  height: 40px;
-  width: auto;
+  height: 300px;
+  width: 300px;
   object-fit: contain;
   border-radius: 8px;
 }
@@ -409,11 +397,7 @@ header {
   font-size: 13px;
   transition: all 0.2s;
 }
-#limparHistorico:hover {
-  background: #c0392b;
-  color: white;
-  border-color: #c0392b;
-}
+#limparHistorico:hover { background: #c0392b; color: white; border-color: #c0392b; }
 
 /* ========================
    CARROSSEL
@@ -474,7 +458,7 @@ header {
   margin-bottom: 4px;
 }
 
-/* BADGE ASSISTINDO */
+/* BADGE "ASSISTINDO" */
 .badge-assistindo {
   position: absolute;
   bottom: 36px;
@@ -579,7 +563,7 @@ header {
 }
 #fecharPlayer:hover { background: #e74c3c; }
 
-#player iframe {
+iframe {
   width: 100%;
   height: 60vh;
   border-radius: 10px;
@@ -659,7 +643,6 @@ header {
 }
 #btnGoTo:hover { background: #e6c200; }
 
-/* TIMER */
 .timer-area {
   display: flex;
   align-items: center;
@@ -695,7 +678,7 @@ header {
 }
 
 /* ========================
-   BANNER PRÓXIMO EP
+   BANNER PRÓXIMO EP (Netflix)
 ======================== */
 #nextEpBanner {
   position: relative;
@@ -740,6 +723,7 @@ header {
   background: #cceb20;
   border-radius: 3px;
   width: 100%;
+  transition: width 1s linear;
 }
 #nextEpNow {
   background: #cceb20;
@@ -819,7 +803,7 @@ footer {
   .busca input { font-size: 15px; }
   #btnFav { font-size: 16px; text-align: center; }
   .hero { height: auto; padding-bottom: 15px; }
-  #player iframe { height: 40vh; }
+  iframe { height: 40vh; }
   .ep-btns button { font-size: 12px; padding: 6px 10px; }
   .ep-goto input { width: 55px; }
   #btnRoleta::after { display: none; }

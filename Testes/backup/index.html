@@ -4,7 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>DuckFlix</title>
-<link rel="icon" type="image/png" href="img/LOGO_pg.png">
+<!-- FAVICON (ícone da aba) -->
+  <link rel="icon" type="image/png" href="img/LOGO_pg.png">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -36,6 +37,7 @@
       <button class="cat-btn" data-cat="desenhos">🎨 Desenhos</button>
     </div>
 
+    <!-- DISPLAY DA ROLETA -->
     <div id="roletaDisplay" class="hidden">
       <div id="roletaSpinner">
         <img id="roletaImg" src="" alt="">
@@ -64,7 +66,7 @@
 </div>
 
 <!-- ========================
-     HERO / HEADER
+     HERO
 ======================== -->
 <section class="hero">
   <header>
@@ -135,7 +137,7 @@
 
   <div id="player"></div>
 
-  <!-- BANNER PRÓXIMO EPISÓDIO -->
+  <!-- BANNER PRÓXIMO EPISÓDIO (estilo Netflix) -->
   <div id="nextEpBanner" class="hidden">
     <div class="next-ep-info">
       <span>▶ Próximo episódio em</span>
@@ -175,13 +177,13 @@
 ======================== -->
 <div id="historicoSection" class="hidden">
   <div class="cat-header">
-    <h2>🕐 Continuar Assistindo</h2>
+    <h2> 🕐 Continuar Assistindo</h2>
     <button id="limparHistorico">🗑️ Limpar</button>
   </div>
   <div class="carousel">
-    <button class="scroll-btn left" id="scrollEsqHistorico">‹</button>
+    <button class="scroll-btn left" onclick="rolarEsquerda('historico')">‹</button>
     <div class="row" id="historico"></div>
-    <button class="scroll-btn right" id="scrollDirHistorico">›</button>
+    <button class="scroll-btn right" onclick="rolarDireita('historico')">›</button>
   </div>
 </div>
 
@@ -189,43 +191,43 @@
      CARROSSEIS
 ======================== -->
 <div class="cat-header">
-  <img src="img/logo_filmes.png" alt="Filmes" class="cat-icon" onerror="this.style.display='none'">
-  <h2>🎬 Filmes</h2>
+  <img src="img/LOGO_pg.png" alt="" class="cat-icon" onerror="this.style.display='none'">
+  <h2></h2>
 </div>
 <div class="carousel">
-  <button class="scroll-btn left" id="scrollEsqFilmes">‹</button>
+  <button class="scroll-btn left" onclick="rolarEsquerda('filmes')">‹</button>
   <div class="row" id="filmes"></div>
-  <button class="scroll-btn right" id="scrollDirFilmes">›</button>
+  <button class="scroll-btn right" onclick="rolarDireita('filmes')">›</button>
 </div>
 
 <div class="cat-header">
-  <img src="img/logo_series.png" alt="Séries" class="cat-icon" onerror="this.style.display='none'">
-  <h2>📺 Séries</h2>
+  <img src="img/logo_series.png" alt="" class="cat-icon" onerror="this.style.display='none'">
+  <h2></h2>
 </div>
 <div class="carousel">
-  <button class="scroll-btn left" id="scrollEsqSeries">‹</button>
+  <button class="scroll-btn left" onclick="rolarEsquerda('series')">‹</button>
   <div class="row" id="series"></div>
-  <button class="scroll-btn right" id="scrollDirSeries">›</button>
+  <button class="scroll-btn right" onclick="rolarDireita('series')">›</button>
 </div>
 
 <div class="cat-header">
-  <img src="img/logo_animes.png" alt="Animes" class="cat-icon" onerror="this.style.display='none'">
-  <h2>⛩️ Animes</h2>
+  <img src="img/logo_animes.png" alt="" class="cat-icon" onerror="this.style.display='none'">
+  <h2></h2>
 </div>
 <div class="carousel">
-  <button class="scroll-btn left" id="scrollEsqAnimes">‹</button>
+  <button class="scroll-btn left" onclick="rolarEsquerda('animes')">‹</button>
   <div class="row" id="animes"></div>
-  <button class="scroll-btn right" id="scrollDirAnimes">›</button>
+  <button class="scroll-btn right" onclick="rolarDireita('animes')">›</button>
 </div>
 
 <div class="cat-header">
-  <img src="img/logo_desenhos.png" alt="Desenhos" class="cat-icon" onerror="this.style.display='none'">
-  <h2>🎨 Desenhos</h2>
+  <img src="img/logo_desenhos.png" alt="" class="cat-icon" onerror="this.style.display='none'">
+  <h2></h2>
 </div>
 <div class="carousel">
-  <button class="scroll-btn left" id="scrollEsqDesenhos">‹</button>
+  <button class="scroll-btn left" onclick="rolarEsquerda('desenhos')">‹</button>
   <div class="row" id="desenhos"></div>
-  <button class="scroll-btn right" id="scrollDirDesenhos">›</button>
+  <button class="scroll-btn right" onclick="rolarDireita('desenhos')">›</button>
 </div>
 
 <footer>© DuckFlix for Mamutinho 🦣</footer>

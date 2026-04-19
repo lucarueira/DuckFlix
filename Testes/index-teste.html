@@ -3,9 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>DuckFlix 🦆</title>
-<!-- FAVICON (ícone da aba) -->
-  <link rel="icon" type="image/png" href="img/logo_duckflix.png">
+<title>DuckFlix</title>
+<link rel="icon" type="image/png" href="img/LOGO_pg.png">
 <link rel="stylesheet" href="style-teste.css">
 </head>
 <body>
@@ -37,7 +36,6 @@
       <button class="cat-btn" data-cat="desenhos">🎨 Desenhos</button>
     </div>
 
-    <!-- DISPLAY DA ROLETA -->
     <div id="roletaDisplay" class="hidden">
       <div id="roletaSpinner">
         <img id="roletaImg" src="" alt="">
@@ -66,7 +64,7 @@
 </div>
 
 <!-- ========================
-     HERO
+     HERO / HEADER
 ======================== -->
 <section class="hero">
   <header>
@@ -137,7 +135,7 @@
 
   <div id="player"></div>
 
-  <!-- BANNER PRÓXIMO EPISÓDIO (estilo Netflix) -->
+  <!-- BANNER PRÓXIMO EPISÓDIO -->
   <div id="nextEpBanner" class="hidden">
     <div class="next-ep-info">
       <span>▶ Próximo episódio em</span>
@@ -181,9 +179,9 @@
     <button id="limparHistorico">🗑️ Limpar</button>
   </div>
   <div class="carousel">
-    <button class="scroll-btn left" onclick="rolarEsquerda('historico')">‹</button>
+    <button class="scroll-btn left" id="scrollEsqHistorico">‹</button>
     <div class="row" id="historico"></div>
-    <button class="scroll-btn right" onclick="rolarDireita('historico')">›</button>
+    <button class="scroll-btn right" id="scrollDirHistorico">›</button>
   </div>
 </div>
 
@@ -191,46 +189,46 @@
      CARROSSEIS
 ======================== -->
 <div class="cat-header">
-  <img src="img/icone-filmes.png" alt="" class="cat-icon" onerror="this.style.display='none'">
+  <img src="img/logo_filmes.png" alt="Filmes" class="cat-icon" onerror="this.style.display='none'">
   <h2>🎬 Filmes</h2>
 </div>
 <div class="carousel">
-  <button class="scroll-btn left" onclick="rolarEsquerda('filmes')">‹</button>
+  <button class="scroll-btn left" id="scrollEsqFilmes">‹</button>
   <div class="row" id="filmes"></div>
-  <button class="scroll-btn right" onclick="rolarDireita('filmes')">›</button>
+  <button class="scroll-btn right" id="scrollDirFilmes">›</button>
 </div>
 
 <div class="cat-header">
-  <img src="img/icone-series.png" alt="" class="cat-icon" onerror="this.style.display='none'">
+  <img src="img/logo_series.png" alt="Séries" class="cat-icon" onerror="this.style.display='none'">
   <h2>📺 Séries</h2>
 </div>
 <div class="carousel">
-  <button class="scroll-btn left" onclick="rolarEsquerda('series')">‹</button>
+  <button class="scroll-btn left" id="scrollEsqSeries">‹</button>
   <div class="row" id="series"></div>
-  <button class="scroll-btn right" onclick="rolarDireita('series')">›</button>
+  <button class="scroll-btn right" id="scrollDirSeries">›</button>
 </div>
 
 <div class="cat-header">
-  <img src="img/icone-animes.png" alt="" class="cat-icon" onerror="this.style.display='none'">
+  <img src="img/logo_animes.png" alt="Animes" class="cat-icon" onerror="this.style.display='none'">
   <h2>⛩️ Animes</h2>
 </div>
 <div class="carousel">
-  <button class="scroll-btn left" onclick="rolarEsquerda('animes')">‹</button>
+  <button class="scroll-btn left" id="scrollEsqAnimes">‹</button>
   <div class="row" id="animes"></div>
-  <button class="scroll-btn right" onclick="rolarDireita('animes')">›</button>
+  <button class="scroll-btn right" id="scrollDirAnimes">›</button>
 </div>
 
 <div class="cat-header">
-  <img src="img/icone-desenhos.png" alt="" class="cat-icon" onerror="this.style.display='none'">
+  <img src="img/logo_desenhos.png" alt="Desenhos" class="cat-icon" onerror="this.style.display='none'">
   <h2>🎨 Desenhos</h2>
 </div>
 <div class="carousel">
-  <button class="scroll-btn left" onclick="rolarEsquerda('desenhos')">‹</button>
+  <button class="scroll-btn left" id="scrollEsqDesenhos">‹</button>
   <div class="row" id="desenhos"></div>
-  <button class="scroll-btn right" onclick="rolarDireita('desenhos')">›</button>
+  <button class="scroll-btn right" id="scrollDirDesenhos">›</button>
 </div>
 
-<footer>© DuckFlix for Mamutinho 🦆</footer>
+<footer>© DuckFlix for Mamutinho 🦣</footer>
 
 <script src="script-teste.js"></script>
 </body>

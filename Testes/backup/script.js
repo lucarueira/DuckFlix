@@ -18,19 +18,25 @@ const generosSerie = {
 /* ========================
    ESTADO
 ======================== */
-let favs      = JSON.parse(localStorage.getItem("favs"))      || {};
-let historico = JSON.parse(localStorage.getItem("historico")) || {};
+let favs          = JSON.parse(localStorage.getItem("favs"))      || {};
+let historico     = JSON.parse(localStorage.getItem("historico")) || {};
 
 let currentItem   = null;
 let currentSeason = 1;
 let currentEp     = 1;
+
+// Listas carregadas (para roleta)
+let listaFilmes   = [];
+let listaSeries   = [];
+let listaAnimes   = [];
+let listaDesenhos = [];
 
 // Timer auto-pular
 let timerInterval  = null;
 let timerSegundos  = 0;
 
 // Banner próximo ep
-let nextEpInterval  = null;
+let nextEpInterval = null;
 let nextEpCancelled = false;
 
 // Item sorteado na roleta
@@ -51,10 +57,11 @@ const overlay         = document.getElementById("overlay");
 const nextEpBanner    = document.getElementById("nextEpBanner");
 const nextEpCount     = document.getElementById("nextEpCount");
 const nextEpProgress  = document.getElementById("nextEpProgress");
-const favPage         = document.getElementById("favPage");
-const favList         = document.getElementById("favList");
-const searchPage      = document.getElementById("searchPage");
-const searchList      = document.getElementById("searchList");
+
+const favPage    = document.getElementById("favPage");
+const favList    = document.getElementById("favList");
+const searchPage = document.getElementById("searchPage");
+const searchList = document.getElementById("searchList");
 
 /* ========================
    TOAST
@@ -108,7 +115,7 @@ function toggleFav(item, btn) {
 
 function atualizarBtnFav(btn, fav) {
   btn.textContent = fav ? "💛" : "⭐";
-  btn.title = fav ? "Remover dos favoritos" : "Adicionar aos favoritos";
+  btn.title       = fav ? "Remover dos favoritos" : "Adicionar aos favoritos";
   fav ? btn.classList.add("favoritado") : btn.classList.remove("favoritado");
 }
 
@@ -173,13 +180,10 @@ function carregarProgresso(id) {
 
 /* ========================
    TIMER AUTO-PULAR
-   (conta a partir do momento
-   que o episódio começa a tocar)
 ======================== */
 function iniciarTimer(min) {
   pararTimer();
   if (min === 0) return;
-
   timerSegundos = min * 60;
   atualizarTimerDisplay();
   timerDisplay.classList.remove("hidden");
@@ -193,13 +197,11 @@ function iniciarTimer(min) {
     }
   }, 1000);
 }
-
 function pararTimer() {
   clearInterval(timerInterval);
   timerInterval = null;
   timerDisplay.classList.add("hidden");
 }
-
 function atualizarTimerDisplay() {
   const m = String(Math.floor(timerSegundos / 60)).padStart(2, "0");
   const s = String(timerSegundos % 60).padStart(2, "0");
@@ -208,11 +210,6 @@ function atualizarTimerDisplay() {
 
 document.querySelectorAll(".timer-btn").forEach(btn => {
   btn.onclick = () => {
-    // Timer só funciona pra séries
-    if (!currentItem || currentItem.type !== "serie") {
-      showToast("⚠️ Abra uma série para usar o timer!");
-      return;
-    }
     document.querySelectorAll(".timer-btn").forEach(b => b.classList.remove("ativo"));
     btn.classList.add("ativo");
     const min = parseInt(btn.dataset.min);
@@ -223,7 +220,7 @@ document.querySelectorAll(".timer-btn").forEach(btn => {
 
 /* ========================
    BANNER PRÓXIMO EPISÓDIO
-   (10s → autoplay real)
+   (estilo Netflix — 10s)
 ======================== */
 function iniciarBannerProximoEp() {
   if (!currentItem || currentItem.type === "filme") return;
@@ -231,12 +228,11 @@ function iniciarBannerProximoEp() {
   nextEpCancelled = false;
   let seg = 10;
   nextEpCount.textContent = seg;
-
-  // Reset e anima barra regressiva
   nextEpProgress.style.transition = "none";
   nextEpProgress.style.width = "100%";
   nextEpBanner.classList.remove("hidden");
 
+  // Anima a barra regressiva
   requestAnimationFrame(() => {
     requestAnimationFrame(() => {
       nextEpProgress.style.transition = `width ${seg}s linear`;
@@ -249,7 +245,7 @@ function iniciarBannerProximoEp() {
     nextEpCount.textContent = seg;
     if (seg <= 0) {
       fecharBannerProximoEp();
-      if (!nextEpCancelled) proximoEpisodioAutoplay();
+      if (!nextEpCancelled) proximoEpisodio();
     }
   }, 1000);
 }
@@ -262,7 +258,7 @@ function fecharBannerProximoEp() {
 
 document.getElementById("nextEpNow").onclick = () => {
   fecharBannerProximoEp();
-  proximoEpisodioAutoplay();
+  proximoEpisodio();
 };
 document.getElementById("nextEpCancel").onclick = () => {
   nextEpCancelled = true;
@@ -271,35 +267,28 @@ document.getElementById("nextEpCancel").onclick = () => {
 };
 
 /* ========================
-   PRÓXIMO EPISÓDIO — manual
-   (sem autoplay, clique direto)
+   postMessage — fim de vídeo
+======================== */
+window.addEventListener("message", (e) => {
+  if (!currentItem || currentItem.type === "filme") return;
+  const d = e.data;
+  const ended =
+    d === "ended" || d?.event === "ended" || d?.type === "ended" ||
+    d?.status === "ended" || d?.event === "video:ended" || d?.event === "complete";
+  if (ended) iniciarBannerProximoEp();
+});
+
+/* ========================
+   PRÓXIMO EPISÓDIO (progressivo)
 ======================== */
 function proximoEpisodio() {
   currentEp++;
   atualizarEpInfo();
-  carregarPlayer();   // sem autoplay
+  carregarPlayer();
   salvarProgresso(currentItem.id, currentSeason, currentEp);
-  addHistorico(currentItem);
   showToast(`▶ Episódio ${currentEp} — Temporada ${currentSeason}`);
-  reiniciarTimerSeAtivo();
-}
 
-/* ========================
-   PRÓXIMO EPISÓDIO — automático
-   (disparado pelo timer/banner,
-   carrega com autoplay=1)
-======================== */
-function proximoEpisodioAutoplay() {
-  currentEp++;
-  atualizarEpInfo();
-  carregarPlayerAutoplay();   // COM autoplay
-  salvarProgresso(currentItem.id, currentSeason, currentEp);
-  addHistorico(currentItem);
-  showToast(`▶ Episódio ${currentEp} — Temporada ${currentSeason}`);
-  reiniciarTimerSeAtivo();
-}
-
-function reiniciarTimerSeAtivo() {
+  // Reinicia timer se ativo
   const timerAtivo = document.querySelector(".timer-btn.ativo");
   if (timerAtivo) {
     const min = parseInt(timerAtivo.dataset.min);
@@ -315,7 +304,7 @@ function abrirPlayer(item) {
   const ehSerie = item.type === "serie";
 
   if (ehSerie) {
-    const prog    = carregarProgresso(item.id);
+    const prog   = carregarProgresso(item.id);
     currentSeason = prog.season;
     currentEp     = prog.episode;
     episodeControls.classList.remove("hidden");
@@ -323,9 +312,6 @@ function abrirPlayer(item) {
   } else {
     episodeControls.classList.add("hidden");
     pararTimer();
-    // Reseta botões timer
-    document.querySelectorAll(".timer-btn").forEach(b => b.classList.remove("ativo"));
-    document.querySelector('.timer-btn[data-min="0"]').classList.add("ativo");
   }
 
   tituloPlayer.innerText = item.title;
@@ -363,9 +349,7 @@ function fecharTodasSecoes() {
 }
 
 /* ========================
-   CARREGAR PLAYER (normal, sem autoplay)
-   Usado ao abrir manualmente um item
-   ou navegar entre episódios via botões
+   CARREGAR IFRAME
 ======================== */
 function carregarPlayer() {
   if (!currentItem) return;
@@ -374,24 +358,7 @@ function carregarPlayer() {
     : `https://myembed.biz/serie/${currentItem.id}/${currentSeason}/${currentEp}`;
 
   player.innerHTML = `
-    <iframe src="${url}" allowfullscreen loading="lazy"
-      allow="autoplay; fullscreen; picture-in-picture"></iframe>
-  `;
-}
-
-/* ========================
-   CARREGAR PLAYER (com autoplay=1)
-   Usado apenas pelo timer/banner automático
-======================== */
-function carregarPlayerAutoplay() {
-  if (!currentItem) return;
-  const url = currentItem.type === "filme"
-    ? `https://myembed.biz/filme/${currentItem.id}?autoplay=1`
-    : `https://myembed.biz/serie/${currentItem.id}/${currentSeason}/${currentEp}?autoplay=1`;
-
-  player.innerHTML = `
-    <iframe src="${url}" allowfullscreen loading="lazy"
-      allow="autoplay; fullscreen; picture-in-picture"></iframe>
+    <iframe src="${url}" allowfullscreen loading="lazy" allow="autoplay; fullscreen"></iframe>
   `;
 }
 
@@ -413,9 +380,7 @@ document.getElementById("btnEpMenos").onclick = () => {
     atualizarEpInfo();
     carregarPlayer();
     salvarProgresso(currentItem.id, currentSeason, currentEp);
-  } else {
-    showToast("⚠️ Primeiro episódio da temporada!");
-  }
+  } else showToast("⚠️ Primeiro episódio da temporada!");
 };
 
 document.getElementById("btnTemporadaMais").onclick = () => {
@@ -435,9 +400,7 @@ document.getElementById("btnTemporadaMenos").onclick = () => {
     carregarPlayer();
     salvarProgresso(currentItem.id, currentSeason, currentEp);
     showToast(`📺 Temporada ${currentSeason}`);
-  } else {
-    showToast("⚠️ Primeira temporada!");
-  }
+  } else showToast("⚠️ Primeira temporada!");
 };
 
 document.getElementById("btnGoTo").onclick = () => {
@@ -457,12 +420,12 @@ document.getElementById("btnGoTo").onclick = () => {
 document.getElementById("btnTrailer").onclick = () => {
   if (!currentItem) return;
   const tipo = currentItem.type === "filme" ? "movie" : "tv";
-
   fetch(`https://api.themoviedb.org/3/${tipo}/${currentItem.id}/videos?api_key=${apiKey}&language=pt-BR`)
     .then(r => r.json())
     .then(d => {
       let trailer = d.results?.find(v => v.type === "Trailer" && v.site === "YouTube");
       if (!trailer) {
+        // Tenta em inglês
         return fetch(`https://api.themoviedb.org/3/${tipo}/${currentItem.id}/videos?api_key=${apiKey}`)
           .then(r => r.json())
           .then(d2 => {
@@ -472,8 +435,7 @@ document.getElementById("btnTrailer").onclick = () => {
           });
       }
       abrirTrailer(trailer.key, currentItem.title);
-    })
-    .catch(() => showToast("⚠️ Erro ao buscar trailer"));
+    });
 };
 
 function abrirTrailer(key, titulo) {
@@ -563,26 +525,27 @@ document.getElementById("busca").addEventListener("input", (e) => {
             document.getElementById("busca").value = title;
             fecharTodasSecoes();
             abrirPlayer({
-              id:     item.id,
+              id: item.id,
               title,
-              type:   item.title ? "filme" : "serie",
+              type: item.title ? "filme" : "serie",
               poster: item.poster_path
             });
           };
           sug.appendChild(div);
         });
         sug.classList.remove("hidden");
-      })
-      .catch(() => {});
+      });
   }, 350);
 });
 
+// Fecha sugestões ao clicar fora
 document.addEventListener("click", (e) => {
   if (!e.target.closest(".busca-wrap")) {
     document.getElementById("sugestoes").classList.add("hidden");
   }
 });
 
+// Busca principal (Enter ou botão)
 document.getElementById("btnBusca").onclick = buscar;
 document.getElementById("busca").addEventListener("keydown", (e) => {
   if (e.key === "Enter") buscar();
@@ -602,32 +565,31 @@ function buscar() {
       if (res.length === 0) {
         searchList.innerHTML = `<p style="color:#aaa;padding:20px;">Nenhum resultado para "<strong>${q}</strong>".</p>`;
       } else {
-        res.forEach(item => criarCard(searchList, item));
+        res.forEach(item => card(searchList, item));
       }
       searchPage.classList.remove("hidden");
       searchPage.scrollIntoView({ behavior: "smooth" });
-    })
-    .catch(() => showToast("⚠️ Erro na busca"));
+    });
 }
 document.getElementById("closeSearch").onclick = () => searchPage.classList.add("hidden");
 
 /* ========================
-   CRIAR CARD
+   CARD (com nota e gênero)
 ======================== */
-function criarCard(container, item, tipoForcado) {
-  const div = document.createElement("div");
+function card(container, item, tipoForcado) {
+  const div   = document.createElement("div");
   div.classList.add("card");
 
-  const type       = tipoForcado || (item.title ? "filme" : "serie");
-  const title      = item.title || item.name;
+  const type      = tipoForcado || (item.title ? "filme" : "serie");
+  const title     = item.title || item.name;
   const favoritado = isFav(item.id);
-  const nota       = item.vote_average ? `⭐ ${item.vote_average.toFixed(1)}` : "";
-  const genMap     = type === "filme" ? generosFilme : generosSerie;
-  const genero     = item.genre_ids?.[0] ? (genMap[item.genre_ids[0]] || "") : "";
+  const nota      = item.vote_average ? `⭐ ${item.vote_average.toFixed(1)}` : "";
+  const genMap    = type === "filme" ? generosFilme : generosSerie;
+  const genero    = item.genre_ids?.[0] ? (genMap[item.genre_ids[0]] || "") : "";
 
   div.innerHTML = `
     ${nota ? `<span class="badge-nota">${nota}</span>` : ""}
-    <img src="https://image.tmdb.org/t/p/w300${item.poster_path}" alt="${title}" loading="lazy">
+    <img src="https://image.tmdb.org/t/p/w300${item.poster_path}" alt="${title}">
     <p>${title}</p>
     ${genero ? `<span class="badge-genero">${genero}</span>` : ""}
     <button class="fav-btn ${favoritado ? "favoritado" : ""}" title="${favoritado ? "Remover" : "Favoritar"}">
@@ -636,6 +598,7 @@ function criarCard(container, item, tipoForcado) {
   `;
 
   const favBtn = div.querySelector(".fav-btn");
+
   div.onclick = () => {
     fecharTodasSecoes();
     abrirPlayer({ id: item.id, title, type, poster: item.poster_path });
@@ -649,7 +612,7 @@ function criarCard(container, item, tipoForcado) {
 }
 
 /* ========================
-   SCROLL CARROSSÉIS
+   SCROLL
 ======================== */
 function rolarDireita(id) {
   const el = document.getElementById(id);
@@ -667,27 +630,8 @@ function rolarEsquerda(id) {
     : el.scrollBy({ left: -300, behavior: "smooth" });
 }
 
-// Vincula botões de scroll via JS (sem onclick inline no HTML)
-const scrollMap = {
-  scrollEsqHistorico: () => rolarEsquerda("historico"),
-  scrollDirHistorico: () => rolarDireita("historico"),
-  scrollEsqFilmes:    () => rolarEsquerda("filmes"),
-  scrollDirFilmes:    () => rolarDireita("filmes"),
-  scrollEsqSeries:    () => rolarEsquerda("series"),
-  scrollDirSeries:    () => rolarDireita("series"),
-  scrollEsqAnimes:    () => rolarEsquerda("animes"),
-  scrollDirAnimes:    () => rolarDireita("animes"),
-  scrollEsqDesenhos:  () => rolarEsquerda("desenhos"),
-  scrollDirDesenhos:  () => rolarDireita("desenhos"),
-};
-Object.entries(scrollMap).forEach(([id, fn]) => {
-  const el = document.getElementById(id);
-  if (el) el.onclick = fn;
-});
-
 /* ========================
-   ROLETA — busca múltiplas
-   páginas aleatórias da API
+   ROLETA
 ======================== */
 const modalRoleta = document.getElementById("modalRoleta");
 
@@ -712,33 +656,15 @@ document.querySelectorAll(".cat-btn").forEach(btn => {
   };
 });
 
-// Busca 5 páginas aleatórias em paralelo → ~100 títulos por sorteio
-async function buscarPaginasAleatorias(endpoint, totalPaginas = 5) {
-  const paginas = new Set();
-  while (paginas.size < totalPaginas) {
-    paginas.add(Math.floor(Math.random() * 10) + 1);
-  }
-
-  const resultados = await Promise.all(
-    [...paginas].map(pg =>
-      fetch(`${endpoint}&page=${pg}`)
-        .then(r => r.json())
-        .then(d => d.results || [])
-        .catch(() => [])
-    )
-  );
-
-  return resultados.flat().filter(i => i.poster_path);
-}
-
-async function sortear(cat) {
-  const endpoints = {
-    filmes:   `https://api.themoviedb.org/3/movie/popular?api_key=${apiKey}&language=pt-BR`,
-    series:   `https://api.themoviedb.org/3/tv/popular?api_key=${apiKey}&language=pt-BR`,
-    animes:   `https://api.themoviedb.org/3/discover/tv?api_key=${apiKey}&with_original_language=ja&language=pt-BR`,
-    desenhos: `https://api.themoviedb.org/3/discover/tv?api_key=${apiKey}&with_genres=16&language=pt-BR`
+function sortear(cat) {
+  const listas = {
+    filmes:   listaFilmes,
+    series:   listaSeries,
+    animes:   listaAnimes,
+    desenhos: listaDesenhos
   };
-  const tipos = { filmes: "filme", series: "serie", animes: "serie", desenhos: "serie" };
+  const lista = listas[cat]?.filter(i => i.poster_path);
+  if (!lista || lista.length === 0) { showToast("⏳ Carregando lista..."); return; }
 
   const display = document.getElementById("roletaDisplay");
   const img     = document.getElementById("roletaImg");
@@ -747,59 +673,32 @@ async function sortear(cat) {
   const btnAss  = document.getElementById("btnAssistirRoleta");
   const btnNov  = document.getElementById("btnSortearNovamente");
 
-  // Mostra loading
   display.classList.remove("hidden");
   btnAss.classList.add("hidden");
   btnNov.classList.add("hidden");
-  img.src = "";
-  img.style.display = "none";
-  titulo.textContent = "";
-  nota.textContent   = "";
-
-  // Spinner de loading na roleta
-  const loadDiv = document.createElement("div");
-  loadDiv.className = "roleta-loading";
-  loadDiv.id = "roletaLoadingDiv";
-  loadDiv.innerHTML = `<div class="roleta-spinner-icon"></div><span>Buscando títulos...</span>`;
-  display.insertBefore(loadDiv, document.getElementById("roletaSpinner"));
-
-  const lista = await buscarPaginasAleatorias(endpoints[cat], 5);
-
-  // Remove loading
-  const ld = document.getElementById("roletaLoadingDiv");
-  if (ld) ld.remove();
-  img.style.display = "";
-
-  if (!lista || lista.length === 0) {
-    titulo.textContent = "Nenhum título encontrado";
-    showToast("⚠️ Não foi possível carregar títulos");
-    return;
-  }
-
-  // Animação de roleta
   img.classList.add("girando");
+
+  // Anima por 2s trocando rápido
   let loops = 0;
   const spin = setInterval(() => {
     const rand = lista[Math.floor(Math.random() * lista.length)];
     img.src = `https://image.tmdb.org/t/p/w300${rand.poster_path}`;
     titulo.textContent = rand.title || rand.name;
     loops++;
-
     if (loops >= 16) {
       clearInterval(spin);
       img.classList.remove("girando");
 
+      // Resultado final
       const escolhido = lista[Math.floor(Math.random() * lista.length)];
       img.src = `https://image.tmdb.org/t/p/w300${escolhido.poster_path}`;
       titulo.textContent = escolhido.title || escolhido.name;
-      nota.textContent   = escolhido.vote_average
-        ? `⭐ ${escolhido.vote_average.toFixed(1)}`
-        : "";
+      nota.textContent   = escolhido.vote_average ? `⭐ ${escolhido.vote_average.toFixed(1)}` : "";
 
       roletaItemSelecionado = {
         id:     escolhido.id,
         title:  escolhido.title || escolhido.name,
-        type:   tipos[cat],
+        type:   cat === "filmes" ? "filme" : "serie",
         poster: escolhido.poster_path
       };
 
@@ -822,29 +721,33 @@ document.getElementById("btnSortearNovamente").onclick = () => {
 };
 
 /* ========================
-   CARREGAR CONTEÚDO INICIAL
+   CARREGAR CONTEÚDO
 ======================== */
 fetch(`https://api.themoviedb.org/3/movie/popular?api_key=${apiKey}&language=pt-BR`)
-  .then(r => r.json())
-  .then(d => d.results.forEach(m => criarCard(document.getElementById("filmes"), m, "filme")))
-  .catch(() => showToast("⚠️ Erro ao carregar filmes"));
+  .then(r => r.json()).then(d => {
+    listaFilmes = d.results;
+    listaFilmes.forEach(m => card(document.getElementById("filmes"), m, "filme"));
+  });
 
 fetch(`https://api.themoviedb.org/3/tv/popular?api_key=${apiKey}&language=pt-BR`)
-  .then(r => r.json())
-  .then(d => d.results.forEach(s => criarCard(document.getElementById("series"), s, "serie")))
-  .catch(() => showToast("⚠️ Erro ao carregar séries"));
+  .then(r => r.json()).then(d => {
+    listaSeries = d.results;
+    listaSeries.forEach(s => card(document.getElementById("series"), s, "serie"));
+  });
 
 fetch(`https://api.themoviedb.org/3/discover/tv?api_key=${apiKey}&with_original_language=ja&language=pt-BR`)
-  .then(r => r.json())
-  .then(d => d.results.forEach(a => criarCard(document.getElementById("animes"), a, "serie")))
-  .catch(() => showToast("⚠️ Erro ao carregar animes"));
+  .then(r => r.json()).then(d => {
+    listaAnimes = d.results;
+    listaAnimes.forEach(a => card(document.getElementById("animes"), a, "serie"));
+  });
 
 fetch(`https://api.themoviedb.org/3/discover/tv?api_key=${apiKey}&with_genres=16&language=pt-BR`)
-  .then(r => r.json())
-  .then(d => d.results.forEach(x => criarCard(document.getElementById("desenhos"), x, "serie")))
-  .catch(() => showToast("⚠️ Erro ao carregar desenhos"));
+  .then(r => r.json()).then(d => {
+    listaDesenhos = d.results;
+    listaDesenhos.forEach(x => card(document.getElementById("desenhos"), x, "serie"));
+  });
 
 /* ========================
-   INIT
+   INIT — renderiza histórico
 ======================== */
 renderHistorico();
