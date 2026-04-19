@@ -1,6 +1,4 @@
-* {
-  box-sizing: border-box;
-}
+* { box-sizing: border-box; }
 
 body {
   margin: 0;
@@ -36,25 +34,22 @@ body {
 }
 
 /* ========================
-   OVERLAY ESCURO
+   OVERLAY
 ======================== */
 #overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.82);
+  background: rgba(0,0,0,0.85);
   z-index: 50;
   transition: opacity 0.3s;
 }
-#overlay.hidden {
-  display: none !important;
-}
 
 /* ========================
-   BOTÃO VOLTAR AO TOPO
+   BOTÃO TOPO
 ======================== */
 #btnTopo {
   position: fixed;
-  bottom: 80px;
+  bottom: 90px;
   right: 20px;
   background: gold;
   color: black;
@@ -70,12 +65,195 @@ body {
   transition: opacity 0.3s, transform 0.2s;
   box-shadow: 0 2px 10px rgba(0,0,0,0.5);
 }
-#btnTopo.visivel {
-  opacity: 1;
-  pointer-events: all;
+#btnTopo.visivel { opacity: 1; pointer-events: all; }
+#btnTopo:hover { transform: scale(1.12); }
+
+/* ========================
+   BOTÃO FLUTUANTE ROLETA
+======================== */
+#btnRoleta {
+  position: fixed;
+  bottom: 30px;
+  right: 20px;
+  background: linear-gradient(135deg, #e91e8c, #9b27af);
+  color: white;
+  border: none;
+  border-radius: 50px;
+  padding: 12px 20px;
+  font-size: 22px;
+  cursor: pointer;
+  z-index: 9997;
+  box-shadow: 0 4px 20px rgba(233,30,140,0.5);
+  transition: transform 0.2s, box-shadow 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
-#btnTopo:hover {
-  transform: scale(1.12);
+#btnRoleta::after { content: "Surpreenda-me"; font-size: 14px; font-weight: bold; }
+#btnRoleta:hover {
+  transform: scale(1.07);
+  box-shadow: 0 6px 28px rgba(233,30,140,0.7);
+}
+
+/* ========================
+   MODAL ROLETA
+======================== */
+#modalRoleta {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  background: rgba(0,0,0,0.88);
+}
+.roleta-box {
+  background: #1a1a1a;
+  border: 1px solid #333;
+  border-radius: 20px;
+  padding: 30px;
+  max-width: 480px;
+  width: 90%;
+  text-align: center;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.8);
+}
+.roleta-box h2 { margin: 0 0 8px; font-size: 26px; }
+.roleta-box > p { color: #aaa; margin-bottom: 20px; }
+
+.roleta-categorias {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+.cat-btn {
+  padding: 12px 20px;
+  border-radius: 12px;
+  border: 2px solid #444;
+  background: #222;
+  color: white;
+  font-size: 15px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.cat-btn:hover, .cat-btn.selecionado {
+  background: linear-gradient(135deg, #e91e8c, #9b27af);
+  border-color: transparent;
+  transform: scale(1.05);
+}
+
+#roletaDisplay { margin: 16px 0; }
+
+#roletaSpinner {
+  position: relative;
+  display: inline-block;
+}
+#roletaSpinner img {
+  width: 160px;
+  height: 240px;
+  object-fit: cover;
+  border-radius: 12px;
+  border: 3px solid #444;
+  transition: all 0.1s;
+}
+#roletaSpinner img.girando {
+  animation: girarCard 0.08s infinite alternate;
+  border-color: #e91e8c;
+  box-shadow: 0 0 20px rgba(233,30,140,0.6);
+}
+@keyframes girarCard {
+  from { transform: scale(0.97) rotate(-1deg); filter: brightness(0.8); }
+  to   { transform: scale(1.03) rotate(1deg);  filter: brightness(1.2); }
+}
+
+#roletaTitulo {
+  font-size: 16px;
+  font-weight: bold;
+  margin: 10px 0 4px;
+}
+#roletaNota {
+  font-size: 13px;
+  color: gold;
+}
+
+#btnAssistirRoleta, #btnSortearNovamente {
+  margin: 8px 4px 0;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+#btnAssistirRoleta {
+  background: #cceb20;
+  color: black;
+}
+#btnSortearNovamente {
+  background: #333;
+  color: white;
+}
+#btnAssistirRoleta:hover, #btnSortearNovamente:hover { transform: scale(1.05); }
+
+#fecharRoleta {
+  display: block;
+  margin: 18px auto 0;
+  background: transparent;
+  border: 1px solid #555;
+  color: #aaa;
+  padding: 8px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+#fecharRoleta:hover { background: #333; color: white; }
+
+/* ========================
+   MODAL TRAILER
+======================== */
+#modalTrailer {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10001;
+  background: rgba(0,0,0,0.92);
+}
+.trailer-box {
+  width: 90%;
+  max-width: 900px;
+  background: #111;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.9);
+}
+.trailer-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: #1a1a1a;
+}
+.trailer-top h3 { margin: 0; font-size: 18px; }
+#fecharTrailer {
+  background: #c0392b;
+  border: none;
+  color: white;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: bold;
+}
+#trailerFrame {
+  width: 100%;
+  height: 50vh;
+  border: none;
+  display: block;
 }
 
 /* ========================
@@ -91,12 +269,8 @@ body {
   content: "";
   position: absolute;
   inset: 0;
-  background: rgba(0, 0, 0, 0.6);
+  background: rgba(0,0,0,0.6);
 }
-
-/* ========================
-   HEADER
-======================== */
 header {
   position: relative;
   z-index: 2;
@@ -108,24 +282,19 @@ header {
   flex-wrap: wrap;
 }
 
-/* ========================
-   LOGO
-======================== */
-.logo {
-  display: flex;
-  align-items: center;
-  cursor: pointer;
-}
+/* LOGO */
+.logo { display: flex; align-items: center; cursor: pointer; }
 .logo img { height: 200px; }
 
-/* ========================
-   BUSCA
-======================== */
+/* BUSCA */
+.busca-wrap {
+  position: relative;
+  flex: 1;
+  max-width: 600px;
+}
 .busca {
   display: flex;
   gap: 5px;
-  flex: 1;
-  max-width: 600px;
 }
 .busca input {
   padding: 10px 16px;
@@ -148,9 +317,46 @@ header {
 }
 .busca button:hover { background: #aac800; }
 
-/* ========================
-   BOTÃO FAVORITOS
-======================== */
+/* SUGESTÕES */
+#sugestoes {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  background: #1e1e1e;
+  border: 1px solid #333;
+  border-radius: 12px;
+  z-index: 200;
+  max-height: 320px;
+  overflow-y: auto;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.7);
+}
+.sug-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 14px;
+  cursor: pointer;
+  transition: background 0.15s;
+  border-bottom: 1px solid #2a2a2a;
+}
+.sug-item:last-child { border-bottom: none; }
+.sug-item:hover { background: #2a2a2a; }
+.sug-item img {
+  width: 36px;
+  height: 54px;
+  object-fit: cover;
+  border-radius: 5px;
+}
+.sug-item span { font-size: 14px; }
+.sug-item .sug-tipo {
+  font-size: 11px;
+  color: #aaa;
+  margin-left: auto;
+}
+
+/* HEADER BTNS */
+.header-btns { display: flex; gap: 8px; }
 #btnFav {
   background: gold;
   border: none;
@@ -165,7 +371,7 @@ header {
 #btnFav:hover { background: #e6c200; }
 
 /* ========================
-   CABEÇALHO DE CATEGORIA
+   CATEGORIA HEADER
 ======================== */
 .cat-header {
   display: flex;
@@ -173,16 +379,25 @@ header {
   gap: 12px;
   margin: 18px 10px 6px;
 }
-.cat-header h2 {
-  margin: 0;
-  font-size: 22px;
-}
+.cat-header h2 { margin: 0; font-size: 22px; }
 .cat-icon {
   height: 38px;
   width: 38px;
   object-fit: contain;
   border-radius: 8px;
 }
+#limparHistorico {
+  margin-left: auto;
+  background: transparent;
+  border: 1px solid #555;
+  color: #aaa;
+  padding: 5px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  transition: all 0.2s;
+}
+#limparHistorico:hover { background: #c0392b; color: white; border-color: #c0392b; }
 
 /* ========================
    CARROSSEL
@@ -217,18 +432,53 @@ header {
   text-align: center;
   font-size: 13px;
   font-weight: bold;
-  margin: 6px 0 4px;
+  margin: 6px 0 2px;
 }
 
-/* ========================
-   BOTÃO FAVORITAR
-======================== */
+/* BADGE NOTA */
+.badge-nota {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  background: rgba(0,0,0,0.8);
+  color: gold;
+  font-size: 12px;
+  font-weight: bold;
+  padding: 3px 7px;
+  border-radius: 6px;
+  pointer-events: none;
+}
+
+/* BADGE GÊNERO */
+.badge-genero {
+  display: block;
+  text-align: center;
+  font-size: 11px;
+  color: #aaa;
+  margin-bottom: 4px;
+}
+
+/* BADGE "ASSISTINDO" */
+.badge-assistindo {
+  position: absolute;
+  bottom: 36px;
+  left: 0;
+  right: 0;
+  background: rgba(204,235,32,0.9);
+  color: black;
+  font-size: 11px;
+  font-weight: bold;
+  text-align: center;
+  padding: 3px 0;
+}
+
+/* BOTÃO FAVORITAR */
 .fav-btn {
   position: absolute;
   top: 8px;
   right: 8px;
   display: none;
-  background: rgba(0, 0, 0, 0.78);
+  background: rgba(0,0,0,0.78);
   color: white;
   border: none;
   border-radius: 6px;
@@ -242,7 +492,7 @@ header {
 .fav-btn:hover { transform: scale(1.2); }
 .fav-btn.favoritado {
   display: block;
-  background: rgba(255, 200, 0, 0.88);
+  background: rgba(255,200,0,0.88);
 }
 
 /* ========================
@@ -274,15 +524,31 @@ header {
   background: #111;
   border-bottom: 2px solid #222;
   position: relative;
-  z-index: 60; /* acima do overlay */
+  z-index: 60;
 }
 .playerTop {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 10px;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 .playerTop h2 { margin: 0; font-size: 20px; }
+.player-top-btns { display: flex; gap: 8px; }
+
+#btnTrailer {
+  background: #e67e22;
+  border: none;
+  color: white;
+  padding: 8px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: bold;
+  transition: background 0.2s;
+}
+#btnTrailer:hover { background: #d35400; }
 
 #fecharPlayer {
   background: #c0392b;
@@ -306,7 +572,7 @@ iframe {
 }
 
 /* ========================
-   CONTROLES DE EPISÓDIO
+   CONTROLES EPISÓDIO
 ======================== */
 #episodeControls {
   display: flex;
@@ -319,18 +585,12 @@ iframe {
   border-radius: 12px;
   border: 1px solid #2a2a2a;
 }
-
-.ep-info {
-  display: flex;
-  gap: 20px;
-  font-size: 15px;
-}
+.ep-info { display: flex; gap: 20px; font-size: 15px; }
 .ep-info span {
   background: #2a2a2a;
   padding: 6px 16px;
   border-radius: 20px;
 }
-
 .ep-btns {
   display: flex;
   gap: 8px;
@@ -350,7 +610,6 @@ iframe {
 }
 .ep-btns button:hover { background: #aac800; transform: scale(1.05); }
 
-/* IR PARA EPISÓDIO */
 .ep-goto {
   display: flex;
   align-items: center;
@@ -358,10 +617,7 @@ iframe {
   flex-wrap: wrap;
   justify-content: center;
 }
-.ep-goto label {
-  font-size: 14px;
-  color: #aaa;
-}
+.ep-goto label { font-size: 14px; color: #aaa; }
 .ep-goto input {
   width: 70px;
   padding: 6px 10px;
@@ -387,7 +643,6 @@ iframe {
 }
 #btnGoTo:hover { background: #e6c200; }
 
-/* TIMER */
 .timer-area {
   display: flex;
   align-items: center;
@@ -423,13 +678,83 @@ iframe {
 }
 
 /* ========================
+   BANNER PRÓXIMO EP (Netflix)
+======================== */
+#nextEpBanner {
+  position: relative;
+  background: #1a1a1a;
+  border: 1px solid #2a2a2a;
+  border-radius: 12px;
+  padding: 14px 18px;
+  margin-top: 10px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  animation: slideUp 0.4s ease;
+}
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.next-ep-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 15px;
+  color: #ccc;
+}
+.next-ep-info strong {
+  font-size: 28px;
+  color: #cceb20;
+  min-width: 36px;
+  text-align: center;
+}
+.next-ep-bar {
+  flex: 1;
+  height: 6px;
+  background: #333;
+  border-radius: 3px;
+  min-width: 80px;
+  overflow: hidden;
+}
+#nextEpProgress {
+  height: 100%;
+  background: #cceb20;
+  border-radius: 3px;
+  width: 100%;
+  transition: width 1s linear;
+}
+#nextEpNow {
+  background: #cceb20;
+  border: none;
+  color: black;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+  font-size: 14px;
+  white-space: nowrap;
+  transition: background 0.2s;
+}
+#nextEpNow:hover { background: #aac800; }
+#nextEpCancel {
+  background: transparent;
+  border: 1px solid #555;
+  color: #aaa;
+  padding: 7px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  transition: all 0.2s;
+}
+#nextEpCancel:hover { background: #c0392b; color: white; border-color: #c0392b; }
+
+/* ========================
    FAVORITOS + BUSCA
 ======================== */
 .hidden { display: none !important; }
-
-#favPage, #searchPage {
-  padding: 12px 16px;
-}
+#favPage, #searchPage { padding: 12px 16px; }
 .favHeader {
   display: flex;
   justify-content: space-between;
@@ -437,7 +762,6 @@ iframe {
   margin-bottom: 12px;
 }
 .favHeader h2 { margin: 0; }
-
 #closeFav, #closeSearch {
   background: #c0392b;
   border: none;
@@ -450,7 +774,6 @@ iframe {
   transition: background 0.2s;
 }
 #closeFav:hover, #closeSearch:hover { background: #e74c3c; }
-
 #favList, #searchList {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
@@ -474,16 +797,17 @@ footer {
    RESPONSIVO
 ======================== */
 @media (max-width: 768px) {
-  header {
-    flex-direction: column;
-    align-items: stretch;
-  }
+  header { flex-direction: column; align-items: stretch; }
   .logo img { height: 100px; }
-  .busca { max-width: 100%; }
+  .busca-wrap { max-width: 100%; }
   .busca input { font-size: 15px; }
   #btnFav { font-size: 16px; text-align: center; }
   .hero { height: auto; padding-bottom: 15px; }
   iframe { height: 40vh; }
   .ep-btns button { font-size: 12px; padding: 6px 10px; }
   .ep-goto input { width: 55px; }
+  #btnRoleta::after { display: none; }
+  #btnRoleta { padding: 12px; }
+  .next-ep-bar { display: none; }
+  #trailerFrame { height: 35vh; }
 }

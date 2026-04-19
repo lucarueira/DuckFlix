@@ -4,47 +4,104 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>DuckFlix 🦆</title>
+<!-- FAVICON (ícone da aba) -->
+  <link rel="icon" type="image/png" href="img/logo_duckflix.png">
 <link rel="stylesheet" href="style-teste.css">
 </head>
-
 <body>
 
 <!-- TOAST -->
 <div id="toast"></div>
 
-<!-- OVERLAY ESCURO (foco no player) -->
+<!-- OVERLAY ESCURO -->
 <div id="overlay" class="hidden"></div>
 
 <!-- BOTÃO VOLTAR AO TOPO -->
 <button id="btnTopo" title="Voltar ao topo">▲</button>
 
-<!-- HERO -->
+<!-- BOTÃO FLUTUANTE ROLETA -->
+<button id="btnRoleta" title="Surpreenda-me!">🎲</button>
+
+<!-- ========================
+     MODAL ROLETA
+======================== -->
+<div id="modalRoleta" class="hidden">
+  <div class="roleta-box">
+    <h2>🎲 Surpreenda-me!</h2>
+    <p>Escolha uma categoria e deixa a sorte decidir:</p>
+
+    <div class="roleta-categorias">
+      <button class="cat-btn" data-cat="filmes">🎬 Filmes</button>
+      <button class="cat-btn" data-cat="series">📺 Séries</button>
+      <button class="cat-btn" data-cat="animes">⛩️ Animes</button>
+      <button class="cat-btn" data-cat="desenhos">🎨 Desenhos</button>
+    </div>
+
+    <!-- DISPLAY DA ROLETA -->
+    <div id="roletaDisplay" class="hidden">
+      <div id="roletaSpinner">
+        <img id="roletaImg" src="" alt="">
+        <p id="roletaTitulo"></p>
+        <span id="roletaNota"></span>
+      </div>
+      <button id="btnAssistirRoleta" class="hidden">▶ Assistir agora!</button>
+      <button id="btnSortearNovamente" class="hidden">🔀 Sortear novamente</button>
+    </div>
+
+    <button id="fecharRoleta">✖ Fechar</button>
+  </div>
+</div>
+
+<!-- ========================
+     MODAL TRAILER
+======================== -->
+<div id="modalTrailer" class="hidden">
+  <div class="trailer-box">
+    <div class="trailer-top">
+      <h3 id="trailerTitulo">Trailer</h3>
+      <button id="fecharTrailer">✖</button>
+    </div>
+    <iframe id="trailerFrame" src="" allowfullscreen></iframe>
+  </div>
+</div>
+
+<!-- ========================
+     HERO
+======================== -->
 <section class="hero">
   <header>
-
     <div class="logo">
       <img src="img/logo_duckflix.png" alt="DuckFlix">
     </div>
 
-    <div class="busca">
-      <input id="busca" placeholder="Buscar filmes, séries, animes...">
-      <button id="btnBusca">🔍</button>
+    <div class="busca-wrap">
+      <div class="busca">
+        <input id="busca" placeholder="Buscar filmes, séries, animes..." autocomplete="off">
+        <button id="btnBusca">🔍</button>
+      </div>
+      <div id="sugestoes" class="hidden"></div>
     </div>
 
-    <button id="btnFav">⭐ Favoritos</button>
-
+    <div class="header-btns">
+      <button id="btnFav">⭐ Favoritos</button>
+    </div>
   </header>
 </section>
 
-<!-- PLAYER -->
+<!-- ========================
+     PLAYER
+======================== -->
 <section id="playerArea" class="hidden">
 
   <div class="playerTop">
     <h2 id="tituloPlayer"></h2>
-    <button id="fecharPlayer">✖ Fechar</button>
+    <div class="player-top-btns">
+      <button id="btnTrailer">🎬 Trailer</button>
+      <button id="fecharPlayer">✖ Fechar</button>
+    </div>
   </div>
 
-  <!-- CONTROLES DE EPISÓDIO (só séries) -->
+  <!-- CONTROLES DE EPISÓDIO -->
   <div id="episodeControls" class="hidden">
 
     <div class="ep-info">
@@ -54,23 +111,21 @@
 
     <div class="ep-btns">
       <button id="btnTemporadaMenos">⬅ Temp.</button>
-      <button id="btnEpMenos">⬅ Ep. Anterior</button>
-      <button id="btnEpMais">Próximo Ep. ➡</button>
+      <button id="btnEpMenos">⬅ Anterior</button>
+      <button id="btnEpMais">Próximo ➡</button>
       <button id="btnTemporadaMais">Temp. ➡</button>
     </div>
 
-    <!-- IR PARA EPISÓDIO ESPECÍFICO -->
     <div class="ep-goto">
       <label>Ir para:</label>
       <input id="inputTemp" type="number" min="1" value="1" placeholder="Temp.">
-      <input id="inputEp" type="number" min="1" value="1" placeholder="Ep.">
+      <input id="inputEp"   type="number" min="1" value="1" placeholder="Ep.">
       <button id="btnGoTo">▶ Ir</button>
     </div>
 
-    <!-- TIMER AUTO-PRÓXIMO -->
     <div class="timer-area">
       <span>⏱️ Auto-pular:</span>
-      <button class="timer-btn" data-min="0">Off</button>
+      <button class="timer-btn ativo" data-min="0">Off</button>
       <button class="timer-btn" data-min="20">20min</button>
       <button class="timer-btn" data-min="25">25min</button>
       <button class="timer-btn" data-min="45">45min</button>
@@ -82,9 +137,22 @@
 
   <div id="player"></div>
 
+  <!-- BANNER PRÓXIMO EPISÓDIO (estilo Netflix) -->
+  <div id="nextEpBanner" class="hidden">
+    <div class="next-ep-info">
+      <span>▶ Próximo episódio em</span>
+      <strong id="nextEpCount">10</strong>s
+    </div>
+    <div class="next-ep-bar"><div id="nextEpProgress"></div></div>
+    <button id="nextEpNow">Assistir agora</button>
+    <button id="nextEpCancel">✖ Cancelar</button>
+  </div>
+
 </section>
 
-<!-- FAVORITOS -->
+<!-- ========================
+     FAVORITOS
+======================== -->
 <section id="favPage" class="hidden">
   <div class="favHeader">
     <h2>⭐ Favoritos</h2>
@@ -93,7 +161,9 @@
   <div id="favList"></div>
 </section>
 
-<!-- BUSCA PAGE -->
+<!-- ========================
+     BUSCA PAGE
+======================== -->
 <section id="searchPage" class="hidden">
   <div class="favHeader">
     <h2>🔎 Resultados da Busca</h2>
@@ -102,7 +172,24 @@
   <div id="searchList"></div>
 </section>
 
-<!-- CARROSSEIS -->
+<!-- ========================
+     CONTINUAR ASSISTINDO
+======================== -->
+<div id="historicoSection" class="hidden">
+  <div class="cat-header">
+    <h2>🕐 Continuar Assistindo</h2>
+    <button id="limparHistorico">🗑️ Limpar</button>
+  </div>
+  <div class="carousel">
+    <button class="scroll-btn left" onclick="rolarEsquerda('historico')">‹</button>
+    <div class="row" id="historico"></div>
+    <button class="scroll-btn right" onclick="rolarDireita('historico')">›</button>
+  </div>
+</div>
+
+<!-- ========================
+     CARROSSEIS
+======================== -->
 <div class="cat-header">
   <img src="img/icone-filmes.png" alt="" class="cat-icon" onerror="this.style.display='none'">
   <h2>🎬 Filmes</h2>
