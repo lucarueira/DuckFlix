@@ -913,6 +913,22 @@ header {
 }
 .nav-tabs::-webkit-scrollbar { display: none; }
 
+.tv-nav-link {
+  display: inline-flex;
+  align-items: center;
+  padding: 12px 24px;
+  border-radius: 50px;
+  color: #cceb20;
+  text-decoration: none;
+  font-size: 16px;
+  font-weight: 700;
+  white-space: nowrap;
+  min-height: 44px;
+}
+.tv-nav-link:hover, .tv-nav-link:focus-visible {
+  background: rgba(204, 235, 32, 0.15);
+}
+
 .tab-btn {
   background: transparent;
   border: none;
