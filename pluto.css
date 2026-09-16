@@ -1,0 +1,16 @@
+#pluto-section { margin: 20px 0 48px; padding: 32px; border-radius: 24px; border: 1px solid #ffe50050; background: radial-gradient(ellipse at 100% 0, #ffe50014, transparent 60%), #141414; scroll-margin-top: 20px; }
+#pluto-section .pluto-heading { display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap; }
+#pluto-section .pluto-eyebrow { font-size: 10px; letter-spacing: 2px; color: #d4cc87; font-weight: 700; }
+#pluto-section h2 { font-size: clamp(36px, 5vw, 52px); margin: 10px 0; letter-spacing: -2px; }
+#pluto-section h2 span { color: #ffe500; }
+#pluto-section .pluto-badge { border: 1px solid #ffe50050; color: #e8e0a5; padding: 8px 12px; border-radius: 30px; font-size: 10px; letter-spacing: 1px; }
+#pluto-section .pluto-description { color: #bebeb8; line-height: 1.6; margin: 10px 0 24px; }
+#pluto-section .pluto-actions { display: flex; flex-wrap: wrap; gap: 12px; }
+#pluto-section .pluto-open { display: inline-flex; align-items: center; min-height: 48px; padding: 12px 20px; text-decoration: none; border-radius: 12px; background: #ffe500; color: #121200; font-weight: 700; }
+#pluto-section .pluto-open:hover { background: #fff05c; }
+#pluto-section button { background: #232320; border: 1px solid #55533b; color: #eee; }
+#pluto-section #pluto-status { font-size: 13px; color: #b4b4a9; line-height: 1.7; margin: 20px 0; }
+#pluto-section #pluto-viewer { margin-top: 20px; overflow: hidden; border: 1px solid #39392e; border-radius: 16px; background: #000; }
+#pluto-section iframe { display: block; width: 100%; height: min(80vh, 800px); min-height: 460px; border: 0; }
+#pluto-section .pluto-note { font-size: 11px; color: #939386; line-height: 1.7; margin: 20px 0 0; }
+@media (max-width: 760px) { #pluto-section { padding: 24px 18px; } #pluto-section .pluto-actions > * { width: 100%; justify-content: center; text-align: center; } #pluto-section iframe { height: 70vh; min-height: 420px; } }

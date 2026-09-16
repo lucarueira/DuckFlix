@@ -154,11 +154,15 @@
       : 'Nenhuma animação passou no teste ainda. Use “Verificar mais canais” para continuar a busca.';
     el('load-more').hidden = visibleCount >= filtered.length;
     if (loading || listError) return;
+    const candidates = channels.filter(matches);
+    const pending = candidates.filter(channel => !health.isFresh(results.get(channel.url))).length;
     const count = filtered.length;
     listStatus.textContent = count
       ? `${count.toLocaleString('pt-BR')} canais com imagem verificada · mostrando ${Math.min(visibleCount, count)}.`
-      : scanner ? 'Testando os sinais. Os canais aprovados aparecerão aqui conforme a verificação avançar.'
-        : 'Nenhum canal verificado para este filtro. Tente outra busca ou verifique mais canais.';
+      : !candidates.length ? 'Nenhum canal corresponde à busca nesta lista e categoria. Altere os filtros ou limpe a busca.'
+        : scanner && pending ? `${candidates.length} canais encontrados. Verificando quais carregam imagem…`
+          : pending ? `${candidates.length} canais encontrados; ${pending} ainda precisam de verificação. Use “Verificar mais canais”.`
+            : `${candidates.length} canais encontrados, mas nenhum passou no teste de reprodução. Use “Verificar novamente” para repetir.`;
   }
 
   function filterChannels() {
@@ -174,12 +178,15 @@
     grid.setAttribute('aria-busy', 'false');
   }
 
-  async function scanMore() {
+  async function scanMore({ userRequested = false } = {}) {
     cancelScan();
     if (loading || document.hidden) return;
-    if (selected) {
-      el('scan-status').textContent = 'Verificação pausada enquanto você assiste. Feche a transmissão para continuar.';
+    const focusedSearch = Boolean(search.value.trim() || category.value);
+    // Watching pauses background discovery, not an explicit search for the next channel.
+    if (selected && !focusedSearch && !userRequested) {
+      el('scan-status').textContent = 'Varredura automática pausada enquanto você assiste. Você pode buscar outro canal normalmente.';
       el('scan-more').hidden = true;
+      renderChannels();
       return;
     }
     const capable = video.canPlayType('application/vnd.apple.mpegurl') || window.Hls?.isSupported();
@@ -189,7 +196,7 @@
       return;
     }
     const untested = channel => !health.isFresh(results.get(channel.url));
-    const cartoonQueue = animations.filter(untested).slice(0, 20);
+    const cartoonQueue = focusedSearch || selected ? [] : animations.filter(untested).slice(0, 20);
     const channelQueue = channels.filter(channel => matches(channel) && untested(channel)).slice(0, 24);
     // Interleave the featured selection and directory; at most two decoders at once.
     const queue = [];
@@ -199,7 +206,9 @@
     }
     el('scan-more').hidden = true;
     if (!queue.length) {
-      el('scan-status').textContent = 'Verificação em dia para esta seleção. Use “Verificar novamente” para repetir os testes.';
+      el('scan-status').textContent = focusedSearch && !channels.some(matches)
+        ? 'Busca concluída: nenhum canal corresponde aos filtros selecionados.'
+        : 'Verificação em dia para esta seleção. Use “Verificar novamente” para repetir os testes.';
       renderChannels();
       return;
     }
@@ -212,21 +221,33 @@
     };
     updateProgress();
     renderChannels();
-    await health.scanChannels(queue, {
-      signal: controller.signal,
-      onResult(channel, result) {
-        results.set(channel.url, result);
-        checked++;
-        updateProgress();
-        if (!renderTimer) renderTimer = setTimeout(() => { renderTimer = null; renderChannels(); }, 300);
+    try {
+      await health.scanChannels(queue, {
+        signal: controller.signal,
+        concurrency: selected ? 1 : 2,
+        onResult(channel, result) {
+          if (scanner !== controller || controller.signal.aborted) return;
+          results.set(channel.url, result);
+          checked++;
+          updateProgress();
+          if (!renderTimer) renderTimer = setTimeout(() => { renderTimer = null; renderChannels(); }, 300);
+        }
+      });
+      if (scanner !== controller) return;
+      el('scan-status').textContent = `Lote concluído: ${checked} sinais testados. A verificação vale por até 5 minutos.`;
+    } catch {
+      if (scanner !== controller) return;
+      controller.abort();
+      el('scan-status').textContent = 'A verificação foi interrompida. Você pode pesquisar novamente ou clicar em “Verificar mais canais”.';
+    } finally {
+      if (scanner === controller) {
+        scanner = null;
+        grid.setAttribute('aria-busy', 'false');
+        const remaining = focusedSearch || selected ? channels.filter(matches) : [...animations, ...channels.filter(matches)];
+        el('scan-more').hidden = !remaining.some(untested);
+        renderChannels();
       }
-    });
-    if (scanner !== controller) return;
-    scanner = null;
-    grid.setAttribute('aria-busy', 'false');
-    el('scan-status').textContent = `Lote concluído: ${checked} sinais testados. A verificação vale por até 5 minutos.`;
-    el('scan-more').hidden = ![...animations, ...channels.filter(matches)].some(untested);
-    renderChannels();
+    }
   }
 
   async function fetchList(url, signal) {
@@ -238,6 +259,7 @@
   }
 
   async function loadPlaylist() {
+    clearTimeout(searchTimer);
     request?.abort();
     cancelScan();
     const controller = new AbortController();
@@ -321,10 +343,11 @@
   }
 
   function playChannel(channel) {
+    clearTimeout(searchTimer);
     cancelScan();
     stopPlayback();
     selected = channel;
-    el('scan-status').textContent = 'Verificação pausada enquanto você assiste. Feche a transmissão para continuar.';
+    el('scan-status').textContent = 'Varredura automática pausada enquanto você assiste. Você pode buscar outro canal normalmente.';
     el('scan-more').hidden = true;
     const id = playbackId;
     el('channel-title').textContent = channel.name;
@@ -381,10 +404,25 @@
     searchTimer = setTimeout(scanMore, 450);
   }
   search.addEventListener('input', filtersChanged);
+  search.addEventListener('search', filtersChanged);
+  search.addEventListener('keydown', event => {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      clearTimeout(searchTimer);
+      filterChannels();
+      scanMore({ userRequested: true });
+    }
+  });
+  el('clear-filters').addEventListener('click', () => {
+    search.value = '';
+    category.value = '';
+    filtersChanged();
+    search.focus();
+  });
   category.addEventListener('change', filtersChanged);
   playlist.addEventListener('change', loadPlaylist);
   el('reload-list').addEventListener('click', () => { results.clear(); loadPlaylist(); });
-  el('scan-more').addEventListener('click', scanMore);
+  el('scan-more').addEventListener('click', () => scanMore({ userRequested: true }));
   el('stop-stream').addEventListener('click', () => {
     stopPlayback();
     selected = null;

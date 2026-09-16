@@ -10,6 +10,8 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="tv.css">
+  <link rel="stylesheet" href="pluto.css">
+  <script defer src="pluto.js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/hls.js@1.7.3/dist/hls.min.js" integrity="sha384-cciJ0zi8d1uMKC2zJd7jvPY4HQt7W4ByUI/FlMkltvBi31aW61rcpVBhpmW8/NwX" crossorigin="anonymous"></script>
   <script defer src="tv-health.js"></script>
   <script defer src="tv.js"></script>
@@ -24,7 +26,7 @@
       </a>
       <a class="back-link" href="index.html">← Filmes e séries no DuckFlix</a>
     </header>
-    <nav class="tv-nav" aria-label="Navegação DUCKTV"><a class="active" href="#channels">📡 Canais ao vivo</a><a href="#animation">🎨 Animação</a><a href="#watch">▶ Assistir</a></nav>
+    <nav class="tv-nav" aria-label="Navegação DUCKTV"><a class="active" href="#channels">📡 Canais ao vivo</a><a href="#animation">🎨 Animação</a><a href="#watch">▶ Assistir</a><a href="#pluto-section">Pluto TV ↗</a></nav>
   </div>
   <main>
     <section class="intro" aria-labelledby="page-title">
@@ -60,10 +62,24 @@
         <label>Lista<select id="playlist"><option value="br">Brasil</option><option value="world">Todos os países</option></select></label>
         <label>Categoria<select id="category"><option value="">Todas as categorias</option></select></label>
       </div>
+      <button id="clear-filters" class="secondary clear-filters" type="button">Limpar busca e categoria</button>
       <div class="verification-bar"><span class="live-dot" aria-hidden="true"></span><p id="scan-status" role="status">Preparando a verificação dos sinais…</p><button id="scan-more" class="secondary" hidden>Verificar mais canais</button></div>
       <p id="list-status" class="list-status" role="status" aria-live="polite">Carregando canais…</p>
       <div id="channel-grid" class="channel-grid" aria-busy="true"></div>
       <button id="load-more" class="secondary load-more" hidden>Mostrar mais canais</button>
+    </section>
+    <!-- Acesso independente à página oficial da Pluto TV. -->
+    <section id="pluto-section" aria-labelledby="pluto-title">
+      <div class="pluto-heading"><div><span class="pluto-eyebrow">MAIS UMA FORMA DE ASSISTIR</span><h2 id="pluto-title">Pluto <span>TV</span></h2></div><span class="pluto-badge">SITE OFICIAL · BRASIL</span></div>
+      <p class="pluto-description">Explore os canais ao vivo, filmes e séries diretamente na Pluto TV.</p>
+      <div class="pluto-actions">
+        <a class="pluto-open" href="https://pluto.tv/br/home/" target="_blank" rel="noopener noreferrer">Abrir Pluto TV em nova aba ↗</a>
+        <button id="pluto-embed" type="button" aria-controls="pluto-viewer" aria-expanded="false" hidden>Tentar assistir nesta página</button>
+        <button id="pluto-close" type="button" hidden>Fechar Pluto TV</button>
+      </div>
+      <p id="pluto-status" role="status">A reprodução dentro desta página depende da compatibilidade da Pluto TV com seu navegador. Se não funcionar, use a nova aba.</p>
+      <div id="pluto-viewer" hidden></div>
+      <p class="pluto-note">Você acessa a página oficial da Pluto TV. Este acesso não representa parceria com a DUCKTV.</p>
     </section>
     <noscript><p>Ative o JavaScript no navegador para carregar os canais e usar o player.</p></noscript>
   </main>
