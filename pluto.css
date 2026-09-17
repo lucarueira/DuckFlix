@@ -11,6 +11,6 @@
 #pluto-section button { background: #232320; border: 1px solid #55533b; color: #eee; }
 #pluto-section #pluto-status { font-size: 13px; color: #b4b4a9; line-height: 1.7; margin: 20px 0; }
 #pluto-section #pluto-viewer { margin-top: 20px; overflow: hidden; border: 1px solid #39392e; border-radius: 16px; background: #000; }
-#pluto-section iframe { display: block; width: 100%; height: min(80vh, 800px); min-height: 460px; border: 0; }
+#pluto-section iframe { display: block; width: 100%; height: 85vh; height: 85svh; min-height: 560px; border: 0; }
 #pluto-section .pluto-note { font-size: 11px; color: #939386; line-height: 1.7; margin: 20px 0 0; }
-@media (max-width: 760px) { #pluto-section { padding: 24px 18px; } #pluto-section .pluto-actions > * { width: 100%; justify-content: center; text-align: center; } #pluto-section iframe { height: 70vh; min-height: 420px; } }
+@media (max-width: 760px) { #pluto-section { padding: 24px 12px; } #pluto-section .pluto-actions > * { width: 100%; justify-content: center; text-align: center; } #pluto-section iframe { height: 80vh; height: 80svh; min-height: 360px; } }
