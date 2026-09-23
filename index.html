@@ -5,10 +5,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>DuckFlix</title>
-  <link rel="icon" type="image/png" href="img/LOGO_pg.png">
+  <link rel="icon" type="image/png" href="img/favicon.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
 
@@ -24,21 +24,20 @@
   <button id="btnTopo" title="Voltar ao topo">▲</button>
 
   <!-- BOTÃO FLUTUANTE ROLETA -->
-  <button id="btnRoleta" title="Surpreenda-me!">🎲</button>
+  <button id="btnRoleta" title="Surpreenda-me">Surpreenda-me</button>
 
   <!-- ========================
      MODAL ROLETA
 ======================== -->
   <div id="modalRoleta" class="hidden">
     <div class="roleta-box">
-      <h2>🎲 Surpreenda-me!</h2>
-      <p>Escolha uma categoria e deixa a sorte decidir:</p>
+      <h2>Surpreenda-me</h2>
+      <p>Escolha uma categoria e deixe a sorte decidir:</p>
 
       <div class="roleta-categorias">
-        <button class="cat-btn" data-cat="filmes">🎬 Filmes</button>
-        <button class="cat-btn" data-cat="series">📺 Séries</button>
-        <button class="cat-btn" data-cat="animes">⛩️ Animes</button>
-        <button class="cat-btn" data-cat="desenhos">🎨 Desenhos Infantis</button>
+        <button class="cat-btn" data-cat="filmes">Filmes</button>
+        <button class="cat-btn" data-cat="series">Séries</button>
+        <button class="cat-btn" data-cat="animes">Animes</button>
       </div>
 
       <div id="roletaDisplay" class="hidden">
@@ -47,11 +46,11 @@
           <p id="roletaTitulo"></p>
           <span id="roletaNota"></span>
         </div>
-        <button id="btnAssistirRoleta" class="hidden">▶ Assistir agora!</button>
-        <button id="btnSortearNovamente" class="hidden">🔀 Sortear novamente</button>
+        <button id="btnAssistirRoleta" class="hidden">Assistir agora</button>
+        <button id="btnSortearNovamente" class="hidden">Sortear novamente</button>
       </div>
 
-      <button id="fecharRoleta">✖ Fechar</button>
+      <button id="fecharRoleta">Fechar</button>
     </div>
   </div>
 
@@ -62,66 +61,56 @@
     <div class="trailer-box">
       <div class="trailer-top">
         <h3 id="trailerTitulo">Trailer</h3>
-        <button id="fecharTrailer">✖</button>
+        <button id="fecharTrailer">&times;</button>
       </div>
       <iframe id="trailerFrame" src="" allowfullscreen></iframe>
     </div>
   </div>
 
   <!-- ========================
-     HERO / HEADER
-======================== -->
-  <section class="hero">
-    <header>
-      <div class="logo">
-        <img src="img/logo_duckflix.png" alt="DuckFlix">
-      </div>
+     HEADER UNIFICADO DUCKFLIX
+  ======================== -->
+  <header class="header">
+    <a class="brand logo" href="index.html" aria-label="DuckFlix — Início">
+      <img src="img/logo_duckflix.png" alt="DuckFlix" class="brand-logo" width="180" height="80">
+    </a>
+    <nav class="main-nav" aria-label="Navegação Principal">
+      <a href="index.html" class="nav-item active" aria-current="page">Início</a>
+      <a href="tv.html" class="nav-item nav-tv">DUCKTV</a>
+      <a href="extensoes.html" class="nav-item nav-ext">DuckFlix Extensões</a>
+    </nav>
+    <div class="header-right">
+      <button id="btnModoLivre" class="btn-modo-livre" type="button" title="Modo Livre: Oculta conteúdos +18">MODO LIVRE</button>
+    </div>
+  </header>
+
+  <!-- ========================
+     HERO CINEMATOGRÁFICO
+  ======================== -->
+  <section class="hero hero-cinematic">
+    <div class="hero-content">
+      <h1 class="hero-title">DuckFlix</h1>
 
       <div class="busca-wrap">
         <div class="busca">
           <input id="busca" placeholder="Buscar filmes, séries, animes..." autocomplete="off">
-          <button id="btnBusca">🔍</button>
+          <button id="btnBusca" aria-label="Buscar"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg></button>
         </div>
         <div id="sugestoes" class="hidden"></div>
       </div>
-
-      <div class="header-btns">
-        <button id="btnKids" class="btn-kids" title="Modo Kids: oculta animações e filmes com temas adultos">👶 Modo
-          Kids: OFF</button>
-        <button id="btnFav">⭐ Favoritos</button>
-      </div>
-    </header>
+    </div>
 
     <!-- ABAS DE NAVEGAÇÃO DE CATEGORIAS -->
-    <nav class="nav-tabs-container">
+    <nav class="nav-tabs-container" aria-label="Filtrar por tipo">
       <div class="nav-tabs">
-        <a class="tv-nav-link" href="tv.html">📡 DUCKTV · Ao vivo</a>
-        <a class="tv-nav-link" href="extensoes.html">🧩 DuckFlix Extensões</a>
-        <button class="tab-btn active" data-target="all">🌐 Todos</button>
-        <button class="tab-btn" data-target="sec-filmes">🎬 Filmes</button>
-        <button class="tab-btn" data-target="sec-series">📺 Séries</button>
-        <button class="tab-btn" data-target="sec-animes">⛩️ Animes</button>
-        <button class="tab-btn" data-target="sec-desenhos">🎨 Desenhos Infantis</button>
-        <button class="tab-btn" data-target="sec-animacoes-adultas">🔞 Animações Adultas</button>
+        <button class="tab-btn active" data-target="all">Todos</button>
+        <button class="tab-btn" data-target="sec-filmes">Filmes</button>
+        <button class="tab-btn" data-target="sec-series">Séries</button>
+        <button class="tab-btn" data-target="sec-animes">Animes</button>
+        <button class="tab-btn" data-target="sec-fav">Minha Lista</button>
       </div>
     </nav>
   </section>
-
-  <!-- BANNER MODO KIDS -->
-  <div id="kidsBanner" class="kids-banner hidden">
-    <span>👶 MODO KIDS ATIVO — Exibindo apenas conteúdos 100% seguros e livres para a família!</span>
-    <button id="desativarKids">✖ Desativar</button>
-  </div>
-
-  <!-- ========================
-     BARRA DE FILTRO DE GÊNEROS
-======================== -->
-  <div class="genre-bar-wrapper">
-    <div class="genre-bar-container">
-      <span class="genre-bar-label">🏷️ Gêneros:</span>
-      <div class="genre-chips" id="genreChips"></div>
-    </div>
-  </div>
 
   <!-- ========================
      PLAYER
@@ -131,8 +120,8 @@
     <div class="playerTop">
       <h2 id="tituloPlayer"></h2>
       <div class="player-top-btns">
-        <button id="btnTrailer">🎬 Trailer</button>
-        <button id="fecharPlayer">✖ Fechar</button>
+        <button id="btnTrailer">Trailer</button>
+        <button id="fecharPlayer">&times;</button>
       </div>
     </div>
 
@@ -140,22 +129,22 @@
     <div id="episodeControls" class="hidden">
 
       <div class="ep-info">
-        <span>📅 Temporada <strong id="numTemporada">1</strong> <small id="totalTemporadas"></small></span>
-        <span>🎬 Episódio <strong id="numEpisodio">1</strong> <small id="totalEpisodios"></small></span>
+        <span>Temporada <strong id="numTemporada">1</strong> <small id="totalTemporadas"></small></span>
+        <span>Episódio <strong id="numEpisodio">1</strong> <small id="totalEpisodios"></small></span>
       </div>
 
       <div class="ep-btns">
-        <button id="btnTemporadaMenos">⬅ Temp.</button>
-        <button id="btnEpMenos">⬅ Anterior</button>
-        <button id="btnEpMais">Próximo ➡</button>
-        <button id="btnTemporadaMais">Temp. ➡</button>
+        <button id="btnTemporadaMenos">Temp. Anterior</button>
+        <button id="btnEpMenos">Anterior</button>
+        <button id="btnEpMais">Próximo</button>
+        <button id="btnTemporadaMais">Próxima Temp.</button>
       </div>
 
       <div class="ep-goto">
         <label>Ir para:</label>
         <input id="inputTemp" type="number" min="1" value="1" placeholder="Temp.">
         <input id="inputEp" type="number" min="1" value="1" placeholder="Ep.">
-        <button id="btnGoTo">▶ Ir</button>
+        <button id="btnGoTo">Ir</button>
       </div>
 
     </div>
@@ -165,14 +154,14 @@
   </section>
 
   <!-- ========================
-     FAVORITOS
+     MINHA LISTA (FAVORITOS)
 ======================== -->
   <section id="favPage" class="hidden">
     <div class="favHeader">
-      <h2>⭐ Favoritos</h2>
-      <button id="closeFav">✖ Sair</button>
+      <h2>Minha Lista</h2>
+      <button id="closeFav">&times;</button>
     </div>
-    <div id="favList"></div>
+    <div id="favList" class="catalog-grid"></div>
   </section>
 
   <!-- ========================
@@ -180,106 +169,66 @@
 ======================== -->
   <section id="searchPage" class="hidden">
     <div class="favHeader">
-      <h2>🔎 Resultados da Busca</h2>
-      <button id="closeSearch">✖ Sair</button>
+      <h2>Resultados da Busca</h2>
+      <button id="closeSearch">&times;</button>
     </div>
-    <div id="searchList"></div>
+    <div id="searchList" class="catalog-grid"></div>
   </section>
 
-  <!-- ========================
-     PÁGINA DE GÊNERO FILTRADO
-======================== -->
-  <section id="genrePage" class="hidden">
-    <div class="genre-page-header">
-      <div class="genre-title-box">
-        <h2 id="genreTitle">🏷️ Filmes e Séries — Mistério</h2>
-        <span class="genre-count-badge" id="genreCountBadge">14 títulos</span>
+  <main class="home-main">
+    <!-- ========================
+       CONTINUAR ASSISTINDO
+    ======================== -->
+    <div id="historicoSection" class="hidden">
+      <div class="section-heading">
+        <div>
+          <h2>Continuar Assistindo</h2>
+          <span class="sub-muted">RECOLHA DE ONDE PAROU</span>
+        </div>
+        <button id="limparHistorico" class="text-button">Limpar</button>
       </div>
-      <button id="closeGenre" class="btn-close-genre">✖ Limpar Filtro</button>
-    </div>
-    <div id="genreList"></div>
-  </section>
-
-  <!-- ========================
-     CONTINUAR ASSISTINDO
-======================== -->
-  <div id="historicoSection" class="hidden">
-    <div class="cat-header">
-      <h2>🕐 Continuar Assistindo</h2>
-      <button id="limparHistorico">🗑️ Limpar</button>
-    </div>
-    <div class="carousel">
-      <button class="scroll-btn left" id="scrollEsqHistorico">‹</button>
-      <div class="row" id="historico"></div>
-      <button class="scroll-btn right" id="scrollDirHistorico">›</button>
-    </div>
-  </div>
-
-  <!-- ========================
-     CARROSSEIS PRINCIPAIS
-======================== -->
-  <div id="mainCategories">
-    <div class="cat-section" id="sec-filmes">
-      <div class="cat-header">
-        <img src="img/logo_filmes.png" alt="Filmes" class="cat-icon" onerror="this.style.display='none'">
-        <h2>🎬 Filmes</h2>
-      </div>
-      <div class="carousel">
-        <button class="scroll-btn left" id="scrollEsqFilmes">‹</button>
-        <div class="row" id="filmes"></div>
-        <button class="scroll-btn right" id="scrollDirFilmes">›</button>
-      </div>
+      <div class="continuar-carousel" id="historico"></div>
     </div>
 
-    <div class="cat-section" id="sec-series">
-      <div class="cat-header">
-        <img src="img/logo_series.png" alt="Séries" class="cat-icon" onerror="this.style.display='none'">
-        <h2>📺 Séries</h2>
-      </div>
-      <div class="carousel">
-        <button class="scroll-btn left" id="scrollEsqSeries">‹</button>
-        <div class="row" id="series"></div>
-        <button class="scroll-btn right" id="scrollDirSeries">›</button>
-      </div>
-    </div>
+    <!-- ========================
+       GRADES DE 42 TÍTULOS (SEM CARROSSEL)
+    ======================== -->
+    <div id="mainCategories">
+      <section class="cat-section" id="sec-filmes">
+        <div class="section-heading">
+          <div>
+            <h2>Filmes Populares</h2>
+            <span class="sub-muted">42 TÍTULOS PARA EXPLORAR</span>
+          </div>
+        </div>
+        <div class="catalog-grid" id="filmes"></div>
+      </section>
 
-    <div class="cat-section" id="sec-animes">
-      <div class="cat-header">
-        <img src="img/logo_animes.png" alt="Animes" class="cat-icon" onerror="this.style.display='none'">
-        <h2>⛩️ Animes</h2>
-      </div>
-      <div class="carousel">
-        <button class="scroll-btn left" id="scrollEsqAnimes">‹</button>
-        <div class="row" id="animes"></div>
-        <button class="scroll-btn right" id="scrollDirAnimes">›</button>
-      </div>
-    </div>
+      <section class="cat-section" id="sec-series">
+        <div class="section-heading">
+          <div>
+            <h2>Séries em Alta</h2>
+            <span class="sub-muted">42 TÍTULOS PARA EXPLORAR</span>
+          </div>
+        </div>
+        <div class="catalog-grid" id="series"></div>
+      </section>
 
-    <div class="cat-section" id="sec-desenhos">
-      <div class="cat-header">
-        <img src="img/logo_desenhos.png" alt="Desenhos Infantis" class="cat-icon" onerror="this.style.display='none'">
-        <h2>🎨 Desenhos Infantis <span class="sub-tag">Livre para a família</span></h2>
-      </div>
-      <div class="carousel">
-        <button class="scroll-btn left" id="scrollEsqDesenhos">‹</button>
-        <div class="row" id="desenhos"></div>
-        <button class="scroll-btn right" id="scrollDirDesenhos">›</button>
-      </div>
+      <section class="cat-section" id="sec-animes">
+        <div class="section-heading">
+          <div>
+            <h2>Animes em Destaque</h2>
+            <span class="sub-muted">42 TÍTULOS PARA EXPLORAR</span>
+          </div>
+        </div>
+        <div class="catalog-grid" id="animes"></div>
+      </section>
     </div>
+  </main>
 
-    <div class="cat-section" id="sec-animacoes-adultas">
-      <div class="cat-header">
-        <h2>🔞 Animações Adultas <span class="sub-tag warning">+16 / +18</span></h2>
-      </div>
-      <div class="carousel">
-        <button class="scroll-btn left" id="scrollEsqAnimAdultas">‹</button>
-        <div class="row" id="animacoesAdultas"></div>
-        <button class="scroll-btn right" id="scrollDirAnimAdultas">›</button>
-      </div>
-    </div>
-  </div>
-
-  <footer>© DuckFlix for Mamutinho Ver 2.2 🦣</footer>
+  <footer class="footer">
+    <p>DuckFlix © 2026 • Feito com dedicação pelo <strong>Mamute</strong> • Versão <strong>2.5</strong></p>
+  </footer>
 
   <script src="tmdb-config.js"></script>
   <script src="script.js"></script>

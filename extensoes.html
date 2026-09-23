@@ -5,10 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="referrer" content="no-referrer">
   <title>DuckFlix Extensões · Sua próxima sessão</title>
-  <link rel="icon" href="img/LOGO_pg.png">
+  <link rel="icon" type="image/png" href="img/favicon.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="extensoes.css">
   <script defer src="https://cdn.jsdelivr.net/npm/hls.js@1.7.3/dist/hls.min.js" integrity="sha384-cciJ0zi8d1uMKC2zJd7jvPY4HQt7W4ByUI/FlMkltvBi31aW61rcpVBhpmW8/NwX" crossorigin="anonymous"></script>
   <script defer src="tmdb-config.js"></script>
@@ -19,20 +19,52 @@
 </head>
 <body>
   <a class="skip-link" href="#catalogo">Ir para o catálogo</a>
+  <!-- ========================
+     HEADER UNIFICADO DUCKFLIX
+  ======================== -->
   <header class="header">
-    <a class="brand" href="index.html"><img src="img/logo_duckflix.png" alt="DuckFlix"></a>
-    <nav aria-label="Navegação principal"><a href="index.html">Início</a><a href="tv.html">TV ao vivo</a><a href="extensoes.html" aria-current="page">Explorar</a></nav>
-    <span class="header-caption">FEITO POR MANUTE</span>
+    <a class="brand logo" href="index.html" aria-label="DuckFlix — Início">
+      <img src="img/logo_duckflix.png" alt="DuckFlix" class="brand-logo" width="180" height="80">
+    </a>
+    <nav class="main-nav" aria-label="Navegação Principal">
+      <a href="index.html" class="nav-item">Início</a>
+      <a href="tv.html" class="nav-item nav-tv">DUCKTV</a>
+      <a href="extensoes.html" class="nav-item nav-ext active" aria-current="page">DuckFlix Extensões</a>
+    </nav>
+    <div class="header-right">
+      <button id="btnModoLivre" class="btn-modo-livre" type="button" title="Modo Livre: Oculta conteúdos +18">MODO LIVRE</button>
+    </div>
   </header>
   <main>
-    <section class="intro">
-      <span class="eyebrow">DUCKFLIX EXTENSÕES</span>
-      <br></br>
-
-      <form id="search-form" role="search"><label class="sr-only" for="catalog-search">Buscar filmes, séries e animes</label><div class="search-row"><span aria-hidden="true">⌕</span><input id="catalog-search" type="search" placeholder="Buscar ..." maxlength="120" autocomplete="off"><button class="primary" type="submit">Buscar</button></div></form>
+    <section class="intro tv-hero-cinematic">
+      <div class="hero-content">
+        <h1 class="hero-title">DuckFlix <span>Extensões</span></h1>
+        <form id="search-form" role="search"><label class="sr-only" for="catalog-search">Buscar filmes, séries e animes</label><div class="search-row"><span aria-hidden="true">⌕</span><input id="catalog-search" type="search" placeholder="Buscar filmes, séries e animes..." maxlength="120" autocomplete="off"><button class="primary" type="submit">Buscar</button></div></form>
+      </div>
     </section>
+
+    <!-- CONTINUAR ASSISTINDO -->
+    <section id="continuar-section" class="continuar-section" aria-labelledby="continuar-title" hidden>
+      <div class="section-heading">
+        <div>
+          <h2 id="continuar-title">Continuar Assistindo</h2>
+          <span class="muted">RECOLHA DE ONDE PAROU</span>
+        </div>
+        <button id="clear-history" class="text-button" type="button">Limpar</button>
+      </div>
+      <div id="continuar-carousel" class="continuar-carousel"></div>
+    </section>
+
     <section id="catalogo" class="catalog-section" aria-labelledby="catalog-title">
-      <div class="browse-toolbar"><div class="category-tabs" role="group" aria-label="Categoria"><button type="button" data-category="movie" aria-pressed="true">Filmes</button><button type="button" data-category="series" aria-pressed="false">Séries</button><button type="button" data-category="anime" aria-pressed="false">Animes</button></div><button id="reload-catalog" class="text-button" type="button">↻ Atualizar</button></div>
+      <div class="browse-toolbar">
+        <div class="category-tabs" role="group" aria-label="Categoria">
+          <button type="button" data-category="movie" aria-pressed="true">Filmes</button>
+          <button type="button" data-category="series" aria-pressed="false">Séries</button>
+          <button type="button" data-category="anime" aria-pressed="false">Animes</button>
+          <button type="button" data-category="watchlist" aria-pressed="false">Minha Lista</button>
+        </div>
+        <button id="reload-catalog" class="text-button" type="button">↻ Atualizar</button>
+      </div>
       <div class="section-heading"><h2 id="catalog-title">Filmes para a sua sessão</h2><span class="muted">ESCOLHA. DÊ PLAY. APROVEITE.</span></div>
       <p id="catalog-status" class="catalog-status" role="status" aria-live="polite">Carregando títulos…</p>
       <div id="catalog-grid" class="catalog-grid" aria-busy="true"></div>
@@ -40,7 +72,6 @@
     </section>
     <noscript>Ative o JavaScript para pesquisar e assistir.</noscript>
   </main>
-  <footer><strong>DuckFlix <span>Extensões</span></strong><div class="credits" aria-label="Créditos"><a href="https://www.themoviedb.org" target="_blank" rel="noopener noreferrer"><img src="img/tmdb.svg" alt="TMDB" width="85" height="11"> · Dados e imagens</a><p>This product uses the TMDB API but is not endorsed or certified by TMDB.</p></div></footer>
   <dialog id="watch-dialog" aria-labelledby="watch-title">
     <div class="watch-topbar"><a class="watch-brand" href="index.html">DUCK<span>FLIX</span></a><span>AGORA É SUA HORA DE ASSISTIR</span><button id="close-player" class="icon-button" aria-label="Fechar player">✕</button></div>
     <div class="watch-layout">
@@ -68,6 +99,8 @@
       </aside>
     </div>
   </dialog>
-  <footer>© DuckFlix for Mamutinho Ver 2.2 🦣</footer>
+  <footer class="footer">
+    <p>DuckFlix © 2026 • Feito com dedicação pelo <strong>Mamute</strong> • Versão <strong>2.5</strong></p>
+  </footer>
 </body>
 </html>

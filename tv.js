@@ -145,13 +145,18 @@
   function renderChannels() {
     filtered = channels.filter(channel => matches(channel) && available(channel));
     syncCards(grid, filtered.slice(0, visibleCount));
-    const cartoons = animations.filter(available);
-    syncCards(carousel, cartoons, true);
-    el('animation-empty').hidden = cartoons.length > 0;
-    el('animation-prev').disabled = el('animation-next').disabled = cartoons.length < 2;
-    if (!cartoons.length) el('animation-empty').querySelector('p').textContent = scanner || loading
-      ? 'Procurando animações com sinal disponível…'
-      : 'Nenhuma animação passou no teste ainda. Use “Verificar mais canais” para continuar a busca.';
+    if (carousel) {
+      const cartoons = animations.filter(available);
+      syncCards(carousel, cartoons, true);
+      const emptyEl = el('animation-empty');
+      if (emptyEl) emptyEl.hidden = cartoons.length > 0;
+      const prevBtn = el('animation-prev');
+      const nextBtn = el('animation-next');
+      if (prevBtn && nextBtn) prevBtn.disabled = nextBtn.disabled = cartoons.length < 2;
+      if (!cartoons.length && emptyEl) emptyEl.querySelector('p').textContent = scanner || loading
+        ? 'Procurando animações com sinal disponível…'
+        : 'Nenhuma animação passou no teste ainda. Use “Verificar mais canais” para continuar a busca.';
+    }
     el('load-more').hidden = visibleCount >= filtered.length;
     if (loading || listError) return;
     const candidates = channels.filter(matches);
@@ -271,7 +276,7 @@
     animations = [];
     filtered = [];
     grid.replaceChildren();
-    carousel.replaceChildren();
+    carousel?.replaceChildren();
     grid.setAttribute('aria-busy', 'true');
     category.replaceChildren(new Option('Todas as categorias', ''));
     category.disabled = true;
@@ -292,7 +297,7 @@
       if (!channels.length && !animations.length) throw new Error('Empty playlists');
       listError = !channels.length;
       if (listError) listStatus.textContent = 'A lista de canais não carregou. As animações continuam disponíveis; tente “Verificar novamente”.';
-      if (cartoons.status === 'rejected') el('animation-empty').querySelector('p').textContent = 'A lista mundial de animação não carregou. Tentando os canais da lista selecionada.';
+      if (cartoons.status === 'rejected' && el('animation-empty')) el('animation-empty').querySelector('p').textContent = 'A lista mundial de animação não carregou. Tentando os canais da lista selecionada.';
       const categories = [...new Set(channels.flatMap(channel => channel.categories))].sort((a, b) => categoryName(a).localeCompare(categoryName(b), 'pt-BR'));
       for (const value of categories) category.add(new Option(categoryName(value), value));
       loading = false;
@@ -357,7 +362,7 @@
     video.hidden = false;
     playerStatus.textContent = 'Conectando à transmissão…';
     // Preserve the focused card instead of rebuilding the grid on selection.
-    [...grid.children, ...carousel.children].forEach(button => button.setAttribute('aria-pressed', String(button.dataset.url === channel.url)));
+    [...grid.children, ...(carousel ? carousel.children : [])].forEach(button => button.setAttribute('aria-pressed', String(button.dataset.url === channel.url)));
     el('watch').scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth', block: 'start' });
     playbackTimer = setTimeout(() => {
       if (id === playbackId) playbackFailed('O canal demorou para responder. Tente novamente ou escolha outro.');
@@ -434,11 +439,11 @@
     scanMore();
   });
   function moveCarousel(direction) {
-    carousel.scrollBy({ left: direction * Math.max(280, carousel.clientWidth * 0.75), behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' });
+    if (carousel) carousel.scrollBy({ left: direction * Math.max(280, carousel.clientWidth * 0.75), behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' });
   }
-  el('animation-prev').addEventListener('click', () => moveCarousel(-1));
-  el('animation-next').addEventListener('click', () => moveCarousel(1));
-  carousel.addEventListener('keydown', event => {
+  el('animation-prev')?.addEventListener('click', () => moveCarousel(-1));
+  el('animation-next')?.addEventListener('click', () => moveCarousel(1));
+  carousel?.addEventListener('keydown', event => {
     if (event.key === 'ArrowRight' || event.key === 'ArrowLeft') { event.preventDefault(); moveCarousel(event.key === 'ArrowRight' ? 1 : -1); }
   });
   el('retry-stream').addEventListener('click', () => { if (selected) playChannel(selected); });

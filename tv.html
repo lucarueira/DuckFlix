@@ -4,38 +4,52 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="referrer" content="no-referrer">
-  <title>DUCKTV • Ao vivo no universo DuckFlix</title>
-  <link rel="icon" type="image/png" href="img/LOGO_pg.png">
+  <title>DUCKTV • Ao vivo no universo DuckFlix 42</title>
+  <link rel="icon" type="image/png" href="img/favicon.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="tv.css">
-  <link rel="stylesheet" href="pluto.css">
-  <script defer src="pluto.js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/hls.js@1.7.3/dist/hls.min.js" integrity="sha384-cciJ0zi8d1uMKC2zJd7jvPY4HQt7W4ByUI/FlMkltvBi31aW61rcpVBhpmW8/NwX" crossorigin="anonymous"></script>
   <script defer src="tv-health.js"></script>
   <script defer src="tv.js"></script>
 </head>
 <body>
   <a class="skip-link" href="#channels">Ir para os canais</a>
-  <div class="tv-hero">
-    <header class="header">
-      <a class="brand" href="tv.html" aria-label="DUCKTV — início">
-        <span class="brand-mascot" aria-hidden="true"></span>
-        <span class="brand-copy"><span class="wordmark">DUCK<span>TV</span></span><span class="brand-caption">O UNIVERSO DUCKFLIX, AO VIVO</span></span>
-      </a>
-      <a class="back-link" href="index.html">← Filmes e séries no DuckFlix</a>
-    </header>
-    <nav class="tv-nav" aria-label="Navegação DUCKTV"><a class="active" href="#channels">📡 Canais ao vivo</a><a href="#animation">🎨 Animação</a><a href="#watch">▶ Assistir</a><a href="#pluto-section">Pluto TV ↗</a><a href="extensoes.html">🧩 Extensões</a></nav>
-  </div>
+
+  <!-- ========================
+     HEADER UNIFICADO DUCKFLIX
+  ======================== -->
+  <header class="header">
+    <a class="brand logo" href="index.html" aria-label="DuckFlix — Início">
+      <img src="img/logo_duckflix.png" alt="DuckFlix" class="brand-logo" width="180" height="80">
+    </a>
+    <nav class="main-nav" aria-label="Navegação Principal">
+      <a href="index.html" class="nav-item">Início</a>
+      <a href="tv.html" class="nav-item nav-tv active" aria-current="page">DUCKTV</a>
+      <a href="extensoes.html" class="nav-item nav-ext">DuckFlix Extensões</a>
+    </nav>
+    <div class="header-right"></div>
+  </header>
+
+  <!-- ========================
+     HERO CINEMATOGRÁFICO
+  ======================== -->
+  <section class="tv-hero-cinematic">
+    <div class="hero-content">
+      <h1 class="hero-title">DUCKTV <span>AO VIVO</span></h1>
+    </div>
+  </section>
+
   <main>
-    <section class="intro" aria-labelledby="page-title">
-      <h1 id="page-title"><span>DUCKTV.</span></h1>
-    </section>
     <section id="watch" class="watch-panel" aria-labelledby="channel-title">
       <div class="screen">
         <video id="live-video" controls playsinline preload="none" aria-label="Player de TV ao vivo" hidden></video>
-        <div id="player-placeholder" class="placeholder"><span aria-hidden="true">▶</span><p>A programação começa com a sua escolha.</p><a href="#channels">Explorar canais ↓</a></div>
+        <div id="player-placeholder" class="placeholder">
+          <span aria-hidden="true">▶</span>
+          <p>A programação começa com a sua escolha.</p>
+          <a href="#channels">Explorar canais ↓</a>
+        </div>
       </div>
       <div class="player-info">
         <span class="eyebrow">SEU CANAL</span>
@@ -46,17 +60,15 @@
         <p class="player-note">Os canais da lista carregaram imagem neste navegador nos últimos 5 minutos. Se um sinal cair, ele sai da seleção até passar em um novo teste.</p>
       </div>
     </section>
-    <section id="animation" class="animation-section" aria-labelledby="animation-title">
-      <div class="section-heading">
-        <div><span class="eyebrow">UM PLAY, MIL AVENTURAS</span><h2 id="animation-title"> DuckTv Desenhos</h2><p>Uma seleção de canais de animação do mundo todo, testados para você.</p></div>
-        <div class="carousel-controls"><button id="animation-prev" class="secondary" aria-label="Animações anteriores">←</button><button id="animation-next" class="secondary" aria-label="Próximas animações">→</button></div>
-      </div>
-      <div id="animation-empty" class="animation-empty"><span aria-hidden="true">📺</span><p>Procurando animações com sinal disponível…</p></div>
-      <div id="animation-carousel" class="animation-carousel" role="region" aria-label="Carrossel de canais de animação" tabindex="0"></div>
-      <p class="animation-note">A programação e a classificação indicativa são definidas pelas emissoras.</p>
-    </section>
+
     <section id="channels" class="channels-section" aria-labelledby="channels-title">
-      <div class="section-heading"><div><span class="eyebrow">SINAL CONFERIDO</span><h2 id="channels-title">Canais disponíveis agora</h2></div><button id="reload-list" class="secondary">↻ Verificar novamente</button></div>
+      <div class="section-heading">
+        <div>
+          <span class="eyebrow">SINAL CONFERIDO</span>
+          <h2 id="channels-title">Canais disponíveis agora</h2>
+        </div>
+        <button id="reload-list" class="secondary">↻ Verificar novamente</button>
+      </div>
       <div class="filters">
         <label class="search-label">Buscar canal<input id="channel-search" type="search" placeholder="Nome do canal…" autocomplete="off" maxlength="120"></label>
         <label>Lista<select id="playlist"><option value="br">Brasil</option><option value="world">Todos os países</option></select></label>
@@ -68,21 +80,16 @@
       <div id="channel-grid" class="channel-grid" aria-busy="true"></div>
       <button id="load-more" class="secondary load-more" hidden>Mostrar mais canais</button>
     </section>
-    <!-- Acesso independente à página oficial da Pluto TV. -->
-    <section id="pluto-section" aria-labelledby="pluto-title">
-      <div class="pluto-heading"><div><span class="pluto-eyebrow">MAIS UMA FORMA DE ASSISTIR</span><h2 id="pluto-title">Pluto <span>TV</span></h2></div><span class="pluto-badge">SITE OFICIAL · BRASIL</span></div>
-      <p class="pluto-description">Explore os canais ao vivo, filmes e séries diretamente na Pluto TV.</p>
-      <div class="pluto-actions">
-        <a class="pluto-open" href="https://pluto.tv/br/home/" target="_blank" rel="noopener noreferrer">Abrir Pluto TV em nova aba ↗</a>
-        <button id="pluto-embed" type="button" aria-controls="pluto-viewer" aria-expanded="false" hidden>Tentar assistir nesta página</button>
-        <button id="pluto-close" type="button" hidden>Fechar Pluto TV</button>
-      </div>
-      <p id="pluto-status" role="status">A reprodução dentro desta página depende da compatibilidade da Pluto TV com seu navegador. Se não funcionar, use a nova aba.</p>
-      <div id="pluto-viewer" hidden></div>
-      <p class="pluto-note">Você acessa a página oficial da Pluto TV. Este acesso não representa parceria com a DUCKTV.</p>
-    </section>
+    <!-- Elementos ocultos para compatibilidade com teste de canais -->
+    <div id="animation-carousel" hidden style="display:none !important;"></div>
+    <div id="animation-empty" hidden style="display:none !important;"><p></p></div>
+    <button id="animation-prev" hidden style="display:none !important;"></button>
+    <button id="animation-next" hidden style="display:none !important;"></button>
     <noscript><p>Ative o JavaScript no navegador para carregar os canais e usar o player.</p></noscript>
   </main>
-  <footer><strong>DUCKTV</strong>© DuckFlix for Mamutinho Ver 2.1 🦣. O sinal pode mudar após a verificação.</footer>
+
+  <footer class="footer">
+    <p>DuckFlix © 2026 • Feito com dedicação pelo <strong>Mamute</strong> • Versão <strong>2.5</strong></p>
+  </footer>
 </body>
 </html>

@@ -32,7 +32,47 @@
       if (shell) shell.classList.add('controls-hidden');
       controls.classList.add('is-hidden');
     }
+    let lastSaveTime = 0;
+    function saveProgress(force = false) {
+      if (!item || !video || !currentSource) return;
+      const current = Number(video.currentTime) || 0;
+      const duration = Number(video.duration) || 0;
+      const now = Date.now();
+      if (!force && now - lastSaveTime < 4000) return;
+      lastSaveTime = now;
+      if (current < 2 && duration <= 0) return;
+      try {
+        const ep = episodes.length && episodeIndex >= 0 ? episodes[episodeIndex] : null;
+        const entry = {
+          id: item.id,
+          tmdbId: item.tmdbId,
+          name: item.name,
+          poster: item.poster,
+          type: item.type,
+          genres: item.genres,
+          releaseInfo: item.releaseInfo,
+          currentTime: current,
+          duration: duration,
+          progressPct: duration > 0 ? Math.min(100, Math.round((current / duration) * 100)) : 0,
+          season: ep ? Number(ep.season) : undefined,
+          episode: ep ? Number(ep.episode) : undefined,
+          episodeTitle: ep ? (ep.title || ep.name || `Episódio ${ep.episode}`) : undefined,
+          updatedAt: now
+        };
+        const raw = localStorage.getItem('duckflix.extensoes.history');
+        let list = raw ? JSON.parse(raw) : [];
+        if (!Array.isArray(list)) list = [];
+        list = list.filter(e => e.id !== entry.id);
+        list.unshift(entry);
+        if (list.length > 25) list = list.slice(0, 25);
+        localStorage.setItem('duckflix.extensoes.history', JSON.stringify(list));
+        if (typeof window !== 'undefined' && window.dispatchEvent) {
+          try { window.dispatchEvent(new CustomEvent('duckflix:history-updated', { detail: entry })); } catch {}
+        }
+      } catch {}
+    }
     function stopPlayback() {
+      saveProgress(true);
       playbackVersion++; clearTimeout(stallTimer); clearTimeout(controlsTimer); connection?.dispose(); connection = null; currentSource = null;
       setBuffering(false);
       if (shell) shell.classList.remove('controls-hidden');
@@ -42,6 +82,7 @@
       $('video-seek').value = '0'; $('video-seek').disabled = true; status('video-time', '0:00 / 0:00');
     }
     function close() {
+      saveProgress(true);
       clearTimeout(controlsTimer); detailAbort?.abort(); scanAbort?.abort(); stopPlayback();
       if (dialog.open) dialog.close();
     }
@@ -154,10 +195,11 @@
       status('episode-caption', `TEMPORADA ${ep.season} · EPISÓDIO ${ep.episode}`);
       loadStreams();
     }
-    async function open(selected) {
+    async function open(selected, options = {}) {
       detailAbort?.abort(); scanAbort?.abort(); stopPlayback();
       const controller = new AbortController(); detailAbort = controller;
       item = selected; detailsReady = false; episodes = []; episodeIndex = -1; verified = []; scanState = null; drawSources();
+      if (options.startAt) resumeAt = Number(options.startAt) || 0;
       $('episode-panel').hidden = true; $('scan-more').hidden = true;
       status('watch-title', item.name); status('watch-description', item.description || ''); status('episode-caption', item.type === 'movie' ? 'FILME' : 'SÉRIE');
       status('stream-status', 'Preparando sua sessão…'); status('play-message', ''); placeholder('Carregando título…');
@@ -175,7 +217,14 @@
           }
           status('episode-count', `${episodes.length} episódios`);
           detailsReady = true;
-          chooseEpisode(Math.max(0, episodes.findIndex(ep => Number(ep.season) > 0)));
+          let targetIndex = -1;
+          if (options.season !== undefined && options.episode !== undefined) {
+            targetIndex = episodes.findIndex(ep => Number(ep.season) === Number(options.season) && Number(ep.episode) === Number(options.episode));
+          }
+          if (targetIndex < 0) {
+            targetIndex = Math.max(0, episodes.findIndex(ep => Number(ep.season) > 0));
+          }
+          chooseEpisode(targetIndex);
         } else { detailsReady = true; loadStreams(); }
       } catch (error) { if (!controller.signal.aborted) { placeholder(error.message); status('stream-status', 'Não foi possível abrir este título.'); } }
     }
@@ -183,6 +232,7 @@
       const duration = Number(video.duration), current = Number(video.currentTime) || 0;
       if (currentSource && current > 0) lastPosition = current;
       status('video-time', `${timeLabel(current)} / ${timeLabel(duration)}`);
+      saveProgress();
       const seek = $('video-seek');
       seek.disabled = !Number.isFinite(duration) || duration <= 0;
       if (!seek.disabled) {
@@ -248,8 +298,12 @@
     for (const event of ['play', 'pause']) video.addEventListener(event, () => {
       $('toggle-play').textContent = video.paused ? '▶' : 'Ⅱ';
       $('toggle-play').setAttribute('aria-label', video.paused ? 'Reproduzir' : 'Pausar');
-      if (video.paused) showControls(false);
-      else showControls(true);
+      if (video.paused) {
+        saveProgress(true);
+        showControls(false);
+      } else {
+        showControls(true);
+      }
     });
     $('toggle-play').addEventListener('click', togglePlay); $('start-video').addEventListener('click', () => connection?.play());
     $('skip-back').addEventListener('click', () => { seek(-10); showControls(true); });

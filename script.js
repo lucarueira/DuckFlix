@@ -60,7 +60,7 @@ const listaGenerosChips = [
 ======================== */
 let favs      = JSON.parse(localStorage.getItem("favs"))      || {};
 let historico = JSON.parse(localStorage.getItem("historico")) || {};
-let kidsMode  = JSON.parse(localStorage.getItem("kidsMode"))  || false;
+let kidsMode  = localStorage.getItem("duckflix.modoLivre") === "true" || JSON.parse(localStorage.getItem("kidsMode")) || false;
 
 let currentItem   = null;
 let currentSeason = 1;
@@ -90,6 +90,7 @@ const closeGenre          = document.getElementById("closeGenre");
 const genreChipsContainer = document.getElementById("genreChips");
 const mainCategories      = document.getElementById("mainCategories");
 const btnKids             = document.getElementById("btnKids");
+const btnModoLivre        = document.getElementById("btnModoLivre");
 
 /* ========================
    MODO KIDS & FILTRO ADULTO
@@ -145,9 +146,17 @@ const kidsBanner    = document.getElementById("kidsBanner");
 const desativarKids = document.getElementById("desativarKids");
 
 function atualizarBtnKids() {
-  if (!btnKids) return;
-  btnKids.textContent = kidsMode ? "👶 Modo Kids: ON" : "👶 Modo Kids: OFF";
-  btnKids.classList.toggle("ativo", kidsMode);
+  if (btnModoLivre) {
+    btnModoLivre.classList.toggle("ativo", kidsMode);
+    btnModoLivre.setAttribute("aria-pressed", String(kidsMode));
+    btnModoLivre.textContent = kidsMode ? "MODO LIVRE: ON" : "MODO LIVRE";
+    btnModoLivre.title = kidsMode ? "Modo Livre Ativado (oculta +18)" : "Modo Livre Desativado (clique para ocultar +18)";
+  }
+
+  if (btnKids) {
+    btnKids.textContent = kidsMode ? "Modo Kids: ON" : "Modo Kids: OFF";
+    btnKids.classList.toggle("ativo", kidsMode);
+  }
 
   if (kidsBanner) kidsBanner.classList.toggle("hidden", !kidsMode);
 
@@ -159,12 +168,24 @@ function atualizarBtnKids() {
   renderGenreChips();
 }
 
+if (btnModoLivre) {
+  btnModoLivre.onclick = () => {
+    kidsMode = !kidsMode;
+    localStorage.setItem("duckflix.modoLivre", String(kidsMode));
+    localStorage.setItem("kidsMode", JSON.stringify(kidsMode));
+    atualizarBtnKids();
+    showToast(kidsMode ? "Modo Livre Ativado (conteúdos +18 ocultos)" : "Modo Livre Desativado");
+    recarrregarConteudoHome();
+  };
+}
+
 if (desativarKids) {
   desativarKids.onclick = () => {
     kidsMode = false;
-    localStorage.setItem("kidsMode", JSON.stringify(kidsMode));
+    localStorage.setItem("duckflix.modoLivre", "false");
+    localStorage.setItem("kidsMode", JSON.stringify(false));
     atualizarBtnKids();
-    showToast("🔞 Modo Kids Desativado!");
+    showToast("Modo Livre Desativado");
     recarrregarConteudoHome();
   };
 }
@@ -172,9 +193,10 @@ if (desativarKids) {
 if (btnKids) {
   btnKids.onclick = () => {
     kidsMode = !kidsMode;
+    localStorage.setItem("duckflix.modoLivre", String(kidsMode));
     localStorage.setItem("kidsMode", JSON.stringify(kidsMode));
     atualizarBtnKids();
-    showToast(kidsMode ? "👶 Modo Kids Ativado! Apenas conteúdo 100% livre para crianças" : "🔞 Modo Kids Desativado!");
+    showToast(kidsMode ? "Modo Kids Ativado" : "Modo Kids Desativado");
     recarrregarConteudoHome();
   };
 }
@@ -220,18 +242,18 @@ function toggleFav(item, btn) {
     delete favs[item.id];
     saveFavs();
     atualizarBtnFav(btn, false);
-    showToast("❌ Removido dos favoritos");
+    showToast("Removido da Minha Lista");
   } else {
     favs[item.id] = item;
     saveFavs();
     atualizarBtnFav(btn, true);
-    showToast("⭐ Adicionado aos favoritos!");
+    showToast("Salvo na Minha Lista!");
   }
 }
 
 function atualizarBtnFav(btn, fav) {
-  btn.textContent = fav ? "💛" : "⭐";
-  btn.title = fav ? "Remover dos favoritos" : "Adicionar aos favoritos";
+  btn.innerHTML = fav ? "♥" : "♡";
+  btn.title = fav ? "Remover da Minha Lista" : "Salvar na Minha Lista";
   fav ? btn.classList.add("favoritado") : btn.classList.remove("favoritado");
 }
 
@@ -259,17 +281,37 @@ function renderHistorico() {
   row.innerHTML = "";
   lista.forEach(item => {
     const div = document.createElement("div");
-    div.classList.add("card");
+    div.classList.add("card", "continuar-card-home");
     const prog = carregarProgresso(item.id);
+    const sub = item.type === "serie"
+      ? `T${prog.season || 1} · E${prog.episode || 1}`
+      : "Filme";
     div.innerHTML = `
-      <img src="https://image.tmdb.org/t/p/w300${item.poster}" alt="${item.title}">
-      ${item.type === "serie" ? `<div class="badge-assistindo">T${prog.season} E${prog.episode}</div>` : ""}
-      <p>${item.title}</p>
+      <div class="continuar-poster-wrap">
+        <img src="https://image.tmdb.org/t/p/w300${item.poster}" alt="${item.title}">
+        <span class="continuar-play-badge">▶</span>
+        <button class="continuar-remove-btn" title="Remover do histórico" aria-label="Remover">✕</button>
+        <div class="progress-bar-track"><div class="progress-bar-fill"></div></div>
+      </div>
+      <div class="continuar-info-home">
+        <strong>${item.title}</strong>
+        <small>${sub}</small>
+      </div>
     `;
     div.onclick = () => {
       fecharTodasSecoes();
       abrirPlayer(item);
     };
+    const remBtn = div.querySelector(".continuar-remove-btn");
+    if (remBtn) {
+      remBtn.onclick = (e) => {
+        e.stopPropagation();
+        delete historico[item.id];
+        saveHistorico();
+        renderHistorico();
+        showToast("Removido do histórico");
+      };
+    }
     row.appendChild(div);
   });
 }
@@ -278,7 +320,7 @@ document.getElementById("limparHistorico").onclick = () => {
   historico = {};
   saveHistorico();
   renderHistorico();
-  showToast("🗑️ Histórico limpo");
+  showToast("Histórico limpo");
 };
 
 /* ========================
@@ -463,16 +505,16 @@ document.getElementById("btnEpMais").onclick = async () => {
     atualizarEpInfo();
     carregarPlayer();
     salvarProgresso(currentItem.id, currentSeason, currentEp);
-    showToast(`▶ Episódio ${currentEp} — Temporada ${currentSeason}`);
+    showToast(`Episódio ${currentEp} — Temporada ${currentSeason}`);
   } else if (currentSeason < maxSeasons) {
     currentSeason++;
     currentEp = 1;
     atualizarEpInfo();
     carregarPlayer();
     salvarProgresso(currentItem.id, currentSeason, currentEp);
-    showToast(`📺 Avançando para a Temporada ${currentSeason}`);
+    showToast(`Avançando para a Temporada ${currentSeason}`);
   } else {
-    showToast(`⚠️ Você já está no último episódio da série! (T${currentSeason} E${currentEp})`);
+    showToast(`Você já está no último episódio da série! (T${currentSeason} E${currentEp})`);
   }
 };
 
@@ -483,7 +525,7 @@ document.getElementById("btnEpMenos").onclick = async () => {
     atualizarEpInfo();
     carregarPlayer();
     salvarProgresso(currentItem.id, currentSeason, currentEp);
-    showToast(`▶ Episódio ${currentEp} — Temporada ${currentSeason}`);
+    showToast(`Episódio ${currentEp} — Temporada ${currentSeason}`);
   } else if (currentSeason > 1) {
     currentSeason--;
     const detalhes = await carregarDetalhesSerie(currentItem.id);
@@ -492,9 +534,9 @@ document.getElementById("btnEpMenos").onclick = async () => {
     atualizarEpInfo();
     carregarPlayer();
     salvarProgresso(currentItem.id, currentSeason, currentEp);
-    showToast(`📺 Voltando para a Temporada ${currentSeason}`);
+    showToast(`Voltando para a Temporada ${currentSeason}`);
   } else {
-    showToast("⚠️ Este é o primeiro episódio da série!");
+    showToast("Este é o primeiro episódio da série!");
   }
 };
 
@@ -509,9 +551,9 @@ document.getElementById("btnTemporadaMais").onclick = async () => {
     atualizarEpInfo();
     carregarPlayer();
     salvarProgresso(currentItem.id, currentSeason, currentEp);
-    showToast(`📺 Temporada ${currentSeason}`);
+    showToast(`Temporada ${currentSeason}`);
   } else {
-    showToast(`⚠️ A série tem no máximo ${maxSeasons} temporada(s)!`);
+    showToast(`A série tem no máximo ${maxSeasons} temporada(s)!`);
   }
 };
 
@@ -523,9 +565,9 @@ document.getElementById("btnTemporadaMenos").onclick = () => {
     atualizarEpInfo();
     carregarPlayer();
     salvarProgresso(currentItem.id, currentSeason, currentEp);
-    showToast(`📺 Temporada ${currentSeason}`);
+    showToast(`Temporada ${currentSeason}`);
   } else {
-    showToast("⚠️ Primeira temporada!");
+    showToast("Primeira temporada!");
   }
 };
 
@@ -539,7 +581,7 @@ document.getElementById("btnGoTo").onclick = async () => {
     const maxSeasons = detalhes.number_of_seasons || 1;
     if (t > maxSeasons) {
       t = maxSeasons;
-      showToast(`⚠️ Temporada ajustada para o máximo (${maxSeasons})`);
+      showToast(`Temporada ajustada para o máximo (${maxSeasons})`);
     }
     if (t < 1) t = 1;
 
@@ -547,7 +589,7 @@ document.getElementById("btnGoTo").onclick = async () => {
     const maxEps = sInfo ? sInfo.episode_count : 24;
     if (e > maxEps) {
       e = maxEps;
-      showToast(`⚠️ Episódio ajustado para o máximo na T${t} (E${maxEps})`);
+      showToast(`Episódio ajustado para o máximo na T${t} (E${maxEps})`);
     }
     if (e < 1) e = 1;
   }
@@ -557,7 +599,7 @@ document.getElementById("btnGoTo").onclick = async () => {
   atualizarEpInfo();
   carregarPlayer();
   salvarProgresso(currentItem.id, currentSeason, currentEp);
-  showToast(`▶ Temporada ${currentSeason} — Episódio ${currentEp}`);
+  showToast(`Temporada ${currentSeason} — Episódio ${currentEp}`);
 };
 
 /* ========================
@@ -577,16 +619,16 @@ document.getElementById("btnTrailer").onclick = () => {
           .then(d2 => {
             trailer = d2.results?.find(v => v.type === "Trailer" && v.site === "YouTube");
             if (trailer) abrirTrailer(trailer.key, currentItem.title);
-            else showToast("😕 Trailer não encontrado");
+            else showToast("Trailer não encontrado");
           });
       }
       abrirTrailer(trailer.key, currentItem.title);
     })
-    .catch(() => showToast("⚠️ Erro ao buscar trailer"));
+    .catch(() => showToast("Erro ao buscar trailer"));
 };
 
 function abrirTrailer(key, titulo) {
-  document.getElementById("trailerTitulo").textContent = `🎬 Trailer — ${titulo}`;
+  document.getElementById("trailerTitulo").textContent = `Trailer — ${titulo}`;
   document.getElementById("trailerFrame").src = `https://www.youtube.com/embed/${key}?autoplay=1`;
   document.getElementById("modalTrailer").classList.remove("hidden");
 }
@@ -603,35 +645,45 @@ function renderFavs() {
   favList.innerHTML = "";
   const lista = Object.values(favs);
   if (lista.length === 0) {
-    favList.innerHTML = `<p style="color:#aaa;padding:20px;">Nenhum favorito ainda. Adicione com ⭐!</p>`;
+    favList.innerHTML = `<p style="color:#aaa;padding:24px;text-align:center;width:100%;">Sua lista está vazia. Adicione filmes e séries clicando no coração dos títulos.</p>`;
     return;
   }
   lista.forEach(f => {
-    const div = document.createElement("div");
-    div.classList.add("card");
-    div.innerHTML = `
-      <img src="https://image.tmdb.org/t/p/w300${f.poster}" alt="${f.title}">
-      <p>${f.title}</p>
-      <button class="fav-btn favoritado" title="Remover">💛</button>
+    const card = document.createElement("button");
+    card.className = "poster-card card";
+    card.type = "button";
+    card.setAttribute("aria-label", `Assistir ${f.title}`);
+    const tipoLabel = f.type === "filme" ? "Filme" : "Série";
+    card.innerHTML = `
+      <span class="poster">
+        <img src="https://image.tmdb.org/t/p/w300${f.poster}" alt="${f.title}" loading="lazy">
+        <button type="button" class="poster-fav-btn fav-btn favoritado is-fav" title="Remover da Minha Lista">♥</button>
+      </span>
+      <strong>${f.title}</strong>
+      <small>${tipoLabel}</small>
     `;
-    div.onclick = () => { fecharTodasSecoes(); abrirPlayer(f); };
-    div.querySelector(".fav-btn").onclick = (e) => {
+    card.onclick = () => { fecharTodasSecoes(); abrirPlayer(f); };
+    card.querySelector(".fav-btn").onclick = (e) => {
       e.stopPropagation();
       delete favs[f.id];
       saveFavs();
-      showToast("❌ Removido dos favoritos");
+      showToast("Removido da Minha Lista");
       renderFavs();
     };
-    favList.appendChild(div);
+    favList.appendChild(card);
   });
 }
 
-document.getElementById("btnFav").onclick = () => {
-  fecharTodasSecoes();
-  favPage.classList.remove("hidden");
-  renderFavs();
-};
-document.getElementById("closeFav").onclick = () => favPage.classList.add("hidden");
+const btnFavEl = document.getElementById("btnFav");
+if (btnFavEl) {
+  btnFavEl.onclick = () => {
+    fecharTodasSecoes();
+    favPage.classList.remove("hidden");
+    renderFavs();
+  };
+}
+const closeFavEl = document.getElementById("closeFav");
+if (closeFavEl) closeFavEl.onclick = () => favPage.classList.add("hidden");
 
 /* ========================
    BUSCA COM SUGESTÕES
@@ -716,7 +768,7 @@ function buscar() {
       searchPage.classList.remove("hidden");
       searchPage.scrollIntoView({ behavior: "smooth" });
     })
-    .catch(() => showToast("⚠️ Erro na busca"));
+    .catch(() => showToast("Erro na busca"));
 }
 document.getElementById("closeSearch").onclick = () => searchPage.classList.add("hidden");
 
@@ -731,45 +783,39 @@ function criarCard(container, item, tipoForcado = null) {
     return;
   }
 
-  // No Modo Kids, oculta conteúdos adultos/violentos
+  // No Modo Kids / Modo Livre, oculta conteúdos adultos/violentos
   if (kidsMode && isConteudoAdulto(item)) {
     return;
   }
 
-  const div   = document.createElement("div");
-  div.classList.add("card");
+  const card = document.createElement("button");
+  card.className = "poster-card card";
+  card.type = "button";
 
-  const type       = tipoForcado || (item.title ? "filme" : "serie");
-  const title      = item.title || item.name;
+  const type = tipoForcado || (item.title ? "filme" : "serie");
+  const title = item.title || item.name;
+  card.setAttribute("aria-label", `Assistir ${title}`);
+
   const favoritado = isFav(item.id);
-  const nota       = item.vote_average ? `⭐ ${item.vote_average.toFixed(1)}` : "";
-  const genMap     = type === "filme" ? generosFilme : generosSerie;
-  
-  // Extrai até 2 gêneros principais para badges
-  const badgesHtml = (item.genre_ids || [])
-    .slice(0, 2)
-    .map(gId => {
-      const gObj = genMap[gId];
-      if (!gObj) return "";
-      const nome = typeof gObj === "object" ? gObj.nome : gObj;
-      const icon = typeof gObj === "object" ? gObj.icon : "🏷️";
-      return `<span class="badge-genero-tag" data-genre-id="${gId}" data-genre-nome="${nome}" data-genre-icon="${icon}">${icon} ${nome}</span>`;
-    })
-    .filter(Boolean)
-    .join("");
+  const nota = item.vote_average ? `${item.vote_average.toFixed(1)}` : "";
+  const ano = (item.release_date || item.first_air_date || "").slice(0, 4);
+  const tipoLabel = type === "filme" ? "Filme" : (item.genre_ids?.includes(16) && item.original_language === 'ja' ? "Anime" : "Série");
+  const subInfo = [tipoLabel, ano].filter(Boolean).join(" · ");
 
-  div.innerHTML = `
-    ${nota ? `<span class="badge-nota">${nota}</span>` : ""}
-    <img src="https://image.tmdb.org/t/p/w300${item.poster_path}" alt="${title}" loading="lazy">
-    <p>${title}</p>
-    ${badgesHtml ? `<div class="badge-generos-container">${badgesHtml}</div>` : ""}
-    <button class="fav-btn ${favoritado ? "favoritado" : ""}" title="${favoritado ? "Remover" : "Favoritar"}">
-      ${favoritado ? "💛" : "⭐"}
-    </button>
+  card.innerHTML = `
+    <span class="poster">
+      ${nota ? `<span class="badge-nota">${nota}</span>` : ""}
+      <img src="https://image.tmdb.org/t/p/w300${item.poster_path}" alt="${title}" loading="lazy">
+      <button type="button" class="poster-fav-btn fav-btn ${favoritado ? "favoritado is-fav" : ""}" title="${favoritado ? "Remover da Minha Lista" : "Salvar na Minha Lista"}">
+        ${favoritado ? "♥" : "♡"}
+      </button>
+    </span>
+    <strong>${title}</strong>
+    <small>${subInfo}</small>
   `;
 
-  const favBtn = div.querySelector(".fav-btn");
-  div.onclick = () => {
+  const favBtn = card.querySelector(".fav-btn");
+  card.onclick = () => {
     fecharTodasSecoes();
     abrirPlayer({ id: item.id, title, type, poster: item.poster_path });
   };
@@ -778,18 +824,7 @@ function criarCard(container, item, tipoForcado = null) {
     toggleFav({ id: item.id, title, poster: item.poster_path, type }, favBtn);
   };
 
-  // Clique nos badges de gênero dentro dos cards
-  div.querySelectorAll(".badge-genero-tag").forEach(tag => {
-    tag.onclick = (e) => {
-      e.stopPropagation();
-      const gId   = tag.dataset.genreId;
-      const gNome = tag.dataset.genreNome;
-      const gIcon = tag.dataset.genreIcon;
-      filtrarPorGenero(gId, gNome, gIcon);
-    };
-  });
-
-  container.appendChild(div);
+  container.appendChild(card);
 }
 
 /* ========================
@@ -869,7 +904,7 @@ async function filtrarPorGenero(genreId, genreNome, genreIcon = "🏷️") {
 
   } catch (e) {
     if (countBadge) countBadge.textContent = "Erro";
-    genreList.innerHTML = `<p style="color:#e74c3c;padding:20px;">⚠️ Erro ao carregar gênero.</p>`;
+    genreList.innerHTML = `<p style="color:#e74c3c;padding:20px;">Erro ao carregar gênero.</p>`;
   }
 }
 
@@ -1006,10 +1041,9 @@ async function sortear(cat) {
   const endpoints = {
     filmes:   `https://api.themoviedb.org/3/movie/popular?api_key=${apiKey}&language=pt-BR`,
     series:   `https://api.themoviedb.org/3/discover/tv?api_key=${apiKey}&sort_by=popularity.desc&without_genres=16&language=pt-BR`,
-    animes:   `https://api.themoviedb.org/3/discover/tv?api_key=${apiKey}&with_genres=16&with_original_language=ja&language=pt-BR`,
-    desenhos: `https://api.themoviedb.org/3/discover/tv?api_key=${apiKey}&with_genres=16,10762&language=pt-BR`
+    animes:   `https://api.themoviedb.org/3/discover/tv?api_key=${apiKey}&with_genres=16&with_original_language=ja&language=pt-BR`
   };
-  const tipos = { filmes: "filme", series: "serie", animes: "serie", desenhos: "serie" };
+  const tipos = { filmes: "filme", series: "serie", animes: "serie" };
 
   const display = document.getElementById("roletaDisplay");
   const img     = document.getElementById("roletaImg");
@@ -1034,7 +1068,7 @@ async function sortear(cat) {
   loadDiv.innerHTML = `<div class="roleta-spinner-icon"></div><span>Buscando títulos...</span>`;
   display.insertBefore(loadDiv, document.getElementById("roletaSpinner"));
 
-  const lista = await buscarPaginasAleatorias(endpoints[cat], 5);
+  const lista = await buscarPaginasAleatorias(endpoints[cat] || endpoints.filmes, 5);
 
   // Remove loading
   const ld = document.getElementById("roletaLoadingDiv");
@@ -1043,7 +1077,7 @@ async function sortear(cat) {
 
   if (!lista || lista.length === 0) {
     titulo.textContent = "Nenhum título encontrado";
-    showToast("⚠️ Não foi possível carregar títulos");
+    showToast("Não foi possível carregar títulos");
     return;
   }
 
@@ -1064,13 +1098,13 @@ async function sortear(cat) {
       img.src = `https://image.tmdb.org/t/p/w300${escolhido.poster_path}`;
       titulo.textContent = escolhido.title || escolhido.name;
       nota.textContent   = escolhido.vote_average
-        ? `⭐ ${escolhido.vote_average.toFixed(1)}`
+        ? `${escolhido.vote_average.toFixed(1)}`
         : "";
 
       roletaItemSelecionado = {
         id:     escolhido.id,
         title:  escolhido.title || escolhido.name,
-        type:   tipos[cat],
+        type:   tipos[cat] || "filme",
         poster: escolhido.poster_path
       };
 
@@ -1093,50 +1127,66 @@ document.getElementById("btnSortearNovamente").onclick = () => {
 };
 
 /* ========================
-   CARREGAR CONTEÚDO INICIAL
+   CARREGAR CONTEÚDO INICIAL (42 TÍTULOS)
 ======================== */
+async function buscar42Titulos(urlBuilder) {
+  try {
+    const pages = [1, 2, 3, 4];
+    const results = await Promise.all(
+      pages.map(pg => fetch(urlBuilder(pg)).then(r => r.json()).catch(() => ({ results: [] })))
+    );
+    const todos = results.flatMap(p => p.results || []);
+    const vistos = new Set();
+    const lista42 = [];
+    for (const item of todos) {
+      if (item && item.id && item.poster_path && !vistos.has(item.id)) {
+        if (isHentaiOuAdultoExtremo(item)) continue;
+        if (kidsMode && isConteudoAdulto(item)) continue;
+        vistos.add(item.id);
+        lista42.push(item);
+        if (lista42.length === 42) break;
+      }
+    }
+    return lista42;
+  } catch (e) {
+    return [];
+  }
+}
+
 function recarrregarConteudoHome() {
-  const ids = ["filmes", "series", "animes", "desenhos", "animacoesAdultas"];
+  const ids = ["filmes", "series", "animes"];
   ids.forEach(id => {
     const el = document.getElementById(id);
     if (el) el.innerHTML = "";
   });
 
-  fetch(`https://api.themoviedb.org/3/movie/popular?api_key=${apiKey}&language=pt-BR`)
-    .then(r => r.json())
-    .then(d => d.results.forEach(m => criarCard(document.getElementById("filmes"), m, "filme")))
-    .catch(() => showToast("⚠️ Erro ao carregar filmes"));
+  const semAdultoParam = kidsMode ? "&without_genres=27,80,53" : "";
 
-  // Séries Live-Action (Sem nenhuma animação/desenho)
-  fetch(`https://api.themoviedb.org/3/discover/tv?api_key=${apiKey}&sort_by=popularity.desc&without_genres=16&language=pt-BR`)
-    .then(r => r.json())
-    .then(d => d.results.forEach(s => criarCard(document.getElementById("series"), s, "serie")))
-    .catch(() => showToast("⚠️ Erro ao carregar séries"));
+  // 42 Filmes Populares
+  buscar42Titulos(pg => kidsMode
+    ? `https://api.themoviedb.org/3/discover/movie?api_key=${apiKey}&language=pt-BR&sort_by=popularity.desc&without_genres=27,80,53&page=${pg}`
+    : `https://api.themoviedb.org/3/movie/popular?api_key=${apiKey}&language=pt-BR&page=${pg}`)
+    .then(filmes => {
+      const container = document.getElementById("filmes");
+      if (container) filmes.forEach(m => criarCard(container, m, "filme"));
+    })
+    .catch(() => showToast("Erro ao carregar filmes"));
 
-  // Animes Japoneses (+14 / +16 Shounen & Seinen Populares)
-  fetch(`https://api.themoviedb.org/3/discover/tv?api_key=${apiKey}&with_genres=16&with_original_language=ja&without_genres=10762,10751,10749&vote_count.gte=30&sort_by=popularity.desc&language=pt-BR`)
-    .then(r => r.json())
-    .then(d => d.results.forEach(a => criarCard(document.getElementById("animes"), a, "serie")))
-    .catch(() => showToast("⚠️ Erro ao carregar animes"));
+  // 42 Séries Live-Action (Sem animação)
+  buscar42Titulos(pg => `https://api.themoviedb.org/3/discover/tv?api_key=${apiKey}&sort_by=popularity.desc&without_genres=16${semAdultoParam}&language=pt-BR&page=${pg}`)
+    .then(series => {
+      const container = document.getElementById("series");
+      if (container) series.forEach(s => criarCard(container, s, "serie"));
+    })
+    .catch(() => showToast("Erro ao carregar séries"));
 
-  // Desenhos Infantis (Livres para crianças)
-  fetch(`https://api.themoviedb.org/3/discover/tv?api_key=${apiKey}&with_genres=16,10762&sort_by=popularity.desc&language=pt-BR`)
-    .then(r => r.json())
-    .then(d => d.results.forEach(x => criarCard(document.getElementById("desenhos"), x, "serie")))
-    .catch(() => showToast("⚠️ Erro ao carregar desenhos infantis"));
-
-  // Animações Adultas Ocidentais (+16 / +18, sem Animes Orientais)
-  if (!kidsMode) {
-    fetch(`https://api.themoviedb.org/3/discover/tv?api_key=${apiKey}&with_genres=16&without_original_language=ja,zh,ko&without_genres=10762,10751&sort_by=popularity.desc&language=pt-BR`)
-      .then(r => r.json())
-      .then(d => {
-        const el = document.getElementById("animacoesAdultas");
-        if (el && d.results) {
-          d.results.forEach(x => criarCard(el, x, "serie"));
-        }
-      })
-      .catch(() => {});
-  }
+  // 42 Animes Japoneses
+  buscar42Titulos(pg => `https://api.themoviedb.org/3/discover/tv?api_key=${apiKey}&with_genres=16&with_original_language=ja&without_genres=10762,10751,10749${semAdultoParam}&vote_count.gte=30&sort_by=popularity.desc&language=pt-BR&page=${pg}`)
+    .then(animes => {
+      const container = document.getElementById("animes");
+      if (container) animes.forEach(a => criarCard(container, a, "serie"));
+    })
+    .catch(() => showToast("Erro ao carregar animes"));
 }
 
 /* ========================
