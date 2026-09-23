@@ -1,4 +1,4 @@
-const apiKey = "c6f8a018e59af4ea6ea6f3bdd409c65d";
+const apiKey = window.DuckFlixTMDB.apiKey;
 
 /* ========================
    GÊNEROS TMDB COM ÍCONES
