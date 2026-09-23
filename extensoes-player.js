@@ -201,13 +201,14 @@
       item = selected; detailsReady = false; episodes = []; episodeIndex = -1; verified = []; scanState = null; drawSources();
       if (options.startAt) resumeAt = Number(options.startAt) || 0;
       $('episode-panel').hidden = true; $('scan-more').hidden = true;
-      status('watch-title', item.name); status('watch-description', item.description || ''); status('episode-caption', item.type === 'movie' ? 'FILME' : 'SÉRIE');
+      status('watch-title', 'Preparando sua sessão…'); status('watch-description', ''); status('episode-caption', 'SUA SESSÃO');
       status('stream-status', 'Preparando sua sessão…'); status('play-message', ''); placeholder('Carregando título…');
       if (!dialog.open) dialog.showModal();
       try {
         const details = await getDetails(selected, controller.signal);
         if (controller.signal.aborted) return;
         item = details;
+        status('watch-title', item.name); status('watch-description', item.description || ''); status('episode-caption', item.type === 'movie' ? 'FILME' : 'SÉRIE');
         if (item.type === 'series') {
           episodes = media.orderedEpisodes(item.videos);
           if (!episodes.length) throw new Error('Ainda não há episódios disponíveis para este título.');

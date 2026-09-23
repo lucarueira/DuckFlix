@@ -10,7 +10,10 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="tv.css">
+  <link rel="stylesheet" href="site.css">
   <script defer src="https://cdn.jsdelivr.net/npm/hls.js@1.7.3/dist/hls.min.js" integrity="sha384-cciJ0zi8d1uMKC2zJd7jvPY4HQt7W4ByUI/FlMkltvBi31aW61rcpVBhpmW8/NwX" crossorigin="anonymous"></script>
+  <script defer src="content-policy.js"></script>
+  <script defer src="site.js"></script>
   <script defer src="tv-health.js"></script>
   <script defer src="tv.js"></script>
 </head>
@@ -29,7 +32,7 @@
       <a href="tv.html" class="nav-item nav-tv active" aria-current="page">DUCKTV</a>
       <a href="extensoes.html" class="nav-item nav-ext">DuckFlix Extensões</a>
     </nav>
-    <div class="header-right"></div>
+    <div class="header-right"><button id="btnModoLivre" class="btn-modo-livre" type="button">MODO LIVRE</button></div>
   </header>
 
   <!-- ========================
@@ -52,7 +55,7 @@
         </div>
       </div>
       <div class="player-info">
-        <span class="eyebrow">SEU CANAL</span>
+        <button type="button" class="secondary" data-fullscreen="watch">⛶ Tela cheia</button><span class="eyebrow">SEU CANAL</span>
         <h2 id="channel-title">O que vamos assistir?</h2>
         <p id="player-status" role="status" aria-live="polite">Selecione um canal na lista abaixo.</p>
         <button id="retry-stream" class="primary" hidden>Tentar novamente</button>
@@ -69,6 +72,7 @@
         </div>
         <button id="reload-list" class="secondary">↻ Verificar novamente</button>
       </div>
+      <p class="safe-tv-notice" role="status">Modo Livre ativo. A TV ao vivo fica oculta porque os canais não informam uma classificação confiável por programa.</p>
       <div class="filters">
         <label class="search-label">Buscar canal<input id="channel-search" type="search" placeholder="Nome do canal…" autocomplete="off" maxlength="120"></label>
         <label>Lista<select id="playlist"><option value="br">Brasil</option><option value="world">Todos os países</option></select></label>

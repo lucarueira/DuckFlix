@@ -87,8 +87,9 @@
   let loading = false;
   let listError = false;
 
-  const available = channel => health.isAvailable(results.get(channel.url));
-  const matches = channel => channel.search.includes(normalize(search.value.trim())) && (!category.value || channel.categories.includes(category.value));
+  const allowedChannel = channel => !window.DuckFlixSafety || window.DuckFlixSafety.channelAllowed(channel);
+  const available = channel => allowedChannel(channel) && health.isAvailable(results.get(channel.url));
+  const matches = channel => allowedChannel(channel) && channel.search.includes(normalize(search.value.trim())) && (!category.value || channel.categories.includes(category.value));
 
   function createCard(channel, featured = false) {
     const button = document.createElement('button');
@@ -185,6 +186,7 @@
 
   async function scanMore({ userRequested = false } = {}) {
     cancelScan();
+    if (window.DuckFlixSafety?.enabled()) { renderChannels(); return; }
     if (loading || document.hidden) return;
     const focusedSearch = Boolean(search.value.trim() || category.value);
     // Watching pauses background discovery, not an explicit search for the next channel.
@@ -348,6 +350,7 @@
   }
 
   function playChannel(channel) {
+    if (!allowedChannel(channel)) return;
     clearTimeout(searchTimer);
     cancelScan();
     stopPlayback();
@@ -466,5 +469,8 @@
   }, 60000);
   window.addEventListener('pagehide', () => { request?.abort(); cancelScan(); stopPlayback(); });
   window.addEventListener('pageshow', event => { if (event.persisted) { selected = null; el('stop-stream').click(); loadPlaylist(); } });
+  window.addEventListener('duckflix:modechange', () => {
+    cancelScan(); el('stop-stream').click(); filtersChanged();
+  });
   loadPlaylist();
 })();

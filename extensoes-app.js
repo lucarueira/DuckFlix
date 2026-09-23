@@ -18,30 +18,9 @@
   /* ========================
      MODO LIVRE (+18 FILTRO)
   ======================== */
-  function getModoLivre() {
-    try {
-      const storage = getStorage();
-      return storage ? JSON.parse(storage.getItem('duckflix.modoLivre') || storage.getItem('kidsMode') || 'false') : false;
-    } catch { return false; }
-  }
-  function setModoLivre(val) {
-    try {
-      const storage = getStorage();
-      if (storage) {
-        storage.setItem('duckflix.modoLivre', JSON.stringify(val));
-        storage.setItem('kidsMode', JSON.stringify(val));
-      }
-      updateBtnModoLivre();
-      loadCatalog();
-    } catch {}
-  }
-  function updateBtnModoLivre() {
-    const btn = $('btnModoLivre');
-    if (!btn) return;
-    const isLivre = getModoLivre();
-    btn.classList.toggle('ativo', isLivre);
-    btn.textContent = isLivre ? 'MODO LIVRE: ON' : 'MODO LIVRE';
-  }
+  const safety = window.DuckFlixSafety;
+  let historyRender = 0, catalogRender = 0;
+  function updateBtnModoLivre() { safety?.updateSwitch(); }
 
   /* ========================
      GERENCIAMENTO DA MINHA LISTA
@@ -121,11 +100,15 @@
       renderContinuarAssistindo();
     } catch {}
   }
-  function renderContinuarAssistindo() {
+  async function renderContinuarAssistindo() {
+    const renderId = ++historyRender;
     const section = $('continuar-section');
     const carousel = $('continuar-carousel');
     if (!section || !carousel) return;
-    const history = getHistory();
+    carousel.replaceChildren(); section.hidden = true;
+    let history;
+    try { history = safety ? await safety.filter(getHistory()) : getHistory(); } catch { return; }
+    if (renderId !== historyRender) return;
     if (!history.length) {
       section.hidden = true;
       carousel.replaceChildren();
@@ -199,6 +182,7 @@
 
   const player = window.DuckFlixPlayer.create({ document,
     async getDetails(item, signal) {
+      if (safety && !await safety.allowed(item, { signal })) throw new Error('Título indisponível com o Modo Livre ativo.');
       let resolved = { ...item };
       if (item.tmdbId) {
         const key = `${item.type}:${item.tmdbId}`;
@@ -227,9 +211,13 @@
     }
   });
 
-  function render() {
+  async function render() {
+    const renderId = ++catalogRender;
     $('catalog-grid').replaceChildren();
-    for (const item of items) {
+    let visible;
+    try { visible = safety ? await safety.filter(items) : items; } catch { return; }
+    if (renderId !== catalogRender) return;
+    for (const item of visible) {
       const card = node('button', undefined, 'poster-card'); card.type = 'button'; card.setAttribute('aria-label', `Assistir ${item.name}`);
       const poster = node('span', '▶', 'poster');
       if (item.poster) {
@@ -251,8 +239,8 @@
       card.append(poster, node('strong', item.name), node('small', [kind, item.releaseInfo].filter(Boolean).join(' · ')));
       card.addEventListener('click', () => player.open(item)); $('catalog-grid').append(card);
     }
-    $('catalog-status').textContent = items.length
-      ? `${items.length} ${items.length === 1 ? 'título para explorar' : 'títulos para explorar'}`
+    $('catalog-status').textContent = visible.length
+      ? `${visible.length} ${visible.length === 1 ? 'título para explorar' : 'títulos para explorar'}`
       : category === 'watchlist'
         ? 'Sua lista está vazia. Adicione filmes e séries clicando no coração dos títulos.'
         : 'Nenhum título encontrado. Tente outro nome.';
@@ -260,7 +248,7 @@
   }
 
   async function loadCatalog(more = false) {
-    clearTimeout(searchTimer); catalogAbort?.abort();
+    clearTimeout(searchTimer); catalogAbort?.abort(); catalogRender++;
     const controller = new AbortController(); catalogAbort = controller;
     const query = $('catalog-search').value.trim();
 
@@ -285,16 +273,14 @@
       const path = query ? 'search/multi' : category === 'anime' ? 'discover/tv' : `${type}/popular`;
       const known = new Set(items.map(item => `${item.type}:${item.id}`));
       const targetCount = (!more && !query) ? 42 : (items.length + 20);
-      const isLivre = getModoLivre();
       let currentPage = page + 1;
       let totalPages = 500;
 
-      while (items.length < targetCount && currentPage <= totalPages) {
-        const withoutGenres = isLivre ? '27,80,53' : '';
+      const lastPage = currentPage + 5;
+      while (items.length < targetCount && currentPage <= totalPages && currentPage <= lastPage) {
         const params = {
           page: currentPage,
           include_adult: false,
-          ...(withoutGenres ? { without_genres: withoutGenres } : {}),
           ...(query ? { query } : category === 'anime' ? { with_genres: 16, with_original_language: 'ja', sort_by: 'popularity.desc' } : {})
         };
         const data = await tmdb(path, params, controller.signal);
@@ -303,7 +289,6 @@
         totalPages = Math.min(Number(data.total_pages) || 0, 500);
 
         for (const item of api.tmdbItems(data.results, query ? undefined : type)) {
-          if (isLivre && item.genres?.some(g => [27, 80, 53].includes(g))) continue;
           const key = `${item.type}:${item.id}`;
           if (known.has(key)) continue;
           known.add(key);
@@ -336,8 +321,8 @@
     $('catalog-search').value = '';
     loadCatalog();
   });
-  $('btnModoLivre')?.addEventListener('click', () => {
-    setModoLivre(!getModoLivre());
+  window.addEventListener('duckflix:modechange', () => {
+    catalogRender++; player.close(); renderContinuarAssistindo(); loadCatalog();
   });
   $('clear-history')?.addEventListener('click', clearHistory);
   $('reload-catalog').addEventListener('click', () => loadCatalog());
@@ -351,4 +336,3 @@
   renderContinuarAssistindo();
   loadCatalog();
 })();
-

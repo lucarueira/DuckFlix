@@ -60,7 +60,8 @@ const listaGenerosChips = [
 ======================== */
 let favs      = JSON.parse(localStorage.getItem("favs"))      || {};
 let historico = JSON.parse(localStorage.getItem("historico")) || {};
-let kidsMode  = localStorage.getItem("duckflix.modoLivre") === "true" || JSON.parse(localStorage.getItem("kidsMode")) || false;
+const safety = window.DuckFlixSafety;
+let kidsMode = safety.enabled();
 
 let currentItem   = null;
 let currentSeason = 1;
@@ -95,63 +96,14 @@ const btnModoLivre        = document.getElementById("btnModoLivre");
 /* ========================
    MODO KIDS & FILTRO ADULTO
 ======================== */
-const generosFamilia  = [10762, 10751, 16]; // Infantil, Família, Animação Livre
-const generosAdultos  = [27, 80, 10749, 53, 10752]; // Terror, Crime, Romance, Thriller, Guerra
-const palavrasAdultas = [
-  "hentai", "ecchi", "sexo", "erótico", "erotica", "erotic", "adult", "porn",
-  "gore", "violência", "sensual", "18+", "nsfw", "harem", "psicopata", "matança",
-  "assassino", "sangue", "morte"
-];
-
-/* ========================
-   BANIMENTO GLOBAL DE HENTAI E EROTISMO (NUNCA EXIBIDO NO SITE)
-======================== */
-const palavrasHentaiErotico = [
-  "hentai", "ecchi", "erótico", "erotica", "erotic", "porn", "porno", "pornografia",
-  "nsfw", "sexo explícito", "harem adulto", "uncensored sex", "xxx", "hentai series",
-  "softcore", "ero"
-];
-
-function isHentaiOuAdultoExtremo(item) {
-  if (!item) return false;
-  if (item.adult === true) return true;
-  const text = `${item.title || item.name || ""} ${item.overview || ""}`.toLowerCase();
-  if (palavrasHentaiErotico.some(p => text.includes(p))) return true;
-  return false;
-}
-
-function isConteudoAdulto(item) {
-  if (!item) return false;
-  if (item.adult === true) return true;
-  if (isHentaiOuAdultoExtremo(item)) return true;
-
-  const gIds = item.genre_ids || [];
-  if (gIds.some(id => generosAdultos.includes(id))) return true;
-
-  const text = `${item.title || item.name || ""} ${item.overview || ""}`.toLowerCase();
-  if (palavrasAdultas.some(p => text.includes(p))) return true;
-
-  return false;
-}
-
-function isConteudoInfantil(item) {
-  if (!item) return false;
-  if (isConteudoAdulto(item)) return false;
-  const gIds = item.genre_ids || [];
-  if (gIds.some(id => generosFamilia.includes(id))) return true;
-  return false;
-}
+// Classification filtering is shared with search, saved lists and the extensions page.
+function isHentaiOuAdultoExtremo(item) { return safety.explicit(item); }
 
 const kidsBanner    = document.getElementById("kidsBanner");
 const desativarKids = document.getElementById("desativarKids");
 
 function atualizarBtnKids() {
-  if (btnModoLivre) {
-    btnModoLivre.classList.toggle("ativo", kidsMode);
-    btnModoLivre.setAttribute("aria-pressed", String(kidsMode));
-    btnModoLivre.textContent = kidsMode ? "MODO LIVRE: ON" : "MODO LIVRE";
-    btnModoLivre.title = kidsMode ? "Modo Livre Ativado (oculta +18)" : "Modo Livre Desativado (clique para ocultar +18)";
-  }
+  safety.updateSwitch();
 
   if (btnKids) {
     btnKids.textContent = kidsMode ? "Modo Kids: ON" : "Modo Kids: OFF";
@@ -168,38 +120,25 @@ function atualizarBtnKids() {
   renderGenreChips();
 }
 
-if (btnModoLivre) {
-  btnModoLivre.onclick = () => {
-    kidsMode = !kidsMode;
-    localStorage.setItem("duckflix.modoLivre", String(kidsMode));
-    localStorage.setItem("kidsMode", JSON.stringify(kidsMode));
-    atualizarBtnKids();
-    showToast(kidsMode ? "Modo Livre Ativado (conteúdos +18 ocultos)" : "Modo Livre Desativado");
-    recarrregarConteudoHome();
-  };
-}
-
-if (desativarKids) {
-  desativarKids.onclick = () => {
-    kidsMode = false;
-    localStorage.setItem("duckflix.modoLivre", "false");
-    localStorage.setItem("kidsMode", JSON.stringify(false));
-    atualizarBtnKids();
-    showToast("Modo Livre Desativado");
-    recarrregarConteudoHome();
-  };
-}
-
-if (btnKids) {
-  btnKids.onclick = () => {
-    kidsMode = !kidsMode;
-    localStorage.setItem("duckflix.modoLivre", String(kidsMode));
-    localStorage.setItem("kidsMode", JSON.stringify(kidsMode));
-    atualizarBtnKids();
-    showToast(kidsMode ? "Modo Kids Ativado" : "Modo Kids Desativado");
-    recarrregarConteudoHome();
-  };
-}
+if (desativarKids) desativarKids.onclick = () => safety.setEnabled(false);
+if (btnKids) btnKids.onclick = () => safety.setEnabled(!safety.enabled());
+window.addEventListener('duckflix:modechange', () => {
+  kidsMode = safety.enabled();
+  const searching = !searchPage.classList.contains('hidden');
+  clearTimeout(debounceTimer);
+  document.getElementById('sugestoes').replaceChildren();
+  document.getElementById('sugestoes').classList.add('hidden');
+  searchList.replaceChildren(); favList.replaceChildren();
+  document.getElementById('historico').replaceChildren();
+  fecharPlayer();
+  document.getElementById('fecharTrailer').click();
+  document.getElementById('modalRoleta').classList.add('hidden');
+  roletaItemSelecionado = null;
+  atualizarBtnKids();
+  renderHistorico(); renderFavs(); recarrregarConteudoHome();
+  if (searching) buscar();
+  showToast(kidsMode ? 'Modo Livre ativo: +18 e títulos sem classificação ocultos.' : 'Modo Livre desativado');
+});
 
 /* ========================
    TOAST
@@ -268,10 +207,15 @@ function addHistorico(item) {
   renderHistorico();
 }
 
-function renderHistorico() {
+let historyRender = 0, favoritesRender = 0, homeRender = 0, playerRequest = 0;
+async function renderHistorico() {
+  const renderId = ++historyRender;
   const sec  = document.getElementById("historicoSection");
   const row  = document.getElementById("historico");
-  const lista = Object.values(historico).sort((a, b) => b.visto - a.visto);
+  row.replaceChildren();
+  let lista;
+  try { lista = await safety.filter(Object.values(historico).sort((a, b) => b.visto - a.visto)); } catch { return; }
+  if (renderId !== historyRender) return;
 
   if (lista.length === 0) {
     sec.classList.add("hidden");
@@ -346,7 +290,7 @@ const seriesCache = {};
 async function carregarDetalhesSerie(serieId) {
   if (seriesCache[serieId]) return seriesCache[serieId];
   try {
-    const res = await fetch(`https://api.themoviedb.org/3/tv/${serieId}?api_key=${apiKey}&language=pt-BR`);
+    const res = await safety.fetch(`https://api.themoviedb.org/3/tv/${serieId}?api_key=${apiKey}&language=pt-BR`);
     const data = await res.json();
     seriesCache[serieId] = data;
     return data;
@@ -359,6 +303,9 @@ async function carregarDetalhesSerie(serieId) {
    ABRIR PLAYER
 ======================== */
 async function abrirPlayer(item) {
+  const request = ++playerRequest, epoch = safety.revision();
+  try { if (!await safety.allowed(item)) { showToast('Título indisponível com o filtro atual.'); return; } } catch { return; }
+  if (request !== playerRequest || epoch !== safety.revision()) return;
   currentItem = item;
   const ehSerie = item.type === "serie";
 
@@ -383,6 +330,7 @@ async function abrirPlayer(item) {
     episodeControls.classList.add("hidden");
   }
 
+  if (request !== playerRequest || epoch !== safety.revision()) return;
   tituloPlayer.innerText = item.title;
   playerArea.classList.remove("hidden");
   overlay.classList.remove("hidden");
@@ -396,6 +344,7 @@ async function abrirPlayer(item) {
    FECHAR PLAYER
 ======================== */
 function fecharPlayer() {
+  playerRequest++;
   playerArea.classList.add("hidden");
   episodeControls.classList.add("hidden");
   player.innerHTML = "";
@@ -609,12 +558,12 @@ document.getElementById("btnTrailer").onclick = () => {
   if (!currentItem) return;
   const tipo = currentItem.type === "filme" ? "movie" : "tv";
 
-  fetch(`https://api.themoviedb.org/3/${tipo}/${currentItem.id}/videos?api_key=${apiKey}&language=pt-BR`)
+  safety.fetch(`https://api.themoviedb.org/3/${tipo}/${currentItem.id}/videos?api_key=${apiKey}&language=pt-BR`)
     .then(r => r.json())
     .then(d => {
       let trailer = d.results?.find(v => v.type === "Trailer" && v.site === "YouTube");
       if (!trailer) {
-        return fetch(`https://api.themoviedb.org/3/${tipo}/${currentItem.id}/videos?api_key=${apiKey}`)
+        return safety.fetch(`https://api.themoviedb.org/3/${tipo}/${currentItem.id}/videos?api_key=${apiKey}`)
           .then(r => r.json())
           .then(d2 => {
             trailer = d2.results?.find(v => v.type === "Trailer" && v.site === "YouTube");
@@ -641,9 +590,12 @@ document.getElementById("fecharTrailer").onclick = () => {
 /* ========================
    FAVORITOS — página
 ======================== */
-function renderFavs() {
+async function renderFavs() {
+  const renderId = ++favoritesRender;
   favList.innerHTML = "";
-  const lista = Object.values(favs);
+  let lista;
+  try { lista = await safety.filter(Object.values(favs)); } catch { return; }
+  if (renderId !== favoritesRender) return;
   if (lista.length === 0) {
     favList.innerHTML = `<p style="color:#aaa;padding:24px;text-align:center;width:100%;">Sua lista está vazia. Adicione filmes e séries clicando no coração dos títulos.</p>`;
     return;
@@ -702,9 +654,10 @@ document.getElementById("busca").addEventListener("input", (e) => {
   }
 
   debounceTimer = setTimeout(() => {
-    fetch(`https://api.themoviedb.org/3/search/multi?api_key=${apiKey}&language=pt-BR&query=${encodeURIComponent(q)}`)
+    safety.fetch(`https://api.themoviedb.org/3/search/multi?api_key=${apiKey}&language=pt-BR&query=${encodeURIComponent(q)}`)
       .then(r => r.json())
       .then(d => {
+        if (document.getElementById("busca").value.trim() !== q) return;
         sug.innerHTML = "";
         const res = d.results?.filter(i => i.poster_path).slice(0, 6) || [];
         if (res.length === 0) { sug.classList.add("hidden"); return; }
@@ -755,9 +708,10 @@ function buscar() {
   document.getElementById("sugestoes").classList.add("hidden");
   fecharTodasSecoes();
 
-  fetch(`https://api.themoviedb.org/3/search/multi?api_key=${apiKey}&language=pt-BR&query=${encodeURIComponent(q)}`)
+  safety.fetch(`https://api.themoviedb.org/3/search/multi?api_key=${apiKey}&language=pt-BR&query=${encodeURIComponent(q)}`)
     .then(r => r.json())
     .then(d => {
+      if (document.getElementById("busca").value.trim() !== q) return;
       searchList.innerHTML = "";
       const res = d.results?.filter(i => i.poster_path) || [];
       if (res.length === 0) {
@@ -768,7 +722,7 @@ function buscar() {
       searchPage.classList.remove("hidden");
       searchPage.scrollIntoView({ behavior: "smooth" });
     })
-    .catch(() => showToast("Erro na busca"));
+    .catch(error => { if (error.name !== "AbortError") showToast("Erro na busca"); });
 }
 document.getElementById("closeSearch").onclick = () => searchPage.classList.add("hidden");
 
@@ -783,10 +737,6 @@ function criarCard(container, item, tipoForcado = null) {
     return;
   }
 
-  // No Modo Kids / Modo Livre, oculta conteúdos adultos/violentos
-  if (kidsMode && isConteudoAdulto(item)) {
-    return;
-  }
 
   const card = document.createElement("button");
   card.className = "poster-card card";
@@ -830,12 +780,10 @@ function criarCard(container, item, tipoForcado = null) {
 /* ========================
    SISTEMA DE FILTRO DE GÊNEROS & ABAS
 ======================== */
-const generosAdultosChips = [27, 80, 53];
 function renderGenreChips() {
   if (!genreChipsContainer) return;
   genreChipsContainer.innerHTML = "";
   listaGenerosChips.forEach(g => {
-    if (kidsMode && generosAdultosChips.includes(g.id)) return; // Oculta chips de terror/crime no Modo Kids!
 
     const btn = document.createElement("button");
     btn.className = `chip ${g.id === "all" ? "active" : ""}`;
@@ -871,10 +819,10 @@ async function filtrarPorGenero(genreId, genreNome, genreIcon = "🏷️") {
   if (mainCategories) mainCategories.classList.add("hidden");
 
   try {
-    const kidsQuery = kidsMode ? "&with_genres=10751,10762&without_genres=27,80,53" : "";
+    const kidsQuery = "";
     const [resFilmes, resSeries] = await Promise.all([
-      fetch(`https://api.themoviedb.org/3/discover/movie?api_key=${apiKey}&language=pt-BR&sort_by=popularity.desc&with_genres=${genreId}${kidsQuery}`).then(r => r.json()),
-      fetch(`https://api.themoviedb.org/3/discover/tv?api_key=${apiKey}&language=pt-BR&sort_by=popularity.desc&with_genres=${genreId}${kidsQuery}`).then(r => r.json())
+      safety.fetch(`https://api.themoviedb.org/3/discover/movie?api_key=${apiKey}&language=pt-BR&sort_by=popularity.desc&with_genres=${genreId}${kidsQuery}`).then(r => r.json()),
+      safety.fetch(`https://api.themoviedb.org/3/discover/tv?api_key=${apiKey}&language=pt-BR&sort_by=popularity.desc&with_genres=${genreId}${kidsQuery}`).then(r => r.json())
     ]);
 
     const filmes = (resFilmes.results || []).filter(i => i.poster_path).slice(0, 14);
@@ -931,6 +879,9 @@ document.querySelectorAll(".tab-btn").forEach(btn => {
     const target = btn.dataset.target;
 
     limparFiltroGenero();
+    document.querySelectorAll('.tab-btn').forEach(tab => tab.classList.toggle('active', tab === btn));
+    favPage.classList.add('hidden');
+    searchPage.classList.add('hidden');
 
     if (target === "all") {
       document.querySelectorAll(".cat-section").forEach(sec => sec.classList.remove("hidden"));
@@ -945,7 +896,7 @@ document.querySelectorAll(".tab-btn").forEach(btn => {
           sec.classList.remove("hidden");
           setTimeout(() => sec.scrollIntoView({ behavior: "smooth" }), 50);
         } else {
-          sec.classList.remove("hidden");
+          sec.classList.add("hidden");
         }
       });
     }
@@ -1027,7 +978,7 @@ async function buscarPaginasAleatorias(endpoint, totalPaginas = 5) {
 
   const resultados = await Promise.all(
     [...paginas].map(pg =>
-      fetch(`${endpoint}&page=${pg}`)
+      safety.fetch(`${endpoint}&page=${pg}`)
         .then(r => r.json())
         .then(d => d.results || [])
         .catch(() => [])
@@ -1038,6 +989,7 @@ async function buscarPaginasAleatorias(endpoint, totalPaginas = 5) {
 }
 
 async function sortear(cat) {
+  const epoch = safety.revision();
   const endpoints = {
     filmes:   `https://api.themoviedb.org/3/movie/popular?api_key=${apiKey}&language=pt-BR`,
     series:   `https://api.themoviedb.org/3/discover/tv?api_key=${apiKey}&sort_by=popularity.desc&without_genres=16&language=pt-BR`,
@@ -1070,6 +1022,7 @@ async function sortear(cat) {
 
   const lista = await buscarPaginasAleatorias(endpoints[cat] || endpoints.filmes, 5);
 
+  if (epoch !== safety.revision()) return;
   // Remove loading
   const ld = document.getElementById("roletaLoadingDiv");
   if (ld) ld.remove();
@@ -1085,6 +1038,7 @@ async function sortear(cat) {
   img.classList.add("girando");
   let loops = 0;
   const spin = setInterval(() => {
+    if (epoch !== safety.revision()) { clearInterval(spin); return; }
     const rand = lista[Math.floor(Math.random() * lista.length)];
     img.src = `https://image.tmdb.org/t/p/w300${rand.poster_path}`;
     titulo.textContent = rand.title || rand.name;
@@ -1133,7 +1087,7 @@ async function buscar42Titulos(urlBuilder) {
   try {
     const pages = [1, 2, 3, 4];
     const results = await Promise.all(
-      pages.map(pg => fetch(urlBuilder(pg)).then(r => r.json()).catch(() => ({ results: [] })))
+      pages.map(pg => safety.fetch(urlBuilder(pg)).then(r => r.json()).catch(() => ({ results: [] })))
     );
     const todos = results.flatMap(p => p.results || []);
     const vistos = new Set();
@@ -1141,7 +1095,6 @@ async function buscar42Titulos(urlBuilder) {
     for (const item of todos) {
       if (item && item.id && item.poster_path && !vistos.has(item.id)) {
         if (isHentaiOuAdultoExtremo(item)) continue;
-        if (kidsMode && isConteudoAdulto(item)) continue;
         vistos.add(item.id);
         lista42.push(item);
         if (lista42.length === 42) break;
@@ -1154,19 +1107,19 @@ async function buscar42Titulos(urlBuilder) {
 }
 
 function recarrregarConteudoHome() {
+  const renderId = ++homeRender;
   const ids = ["filmes", "series", "animes"];
   ids.forEach(id => {
     const el = document.getElementById(id);
     if (el) el.innerHTML = "";
   });
 
-  const semAdultoParam = kidsMode ? "&without_genres=27,80,53" : "";
+  const semAdultoParam = "";
 
   // 42 Filmes Populares
-  buscar42Titulos(pg => kidsMode
-    ? `https://api.themoviedb.org/3/discover/movie?api_key=${apiKey}&language=pt-BR&sort_by=popularity.desc&without_genres=27,80,53&page=${pg}`
-    : `https://api.themoviedb.org/3/movie/popular?api_key=${apiKey}&language=pt-BR&page=${pg}`)
+  buscar42Titulos(pg => `https://api.themoviedb.org/3/movie/popular?api_key=${apiKey}&language=pt-BR&page=${pg}`)
     .then(filmes => {
+      if (renderId !== homeRender) return;
       const container = document.getElementById("filmes");
       if (container) filmes.forEach(m => criarCard(container, m, "filme"));
     })
@@ -1175,6 +1128,7 @@ function recarrregarConteudoHome() {
   // 42 Séries Live-Action (Sem animação)
   buscar42Titulos(pg => `https://api.themoviedb.org/3/discover/tv?api_key=${apiKey}&sort_by=popularity.desc&without_genres=16${semAdultoParam}&language=pt-BR&page=${pg}`)
     .then(series => {
+      if (renderId !== homeRender) return;
       const container = document.getElementById("series");
       if (container) series.forEach(s => criarCard(container, s, "serie"));
     })
@@ -1183,6 +1137,7 @@ function recarrregarConteudoHome() {
   // 42 Animes Japoneses
   buscar42Titulos(pg => `https://api.themoviedb.org/3/discover/tv?api_key=${apiKey}&with_genres=16&with_original_language=ja&without_genres=10762,10751,10749${semAdultoParam}&vote_count.gte=30&sort_by=popularity.desc&language=pt-BR&page=${pg}`)
     .then(animes => {
+      if (renderId !== homeRender) return;
       const container = document.getElementById("animes");
       if (container) animes.forEach(a => criarCard(container, a, "serie"));
     })

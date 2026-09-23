@@ -1,44 +1,40 @@
-﻿# DuckFlix Extensões
+# DuckFlix Extensões
 
-Abra `extensoes.html` pelo menu do DuckFlix. A página é estática e pode ser hospedada em HTTPS sem backend. Para desenvolvimento local, sirva a pasta com `python -m http.server 8080` e abra `http://localhost:8080/extensoes.html`.
+Abra `extensoes.html` pelo menu do DuckFlix. A página é estática e pode ser hospedada em HTTPS sem backend.
 
 ## Pesquisa e organização
 
-A pesquisa anterior filtrava somente os títulos carregados do FenixFlix, que não anuncia busca em seu manifesto. Agora qualquer pesquisa consulta `search/multi` do TMDB, com idioma `pt-BR`, páginas e exclusão de pessoas. Funciona ao digitar, pressionar Enter ou clicar em Buscar. Limpar a pesquisa restaura o catálogo selecionado. Respostas antigas são canceladas e não sobrescrevem a consulta mais recente.
+Catálogo e pesquisa usam o TMDB em português, com categorias de filmes, séries, animes e Minha Lista. Buscar funciona ao digitar, pressionar Enter ou clicar no botão. Limpar a pesquisa restaura a categoria selecionada. Respostas antigas são canceladas.
 
-O início oferece filmes e séries populares do TMDB. Os catálogos dos addons continuam no seletor de exploração. A pesquisa por texto é global, independentemente do catálogo selecionado. Encontrar um título no TMDB não significa que os addons tenham fontes disponíveis.
-
-`tmdb-config.js` centraliza a configuração TMDB que já existia em `script.js`; ambas as páginas carregam esse arquivo antes de seus scripts. Ao abrir um resultado, `external_ids` converte o ID TMDB para IMDb antes de consultar os addons. Filmes sem ID IMDb mantêm o identificador `tmdb:ID`. Séries IMDb usam episódios do Cinemeta; séries sem IMDb precisam de metadados do catálogo de origem.
+`tmdb-config.js` centraliza a configuração. Ao abrir um título, `external_ids` converte o ID TMDB em IMDb antes de consultar as fontes; os episódios vêm do Cinemeta. Encontrar um título não garante a disponibilidade de vídeo.
 
 ## Addons fixos
 
-Somente os addons de `FIXED_ADDONS`, em `extensoes.js`, são carregados:
-
-- FenixFlix: `https://fenixflix.fenixhub.online/manifest.json`.
-- Flix Streams: `https://flixnest.app/flix-streams/e30/manifest.json`.
-
-Não existe interface de instalação/remoção e a antiga seleção em `localStorage` é ignorada. Para alterar a seleção do site, edite `FIXED_ADDONS`. Falhas dos addons não bloqueiam a pesquisa no TMDB.
-
-O manifesto simples do Flix Streams responde, mas seu endpoint de fontes sem configuração retornou HTTP 400. O configurador oficial gera URLs com JSON em base64url: `e30` representa `{}`, usando os padrões públicos do serviço, sem credenciais ou acesso pago. Esse endpoint respondeu HTTP 200 com CORS. No filme consultado, retornou somente um link de assinatura, sem vídeo. Avisos e links externos sem `url`/`infoHash` não aparecem como fontes. Isso não garante disponibilidade para outros títulos ou planos.
+`FIXED_ADDONS`, em `extensoes.js`, contém FenixFlix, BestCine, Zeus e FrostStream. Não há interface de instalação, seleção de provedor ou links de assinatura. Flix Streams foi removido porque a resposta pública consultada retornou somente assinatura. Falhas dos addons não bloqueiam a pesquisa.
 
 ## Reprodução
 
-O player usa vídeo HTML5 e Hls.js. URLs `.m3u8` usam HLS nativo quando disponível ou Hls.js. URLs opacas são tentadas diretamente no player nativo. HTTP, torrents e fontes que exigem cabeçalhos personalizados ficam indisponíveis para reprodução. Não há proxy, transcodificação ou servidor de torrents.
+O player utiliza vídeo HTML5 e Hls.js. Cada fonte precisa decodificar uma imagem antes de aparecer como opção. Links HTTP são candidatos a HTTPS no mesmo host e passam pelo mesmo teste. Torrents, credenciais e cabeçalhos personalizados não são suportados. Não há proxy ou transcodificação.
 
-A disponibilidade depende do fornecedor, dos codecs e das permissões de acesso/CORS. A página só anuncia “Reproduzindo” após o evento `playing`. Fechar o modal ou trocar episódio/fonte encerra o player e invalida solicitações pendentes. Textos externos são inseridos como texto, e URLs são validadas.
+O player tem controles de reprodução, volume, velocidade, tela cheia, temporadas, episódios e avanço automático opcional. O progresso é salvo. Fechar o player ou trocar episódio encerra conexões e invalida solicitações pendentes. A disponibilidade depende do fornecedor, codecs e permissões CORS.
+
+## Visual e Modo Livre
+
+As três páginas carregam `site.css` por último: navegação, cores, cartões, busca, espaçamentos, controles e regras para celular vêm da mesma base. `site.js` fornece aviso de modo ativo e tela cheia. Os controles internos do iframe da página inicial pertencem ao fornecedor; o contêiner e a navegação de episódios foram ampliados.
+
+`content-policy.js` centraliza a preferência `duckflix.modoLivre` e sincroniza abas. Quando ativo, só exibe títulos com classificação brasileira TMDB conhecida e inferior a 18. Sem classificação ou com falha de consulta, o título fica oculto. Usa `movie/{id}/release_dates` e `tv/{id}/content_ratings`, seis consultas simultâneas e cache de cinco minutos por tipo/ID. Gênero não define idade. Conteúdo explicitamente adulto continua excluído mesmo com a chave desligada.
+
+O filtro cobre catálogo, busca, sugestões, sorteio, favoritos, histórico e abertura do player. Trocar o modo encerra a reprodução e invalida respostas anteriores, sem apagar dados salvos. A TV ao vivo fica indisponível enquanto o modo está ativo: não há classificação confiável por programa. O filtro depende de metadados externos; não analisa os vídeos e não tem PIN de controle parental.
 
 ## Validação
 
-`npm.cmd test` executa a suíte existente e testes de pesquisa remota, paginação, Enter/debounce, cancelamento de pesquisas antigas, recuperação de falhas, IDs IMDb, episódios, ambos os addons e encerramento do player. Os testes de vídeo usam um elemento simulado.
-
-Consultas reais ao TMDB retornaram resultados em português com CORS. Uma execução da página em DOM simulado, com requisições reais, encontrou “Harry Potter e a Ordem da Fênix”, converteu seu ID e exibiu cinco fontes do FenixFlix. Flix Streams respondeu sem vídeos para esse título. Os 34 testes passaram. Na sessão anterior, os controles de navegador/computador não estavam operacionais; reprodução com imagem e áudio e inspeção visual permanecem sem confirmação neste ambiente.
+`npm.cmd test` verifica pesquisa, paginação, cancelamento, classificação indicativa, recuperação de falhas, listas salvas, episódios e reprodução simulada. Os testes usam DOM e mídia simulados; não substituem a conferência visual e de áudio/vídeo em aparelhos reais. Nesta sessão não havia navegador conectado para essa conferência.
 
 ## Referências
 
 - [Busca TMDB](https://developer.themoviedb.org/reference/search-multi)
-- [IDs externos TMDB](https://developer.themoviedb.org/reference/movie-external-ids)
+- [Classificações de filmes](https://developer.themoviedb.org/reference/movie-release-dates)
+- [Classificações de séries](https://developer.themoviedb.org/reference/tv-series-content-ratings)
 - [Protocolo Stremio](https://github.com/Stremio/stremio-addon-sdk/blob/master/docs/protocol.md)
-- [Configurador oficial Flix Streams](https://flixnest.app/flix-streams/configure)
-- [Logo e atribuição TMDB](https://www.themoviedb.org/about/logos-attribution)
 
-A API do Nuvio gerencia conta e biblioteca, não arquivos de vídeo. Login/sincronização Nuvio não fazem parte desta página.
+A API do Nuvio gerencia conta e biblioteca, não arquivos de vídeo. Login e sincronização Nuvio não fazem parte desta página.

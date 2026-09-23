@@ -73,7 +73,7 @@
     signal?.addEventListener('abort', abort, { once: true });
     const timeout = setTimeout(abort, 18000);
     try {
-      const response = await fetch(url, { signal: controller.signal, credentials: 'omit', referrerPolicy: 'no-referrer' });
+      const response = await (globalThis.DuckFlixSafety?.fetch || fetch)(url, { signal: controller.signal, credentials: 'omit', referrerPolicy: 'no-referrer' });
       if (!response.ok) throw new Error(`O servidor respondeu HTTP ${response.status}.`);
       return await response.json();
     } catch (error) {
