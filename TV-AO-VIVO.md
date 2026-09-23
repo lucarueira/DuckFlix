@@ -7,7 +7,7 @@ o armazenamento dos filmes e não muda favoritos, histórico ou o player existen
 ## Publicação
 
 Publique `tv.html`, `tv.css`, `tv-health.js` e `tv.js` junto com as versões atualizadas de
-`index.html` e `style.css`, mantendo a pasta `img`. Funciona em hospedagem
+`index.html`, `inicio.css`, `duckflix.html`, `style.css`, `site.css`, `site.js` e `content-policy.js`, mantendo a pasta `img`. Funciona em hospedagem
 estática, inclusive GitHub Pages, sem chave de API ou servidor adicional.
 
 Fontes:

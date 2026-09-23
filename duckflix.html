@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DuckFlix</title>
+  <link rel="icon" type="image/png" href="img/favicon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="site.css">
+</head>
+
+<body>
+
+  <!-- TOAST -->
+  <div id="toast"></div>
+
+  <!-- OVERLAY ESCURO -->
+  <div id="overlay" class="hidden"></div>
+
+  <!-- BOTÃO VOLTAR AO TOPO -->
+  <button id="btnTopo" title="Voltar ao topo">▲</button>
+
+  <!-- BOTÃO FLUTUANTE ROLETA -->
+  <button id="btnRoleta" title="Surpreenda-me">Surpreenda-me</button>
+
+  <!-- ========================
+     MODAL ROLETA
+======================== -->
+  <div id="modalRoleta" class="hidden">
+    <div class="roleta-box">
+      <h2>Surpreenda-me</h2>
+      <p>Escolha uma categoria e deixe a sorte decidir:</p>
+
+      <div class="roleta-categorias">
+        <button class="cat-btn" data-cat="filmes">Filmes</button>
+        <button class="cat-btn" data-cat="series">Séries</button>
+        <button class="cat-btn" data-cat="animes">Animes</button>
+      </div>
+
+      <div id="roletaDisplay" class="hidden">
+        <div id="roletaSpinner">
+          <img id="roletaImg" src="" alt="">
+          <p id="roletaTitulo"></p>
+          <span id="roletaNota"></span>
+        </div>
+        <button id="btnAssistirRoleta" class="hidden">Assistir agora</button>
+        <button id="btnSortearNovamente" class="hidden">Sortear novamente</button>
+      </div>
+
+      <button id="fecharRoleta">Fechar</button>
+    </div>
+  </div>
+
+  <!-- ========================
+     MODAL TRAILER
+======================== -->
+  <div id="modalTrailer" class="hidden">
+    <div class="trailer-box">
+      <div class="trailer-top">
+        <h3 id="trailerTitulo">Trailer</h3>
+        <button id="fecharTrailer">&times;</button>
+      </div>
+      <iframe id="trailerFrame" src="" allowfullscreen></iframe>
+    </div>
+  </div>
+
+  <!-- ========================
+     HEADER UNIFICADO DUCKFLIX
+  ======================== -->
+  <header class="header">
+    <a class="brand logo" href="index.html" aria-label="DuckFlix — Início">
+      <img src="img/logo_duckflix.png" alt="DuckFlix" class="brand-logo" width="180" height="80">
+    </a>
+    <nav class="main-nav" aria-label="Navegação Principal">
+      <a href="duckflix.html" class="nav-item active" aria-current="page">DuckFlix</a>
+      <a href="tv.html" class="nav-item nav-tv">DUCKTV</a>
+      <a href="extensoes.html" class="nav-item nav-ext">DuckFlix Extensões</a>
+    </nav>
+    <div class="header-right">
+      <button id="btnModoLivre" class="btn-modo-livre" type="button" title="Modo Livre: Oculta conteúdos +18">MODO LIVRE</button>
+    </div>
+  </header>
+
+  <!-- ========================
+     HERO CINEMATOGRÁFICO
+  ======================== -->
+  <section class="hero hero-cinematic">
+    <div class="hero-content">
+      <h1 class="hero-title">DuckFlix</h1>
+
+      <div class="busca-wrap">
+        <div class="busca">
+          <input id="busca" placeholder="Buscar filmes, séries, animes..." autocomplete="off">
+          <button id="btnBusca" aria-label="Buscar"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg></button>
+        </div>
+        <div id="sugestoes" class="hidden"></div>
+      </div>
+    </div>
+
+    <!-- ABAS DE NAVEGAÇÃO DE CATEGORIAS -->
+    <nav class="nav-tabs-container" aria-label="Filtrar por tipo">
+      <div class="nav-tabs">
+        <button class="tab-btn active" data-target="all">Todos</button>
+        <button class="tab-btn" data-target="sec-filmes">Filmes</button>
+        <button class="tab-btn" data-target="sec-series">Séries</button>
+        <button class="tab-btn" data-target="sec-animes">Animes</button>
+        <button class="tab-btn" data-target="sec-fav">Minha Lista</button>
+      </div>
+    </nav>
+  </section>
+
+  <!-- ========================
+     PLAYER
+======================== -->
+  <section id="playerArea" class="hidden">
+
+    <div class="playerTop">
+      <h2 id="tituloPlayer"></h2>
+      <div class="player-top-btns">
+        <button type="button" data-fullscreen="playerArea" class="secondary">⛶ Tela cheia</button>
+        <button id="btnTrailer">Trailer</button>
+        <button id="fecharPlayer">&times;</button>
+      </div>
+    </div>
+
+    <!-- CONTROLES DE EPISÓDIO -->
+    <div id="episodeControls" class="hidden">
+
+      <div class="ep-info">
+        <span>Temporada <strong id="numTemporada">1</strong> <small id="totalTemporadas"></small></span>
+        <span>Episódio <strong id="numEpisodio">1</strong> <small id="totalEpisodios"></small></span>
+      </div>
+
+      <div class="ep-btns">
+        <button id="btnTemporadaMenos">Temp. Anterior</button>
+        <button id="btnEpMenos">Anterior</button>
+        <button id="btnEpMais">Próximo</button>
+        <button id="btnTemporadaMais">Próxima Temp.</button>
+      </div>
+
+      <div class="ep-goto">
+        <label>Ir para:</label>
+        <input id="inputTemp" type="number" min="1" value="1" placeholder="Temp.">
+        <input id="inputEp" type="number" min="1" value="1" placeholder="Ep.">
+        <button id="btnGoTo">Ir</button>
+      </div>
+
+    </div>
+
+    <div id="player"></div>
+
+  </section>
+
+  <!-- ========================
+     MINHA LISTA (FAVORITOS)
+======================== -->
+  <section id="favPage" class="hidden">
+    <div class="favHeader">
+      <h2>Minha Lista</h2>
+      <button id="closeFav">&times;</button>
+    </div>
+    <div id="favList" class="catalog-grid"></div>
+  </section>
+
+  <!-- ========================
+     BUSCA PAGE
+======================== -->
+  <section id="searchPage" class="hidden">
+    <div class="favHeader">
+      <h2>Resultados da Busca</h2>
+      <button id="closeSearch">&times;</button>
+    </div>
+    <div id="searchList" class="catalog-grid"></div>
+  </section>
+
+  <main class="home-main">
+    <!-- ========================
+       CONTINUAR ASSISTINDO
+    ======================== -->
+    <div id="historicoSection" class="hidden">
+      <div class="section-heading">
+        <div>
+          <h2>Continuar Assistindo</h2>
+          <span class="sub-muted">RECOLHA DE ONDE PAROU</span>
+        </div>
+        <button id="limparHistorico" class="text-button">Limpar</button>
+      </div>
+      <div class="continuar-carousel" id="historico"></div>
+    </div>
+
+    <!-- ========================
+       GRADES DE 42 TÍTULOS (SEM CARROSSEL)
+    ======================== -->
+    <div id="mainCategories">
+      <section class="cat-section" id="sec-filmes">
+        <div class="section-heading">
+          <div>
+            <h2>Filmes Populares</h2>
+            <span class="sub-muted">42 TÍTULOS PARA EXPLORAR</span>
+          </div>
+        </div>
+        <div class="catalog-grid" id="filmes"></div>
+      </section>
+
+      <section class="cat-section" id="sec-series">
+        <div class="section-heading">
+          <div>
+            <h2>Séries em Alta</h2>
+            <span class="sub-muted">42 TÍTULOS PARA EXPLORAR</span>
+          </div>
+        </div>
+        <div class="catalog-grid" id="series"></div>
+      </section>
+
+      <section class="cat-section" id="sec-animes">
+        <div class="section-heading">
+          <div>
+            <h2>Animes em Destaque</h2>
+            <span class="sub-muted">42 TÍTULOS PARA EXPLORAR</span>
+          </div>
+        </div>
+        <div class="catalog-grid" id="animes"></div>
+      </section>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <p>DuckFlix © 2026 • Feito com dedicação pelo <strong>Mamute</strong> • Versão <strong>2.5</strong></p>
+  </footer>
+
+  <script src="tmdb-config.js"></script>
+  <script src="content-policy.js"></script>
+  <script src="site.js"></script>
+  <script src="script.js"></script>
+</body>
+
+</html>

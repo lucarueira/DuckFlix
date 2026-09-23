@@ -2,6 +2,8 @@
 
 Abra `extensoes.html` pelo menu do DuckFlix. A página é estática e pode ser hospedada em HTTPS sem backend.
 
+`index.html` é a entrada minimalista, com links para `duckflix.html` (catálogo original), `tv.html` e `extensoes.html`. O logo das páginas volta para essa entrada.
+
 ## Pesquisa e organização
 
 Catálogo e pesquisa usam o TMDB em português, com categorias de filmes, séries, animes e Minha Lista. Buscar funciona ao digitar, pressionar Enter ou clicar no botão. Limpar a pesquisa restaura a categoria selecionada. Respostas antigas são canceladas.
@@ -17,6 +19,14 @@ Catálogo e pesquisa usam o TMDB em português, com categorias de filmes, série
 O player utiliza vídeo HTML5 e Hls.js. Cada fonte precisa decodificar uma imagem antes de aparecer como opção. Links HTTP são candidatos a HTTPS no mesmo host e passam pelo mesmo teste. Torrents, credenciais e cabeçalhos personalizados não são suportados. Não há proxy ou transcodificação.
 
 O player tem controles de reprodução, volume, velocidade, tela cheia, temporadas, episódios e avanço automático opcional. O progresso é salvo. Fechar o player ou trocar episódio encerra conexões e invalida solicitações pendentes. A disponibilidade depende do fornecedor, codecs e permissões CORS.
+
+## Lista de reprodução de filmes
+
+O botão “+ Na fila” adiciona filmes à lista, separada dos favoritos. É possível reordenar, remover e limpar. A lista fica salva em `duckflix.extensoes.movieQueue`; recarregar a página não inicia reprodução sozinho. Clique em “Reproduzir lista” para começar.
+
+`extensoes-queue.js` controla uma sessão finita, sem repetir filmes automaticamente. Ao terminar um filme, abre o próximo; se falhar, tenta fontes alternativas e então pula. Na sequência, são verificadas até 36 fontes por filme, com limite de 90 segundos sem conseguir iniciar/recuperar o vídeo. Filmes bloqueados pelo Modo Livre são pulados, mantendo os dados salvos. Bloqueio de autoplay solicita um toque em “Continuar reprodução”, sem pular o filme.
+
+“Pular filme” avança manualmente. “Parar sequência” mantém o filme atual tocando e desliga o avanço. Fechar o player, iniciar um título fora da lista ou trocar o Modo Livre encerra a sequência. Identificadores de sessão impedem que eventos atrasados avancem a lista errada.
 
 ## Visual e Modo Livre
 

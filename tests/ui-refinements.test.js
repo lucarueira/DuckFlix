@@ -4,7 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 test('Index page categories strictly limited to Filmes, Séries, and Animes', () => {
-  const indexHtml = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
+  const indexHtml = fs.readFileSync(path.join(__dirname, '..', 'duckflix.html'), 'utf8');
 
   // Verify sec-filmes, sec-series, and sec-animes exist
   assert.match(indexHtml, /id="sec-filmes"/);
@@ -24,7 +24,7 @@ test('Duplicate Surpreenda-me pseudo-element is removed from style.css', () => {
 });
 
 test('Minha Lista / Favoritos removed from top header navigation on all pages', () => {
-  const indexHtml = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
+  const indexHtml = fs.readFileSync(path.join(__dirname, '..', 'duckflix.html'), 'utf8');
   const tvHtml = fs.readFileSync(path.join(__dirname, '..', 'tv.html'), 'utf8');
   const extensoesHtml = fs.readFileSync(path.join(__dirname, '..', 'extensoes.html'), 'utf8');
 
@@ -38,7 +38,7 @@ test('Minha Lista / Favoritos removed from top header navigation on all pages', 
     assert.doesNotMatch(headerContent, />Favoritos</i, `No Favoritos in ${page} header`);
   };
 
-  checkHeaderNoList(indexHtml, 'index.html');
+  checkHeaderNoList(indexHtml, 'duckflix.html');
   checkHeaderNoList(tvHtml, 'tv.html');
   checkHeaderNoList(extensoesHtml, 'extensoes.html');
 });
@@ -81,7 +81,7 @@ test('Footer is 100% unified in background, padding, and alignment across all pa
 });
 
 test('Minha Lista tab exists on both Início and Extensões with heart favorite icons', () => {
-  const indexHtml = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
+  const indexHtml = fs.readFileSync(path.join(__dirname, '..', 'duckflix.html'), 'utf8');
   const extensoesHtml = fs.readFileSync(path.join(__dirname, '..', 'extensoes.html'), 'utf8');
   const scriptJs = fs.readFileSync(path.join(__dirname, '..', 'script.js'), 'utf8');
   const extensoesAppJs = fs.readFileSync(path.join(__dirname, '..', 'extensoes-app.js'), 'utf8');
@@ -111,7 +111,7 @@ test('42 titles configured for exploration on both Início and Extensões', () =
 });
 
 test('Continuar Assistindo has matching aesthetics (subtitle RECOLHA DE ONDE PAROU) across both pages', () => {
-  const indexHtml = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
+  const indexHtml = fs.readFileSync(path.join(__dirname, '..', 'duckflix.html'), 'utf8');
   const extensoesHtml = fs.readFileSync(path.join(__dirname, '..', 'extensoes.html'), 'utf8');
   const styleCss = fs.readFileSync(path.join(__dirname, '..', 'style.css'), 'utf8');
   const extensoesCss = fs.readFileSync(path.join(__dirname, '..', 'extensoes.css'), 'utf8');
@@ -124,7 +124,7 @@ test('Continuar Assistindo has matching aesthetics (subtitle RECOLHA DE ONDE PAR
 });
 
 test('MODO LIVRE button exists and is styled on both Início and Extensões', () => {
-  const indexHtml = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
+  const indexHtml = fs.readFileSync(path.join(__dirname, '..', 'duckflix.html'), 'utf8');
   const extensoesHtml = fs.readFileSync(path.join(__dirname, '..', 'extensoes.html'), 'utf8');
   const styleCss = fs.readFileSync(path.join(__dirname, '..', 'style.css'), 'utf8');
   const extensoesCss = fs.readFileSync(path.join(__dirname, '..', 'extensoes.css'), 'utf8');
@@ -153,7 +153,7 @@ test('Watch dialog in Extensões has expansive Prime Video dimensions', () => {
 });
 
 test('Início displays 42 titles in catalog-grid with Extensões poster-card aesthetics and ▶ ASSISTIR overlay', () => {
-  const indexHtml = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
+  const indexHtml = fs.readFileSync(path.join(__dirname, '..', 'duckflix.html'), 'utf8');
   const styleCss = fs.readFileSync(path.join(__dirname, '..', 'style.css'), 'utf8');
   const scriptJs = fs.readFileSync(path.join(__dirname, '..', 'script.js'), 'utf8');
 

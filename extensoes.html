@@ -18,6 +18,7 @@
   <script defer src="extensoes.js"></script>
   <script defer src="extensoes-media.js"></script>
   <script defer src="extensoes-player.js"></script>
+  <script defer src="extensoes-queue.js"></script>
   <script defer src="extensoes-app.js"></script>
 </head>
 <body>
@@ -30,7 +31,7 @@
       <img src="img/logo_duckflix.png" alt="DuckFlix" class="brand-logo" width="180" height="80">
     </a>
     <nav class="main-nav" aria-label="Navegação Principal">
-      <a href="index.html" class="nav-item">Início</a>
+      <a href="duckflix.html" class="nav-item">DuckFlix</a>
       <a href="tv.html" class="nav-item nav-tv">DUCKTV</a>
       <a href="extensoes.html" class="nav-item nav-ext active" aria-current="page">DuckFlix Extensões</a>
     </nav>
@@ -44,6 +45,17 @@
         <h1 class="hero-title">DuckFlix <span>Extensões</span></h1>
         <form id="search-form" role="search"><label class="sr-only" for="catalog-search">Buscar filmes, séries e animes</label><div class="search-row"><span aria-hidden="true">⌕</span><input id="catalog-search" type="search" placeholder="Buscar filmes, séries e animes..." maxlength="120" autocomplete="off"><button class="primary" type="submit">Buscar</button></div></form>
       </div>
+    </section>
+
+    <section class="movie-queue" aria-labelledby="movie-queue-title">
+      <div class="section-heading">
+        <div><span class="eyebrow">SUA SESSÃO, NA SUA ORDEM</span><h2 id="movie-queue-title">Lista de reprodução</h2></div>
+        <button id="queue-start" type="button" class="primary" disabled>▶ Reproduzir lista</button>
+      </div>
+      <p class="muted">Adicione filmes pelo botão “+ Na fila”. Ao terminar, o próximo começa. Se não funcionar, a lista segue em frente.</p>
+      <p id="queue-status" role="status" aria-live="polite">Sua lista está vazia.</p>
+      <details id="queue-details"><summary>Ver e organizar <span id="queue-count">0</span> filmes</summary><ol id="queue-list" class="queue-list"></ol></details>
+      <div class="queue-actions"><button id="queue-stop" type="button" class="secondary" hidden>Parar sequência</button><button id="queue-clear" type="button" class="text-button" disabled>Limpar lista</button></div>
     </section>
 
     <!-- CONTINUAR ASSISTINDO -->
@@ -99,6 +111,12 @@
         <label class="autoplay-toggle"><input id="autoplay-next" type="checkbox" checked><span>Próximo episódio automático</span></label>
         <div id="episode-list" class="episode-list"></div>
         <div class="episode-navigation"><button id="prev-episode" class="secondary" disabled>← Anterior</button><button id="next-episode" class="primary" disabled>Próximo →</button></div>
+      </aside>
+      <aside id="movie-queue-panel" class="episode-panel movie-queue-panel" hidden aria-labelledby="player-queue-title">
+        <div class="episode-heading"><h3 id="player-queue-title">Sua lista de filmes</h3></div>
+        <p id="player-queue-status" role="status" aria-live="polite"></p>
+        <div class="queue-actions"><button id="queue-next" type="button" class="primary">Pular filme →</button><button id="player-queue-stop" type="button" class="secondary">Parar sequência</button></div>
+        <ol id="player-queue-list" class="queue-list"></ol>
       </aside>
     </div>
   </dialog>

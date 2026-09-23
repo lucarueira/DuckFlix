@@ -5,7 +5,7 @@ const fs = require('node:fs');
 const { parseHTML } = require('linkedom');
 const settle = () => new Promise(resolve => setImmediate(resolve));
 test('home mode toggle removes adult catalog, autocomplete, saved entries and playback without deleting history', async () => {
-  const { window, document } = parseHTML(fs.readFileSync('index.html', 'utf8'));
+  const { window, document } = parseHTML(fs.readFileSync('duckflix.html', 'utf8'));
   const el = id => document.getElementById(id);
   const saved = { 18: { id: 18, title: 'Adult film', type: 'filme', poster: '/adult.jpg', visto: 1 }, 12: { id: 12, title: 'Family film', type: 'filme', poster: '/family.jpg', visto: 2 } };
   const storage = new Map([['favs', JSON.stringify(saved)], ['historico', JSON.stringify(saved)]]);

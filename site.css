@@ -196,3 +196,42 @@ html[data-safe-mode='true'] .channels-section :is(.filters, .verification-bar, .
   .player-shell:fullscreen { height: 100dvh !important; }
 }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; transition: none !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; } }
+
+/* Saved movie queue, shared between the catalog and the player. */
+.movie-queue { border: 1px solid var(--line); border-radius: 16px; padding: 24px; background: #14141d; margin-bottom: 40px; }
+.movie-queue .section-heading { margin-bottom: 8px; }
+.movie-queue > p, #player-queue-status { color: var(--muted); font-size: 13px; line-height: 1.7; }
+.movie-queue .eyebrow { display: block; margin-bottom: 8px; }
+.movie-queue summary { cursor: pointer; min-height: 44px; padding-block: 12px; font-size: 14px; }
+.movie-queue summary:focus-visible { outline: 2px solid #ff718d; outline-offset: 3px; }
+.queue-list { list-style: none; padding: 0; margin: 10px 0; max-height: 400px; overflow-y: auto; }
+.queue-item { display: flex; align-items: center; gap: 14px; padding: 12px 0; border-bottom: 1px solid var(--line); }
+.queue-item[aria-current='true'] { color: #ff718d; }
+.queue-position { color: #747488; font-size: 12px; font-variant-numeric: tabular-nums; }
+.queue-copy { flex: 1; min-width: 0; }
+.queue-copy strong { display: block; font-size: 14px; line-height: 1.5; overflow-wrap: anywhere; }
+.queue-copy small { display: block; font-size: 11px; margin-top: 4px; color: var(--muted); }
+.queue-actions, .queue-item-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+.queue-actions:has(> [hidden]):has(> :disabled) { display: none; }
+.queue-item-actions button { border: 1px solid var(--line); background: #1b1b27; }
+.queue-item-actions button:disabled { opacity: .3; }
+.movie-queue-panel { padding: 22px 16px; }
+.movie-queue-panel .queue-list { max-height: none; }
+.movie-queue-panel .queue-actions button { flex: 1; font-size: 12px; }
+.poster-open { width: 100%; display: flex; flex-direction: column; padding: 0; background: transparent; border: 0; color: inherit; text-align: left; border-radius: 12px; }
+.poster-open:focus-visible .poster::after { opacity: 1; }
+.queue-add { width: 100%; min-height: 44px; border: 1px solid var(--line); border-radius: 9px; margin-top: 12px; background: #181820; color: #c8c8d8; font-size: 12px; }
+.queue-add:not(:disabled):hover { border-color: #ff174480; color: white; }
+.queue-add:disabled { color: #94c9ad; cursor: default; }
+.watch-layout:has(.movie-queue-panel:not([hidden])) { grid-template-columns: minmax(0, 1fr) 280px; }
+@media (max-width: 1100px) {
+  .watch-layout:has(.movie-queue-panel:not([hidden])) { display: block; overflow-y: auto; }
+  .movie-queue-panel .queue-list { max-height: 320px; }
+}
+@media (max-width: 600px) {
+  .movie-queue { padding: 18px; }
+  .movie-queue .section-heading { flex-direction: column; }
+  .movie-queue .section-heading > button { width: 100%; }
+  .queue-item { flex-wrap: wrap; gap: 10px; }
+  .queue-item-actions { margin-left: auto; }
+}

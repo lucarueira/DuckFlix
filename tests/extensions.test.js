@@ -27,7 +27,7 @@ test('resource restrictions respect media types and prefixes', () => {
 async function setup(t, override) {
   const app = fixture(), { window, document, el, media } = app;
   const calls = [], timers = new Map(); let timerID = 0;
-  window.DuckFlixTMDB = { apiKey: 'test' }; window.DuckFlixExtensions = ext;
+  window.DuckFlixQueue = require('../extensoes-queue.js'); window.DuckFlixTMDB = { apiKey: 'test' }; window.DuckFlixExtensions = ext;
   const customSetTimeout = (callback, delay) => { const id = ++timerID; timers.set(id, { callback, delay }); return id; };
   const customClearTimeout = id => timers.delete(id);
   window.DuckFlixPlayer = { create: options => playerCore.create({ ...options, media, setTimeout: customSetTimeout, clearTimeout: customClearTimeout }) };
@@ -71,8 +71,31 @@ test('simple anime category requests Japanese animation, without exposing addon 
   assert.match(app.el('catalog-grid').textContent, /Anime/);
   assert.doesNotMatch(app.document.body.textContent, /FenixFlix|Flix Streams|BestCine|Zeus|FrostStream/);
 });
+
+test('catalog queue controls add movies, reorder the session, skip manually and stop on close', async t => {
+  const app = await setup(t);
+  const addFirst = app.el('catalog-grid').querySelector('.queue-add');
+  addFirst.click(); await settle();
+  assert.equal(app.el('queue-count').textContent, '1');
+  assert.equal(addFirst.disabled, true);
+  await app.search('Second');
+  app.el('catalog-grid').querySelector('.queue-add').click(); await settle();
+  assert.equal(app.el('queue-count').textContent, '2');
+  app.el('queue-list').firstElementChild.querySelectorAll('button')[1].click(); await settle();
+  assert.match(app.el('queue-list').firstElementChild.textContent, /Second/);
+  app.el('queue-start').click(); await settle();
+  assert.equal(app.el('movie-queue-panel').hidden, false);
+  assert.match(app.el('watch-title').textContent, /Second/);
+  app.el('queue-next').click(); await settle();
+  assert.match(app.el('watch-title').textContent, /Ação/);
+  app.el('close-player').click(); await settle();
+  assert.equal(app.el('queue-stop').hidden, true);
+  assert.equal(app.el('queue-count').textContent, '2');
+  app.document.querySelector('[data-category="series"]').click(); await settle();
+  assert.equal(app.el('catalog-grid').querySelector('.queue-add'), null);
+});
 test('film identities query all free addons, deduplicate and display only verified anonymous options', async t => {
-  const app = await setup(t); app.el('catalog-grid').firstElementChild.click(); await settle();
+  const app = await setup(t); app.el('catalog-grid').querySelector('.poster-open').click(); await settle();
   assert(app.calls.some(call => call.url.includes('/movie/1/external_ids')));
   for (const addon of ext.FIXED_ADDONS) assert(app.calls.some(call => call.url === ext.resourceURL(addon.url, 'stream', 'movie', 'tt1')));
   assert.equal(app.el('stream-list').children.length, 1); assert.equal(app.probes.length, 2);
@@ -81,7 +104,7 @@ test('film identities query all free addons, deduplicate and display only verifi
 });
 test('series resolve episodes and automatically query the next episode', async t => {
   const app = await setup(t); app.document.querySelector('[data-category="series"]').click(); await settle();
-  app.el('catalog-grid').firstElementChild.click(); await settle();
+  app.el('catalog-grid').querySelector('.poster-open').click(); await settle();
   assert.equal(app.el('episode-list').children.length, 2);
   app.video.dispatchEvent(new app.window.Event('ended')); await settle();
   assert(app.calls.some(call => call.url.includes('/stream/series/tt3%3A1%3A2.json')));
@@ -101,7 +124,7 @@ test('search failures release loading state and another query recovers', async t
 });
 test('player controls auto-hide after inactivity during playback and wake on user activity', async t => {
   const app = await setup(t);
-  app.el('catalog-grid').firstElementChild.click();
+  app.el('catalog-grid').querySelector('.poster-open').click();
   await settle();
   const shell = app.el('player-shell');
   const controls = app.el('video-controls');

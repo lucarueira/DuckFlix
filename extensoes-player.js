@@ -5,10 +5,23 @@
     const value = Math.floor(seconds), hours = Math.floor(value / 3600), minutes = Math.floor(value % 3600 / 60), rest = String(value % 60).padStart(2, '0');
     return hours ? `${hours}:${String(minutes).padStart(2, '0')}:${rest}` : `${minutes}:${rest}`;
   }
-  function create({ document, getDetails, getStreams, media = globalThis.DuckFlixMedia, setTimeout = globalThis.setTimeout, clearTimeout = globalThis.clearTimeout }) {
+  function create({ document, getDetails, getStreams, onMovieFinished = () => {}, onClose = () => {}, onManualOpen = () => {}, media = globalThis.DuckFlixMedia, setTimeout = globalThis.setTimeout, clearTimeout = globalThis.clearTimeout }) {
     const $ = id => document.getElementById(id), video = $('extension-video'), dialog = $('watch-dialog'), shell = $('player-shell');
     let item, episodes = [], episodeIndex = -1, detailAbort, scanAbort, scanState, connection, currentSource, verified = [], sourceNumber = 0, playbackVersion = 0, stallTimer;
     let resumeAt = 0, lastPosition = 0, detailsReady = false;
+    let queueToken = null, movieFinished = false, movieTimer;
+    function finishMovie(reason) {
+      if (queueToken === null || movieFinished) return;
+      movieFinished = true; clearTimeout(movieTimer);
+      detailAbort?.abort(); scanAbort?.abort(); stopPlayback();
+      placeholder(reason === 'failed' ? 'Passando para o próximo filme…' : 'Filme concluído.');
+      status('play-message', reason === 'failed' ? 'Filme indisponível. Passando para o próximo da lista…' : 'Filme concluído.');
+      onMovieFinished({ token: queueToken, reason });
+    }
+    function watchMovieTimeout() {
+      clearTimeout(movieTimer);
+      if (queueToken !== null) movieTimer = setTimeout(() => finishMovie('failed'), 90000);
+    }
     let controlsTimer = null, isInteracting = false, lastTouchTime = 0;
     const node = (tag, text, cls) => { const el = document.createElement(tag); if (text !== undefined) el.textContent = text; if (cls) el.className = cls; return el; };
     const status = (id, text) => { $(id).textContent = text; };
@@ -73,7 +86,7 @@
     }
     function stopPlayback() {
       saveProgress(true);
-      playbackVersion++; clearTimeout(stallTimer); clearTimeout(controlsTimer); connection?.dispose(); connection = null; currentSource = null;
+      playbackVersion++; clearTimeout(stallTimer); stallTimer = null; clearTimeout(controlsTimer); connection?.dispose(); connection = null; currentSource = null;
       setBuffering(false);
       if (shell) shell.classList.remove('controls-hidden');
       const controls = $('video-controls');
@@ -82,6 +95,7 @@
       $('video-seek').value = '0'; $('video-seek').disabled = true; status('video-time', '0:00 / 0:00');
     }
     function close() {
+      clearTimeout(movieTimer); queueToken = null; onClose();
       saveProgress(true);
       clearTimeout(controlsTimer); detailAbort?.abort(); scanAbort?.abort(); stopPlayback();
       if (dialog.open) dialog.close();
@@ -99,12 +113,17 @@
       if (state !== scanState || state.controller.signal.aborted) return;
       const busy = !state.fetched || state.active > 0;
       const remaining = state.queue.length > 0;
+      if (!busy && !verified.length && queueToken !== null && !movieFinished) {
+        if (remaining && state.attempted < 36) { state.limit = Math.min(36, state.limit + 12); pump(state); return; }
+        finishMovie('failed'); return;
+      }
       $('scan-more').hidden = busy || !remaining;
       status('stream-status', busy ? `Verificando reprodução… ${verified.length ? `${verified.length} opções disponíveis.` : ''}` : verified.length ? `${verified.length} ${verified.length === 1 ? 'opção pronta' : 'opções prontas'} para assistir.` : 'Nenhuma opção reproduziu imagem neste navegador.');
       if (!busy && !remaining && !verified.length) placeholder('Não encontramos uma opção funcionando agora. Tente verificar novamente mais tarde.');
       else if (!busy && !verified.length) placeholder('As primeiras opções não responderam. Use “Verificar mais opções” para continuar.');
     }
     function failedSource(source, at) {
+      watchMovieTimeout();
       verified = verified.filter(entry => entry !== source);
       resumeAt = at;
       stopPlayback(); drawSources();
@@ -123,6 +142,7 @@
         mode: source.mode, autoplay: true, startAt: at,
         onReady: () => {
           if (version !== playbackVersion) return;
+          clearTimeout(movieTimer);
           $('player-placeholder').hidden = true; $('video-controls').hidden = false;
           setBuffering(false);
           updateTime();
@@ -130,6 +150,7 @@
         },
         onBlocked: () => {
           if (version !== playbackVersion) return;
+          clearTimeout(movieTimer);
           $('start-video').hidden = false; status('play-message', 'Toque em continuar para iniciar o vídeo.');
         },
         onError: () => { if (version === playbackVersion) failedSource(source, Math.max(at, lastPosition)); }
@@ -196,6 +217,10 @@
       loadStreams();
     }
     async function open(selected, options = {}) {
+      clearTimeout(movieTimer);
+      queueToken = options.queueToken ?? null; movieFinished = false;
+      if (queueToken === null) onManualOpen();
+      watchMovieTimeout();
       detailAbort?.abort(); scanAbort?.abort(); stopPlayback();
       const controller = new AbortController(); detailAbort = controller;
       item = selected; detailsReady = false; episodes = []; episodeIndex = -1; verified = []; scanState = null; drawSources();
@@ -227,7 +252,7 @@
           }
           chooseEpisode(targetIndex);
         } else { detailsReady = true; loadStreams(); }
-      } catch (error) { if (!controller.signal.aborted) { placeholder(error.message); status('stream-status', 'Não foi possível abrir este título.'); } }
+      } catch (error) { if (!controller.signal.aborted) { placeholder(error.message); status('stream-status', 'Não foi possível abrir este título.'); finishMovie('failed'); } }
     }
     function updateTime() {
       const duration = Number(video.duration), current = Number(video.currentTime) || 0;
@@ -266,7 +291,7 @@
     }
     $('close-player').addEventListener('click', close);
     dialog.addEventListener('cancel', event => { event.preventDefault(); close(); });
-    dialog.addEventListener('close', () => { detailAbort?.abort(); scanAbort?.abort(); stopPlayback(); });
+    dialog.addEventListener('close', () => { clearTimeout(movieTimer); queueToken = null; onClose(); detailAbort?.abort(); scanAbort?.abort(); stopPlayback(); });
     $('retry-streams').addEventListener('click', () => { if (detailsReady) loadStreams(); else open(item); });
     $('scan-more').addEventListener('click', () => { if (scanState) { scanState.limit += 12; scanState.target = verified.length + 3; pump(scanState); } });
     $('season-select').addEventListener('change', drawEpisodes);
@@ -276,26 +301,36 @@
     try { $('autoplay-next').checked = localStorage.getItem('duckflix.autoplay-next') !== 'false'; } catch {}
     video.addEventListener('ended', () => {
       showControls(false);
+      if (connection && item?.type === 'movie') { finishMovie('ended'); return; }
       if (!connection || !episodes.length) return;
       if ($('autoplay-next').checked && episodeIndex + 1 < episodes.length) chooseEpisode(episodeIndex + 1);
       else status('play-message', episodeIndex + 1 === episodes.length ? 'Você chegou ao último episódio disponível.' : 'Episódio concluído. O próximo está ao lado.');
     });
-    video.addEventListener('timeupdate', () => { clearTimeout(stallTimer); setBuffering(false); updateTime(); });
+    video.addEventListener('timeupdate', () => {
+      if (Number(video.currentTime) > lastPosition + 0.05) { clearTimeout(stallTimer); stallTimer = null; setBuffering(false); }
+      updateTime();
+    });
     video.addEventListener('durationchange', updateTime);
     video.addEventListener('playing', () => {
       clearTimeout(stallTimer);
+      stallTimer = null;
       setBuffering(false);
       $('start-video').hidden = true;
       status('play-message', '');
       showControls(true);
     });
-    video.addEventListener('waiting', () => {
-      clearTimeout(stallTimer);
+    function waitingForVideo() {
       setBuffering(true);
       showControls(false);
+      if (stallTimer) return;
       const source = currentSource, version = playbackVersion;
-      if (source && connection) stallTimer = setTimeout(() => { if (source === currentSource && version === playbackVersion && !video.paused) failedSource(source, Number(video.currentTime) || 0); }, 25000);
-    });
+      if (source && connection) stallTimer = setTimeout(() => {
+        stallTimer = null;
+        if (source === currentSource && version === playbackVersion && !video.paused) failedSource(source, Number(video.currentTime) || 0);
+      }, 25000);
+    }
+    video.addEventListener('waiting', waitingForVideo);
+    video.addEventListener('stalled', waitingForVideo);
     for (const event of ['play', 'pause']) video.addEventListener(event, () => {
       $('toggle-play').textContent = video.paused ? '▶' : 'Ⅱ';
       $('toggle-play').setAttribute('aria-label', video.paused ? 'Reproduzir' : 'Pausar');
@@ -372,7 +407,10 @@
       if (event.key === ' ') togglePlay(); else if (event.key === 'ArrowLeft') seek(-10); else if (event.key === 'ArrowRight') seek(10); else if (event.key === 'f') fullscreen();
     });
     video.controls = false;
-    return { open, close };
+    return { open, close,
+      detachQueue() { queueToken = null; clearTimeout(movieTimer); },
+      haltQueueMovie() { clearTimeout(movieTimer); movieFinished = true; detailAbort?.abort(); scanAbort?.abort(); stopPlayback(); }
+    };
   }
   const api = { create, timeLabel };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;

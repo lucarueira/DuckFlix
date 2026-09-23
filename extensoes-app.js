@@ -19,6 +19,7 @@
      MODO LIVRE (+18 FILTRO)
   ======================== */
   const safety = window.DuckFlixSafety;
+  let movieQueue, queueRender = 0;
   let historyRender = 0, catalogRender = 0;
   function updateBtnModoLivre() { safety?.updateSwitch(); }
 
@@ -181,6 +182,9 @@
   }
 
   const player = window.DuckFlixPlayer.create({ document,
+    onMovieFinished: event => movieQueue?.advance(event),
+    onClose: () => { if (movieQueue?.snapshot().active) movieQueue.stop(); },
+    onManualOpen: () => { if (movieQueue?.snapshot().active) movieQueue.stop(); },
     async getDetails(item, signal) {
       if (safety && !await safety.allowed(item, { signal })) throw new Error('Título indisponível com o Modo Livre ativo.');
       let resolved = { ...item };
@@ -211,6 +215,66 @@
     }
   });
 
+  movieQueue = window.DuckFlixQueue.create({
+    storage: getStorage(),
+    allowed: item => safety ? safety.allowed(item) : Promise.resolve(true),
+    play: (item, queueToken) => player.open(item, { queueToken }),
+    onChange: () => renderQueue()
+  });
+  async function renderQueue() {
+    const renderId = ++queueRender;
+    const state = movieQueue.snapshot();
+    $('queue-list').replaceChildren(); $('player-queue-list').replaceChildren();
+    let visible;
+    try { visible = safety ? await safety.filter(state.items) : state.items; } catch { return; }
+    if (renderId !== queueRender) return;
+    const message = state.message || (visible.length ? 'Tudo pronto para a sua sessão.' : 'Sua lista está vazia. Adicione filmes pelo catálogo.');
+    $('queue-status').textContent = message;
+    $('player-queue-status').textContent = message;
+    $('queue-count').textContent = String(visible.length);
+    $('queue-start').disabled = state.active || !visible.length;
+    $('queue-clear').disabled = !state.items.length;
+    $('queue-stop').hidden = !state.active;
+    $('queue-next').disabled = !state.active || !state.current;
+    $('player-queue-stop').hidden = !state.active;
+    $('movie-queue-panel').hidden = !state.active;
+    for (const [index, item] of visible.entries()) {
+      const id = window.DuckFlixQueue.key(item), playing = state.active && state.current === id;
+      const row = node('li', undefined, 'queue-item');
+      if (playing) row.setAttribute('aria-current', 'true');
+      row.append(node('span', String(index + 1).padStart(2, '0'), 'queue-position'));
+      const info = node('div', undefined, 'queue-copy');
+      info.append(node('strong', item.name), node('small', playing ? 'Agora na sua tela' : [item.releaseInfo, 'Filme'].filter(Boolean).join(' · ')));
+      row.append(info);
+      const controls = node('div', undefined, 'queue-item-actions');
+      for (const [text, label, action, disabled] of [
+        ['↑', `Mover ${item.name} para cima`, () => movieQueue.move(id, -1), index === 0],
+        ['↓', `Mover ${item.name} para baixo`, () => movieQueue.move(id, 1), index === visible.length - 1],
+        ['✕', `Remover ${item.name}`, () => movieQueue.remove(id), playing]
+      ]) {
+        const button = node('button', text, 'icon-button'); button.type = 'button'; button.setAttribute('aria-label', label); button.disabled = disabled;
+        button.addEventListener('click', action); controls.append(button);
+      }
+      const compact = row.cloneNode(true);
+      row.append(controls); $('queue-list').append(row); $('player-queue-list').append(compact);
+    }
+    document.querySelectorAll('[data-queue-id]').forEach(button => {
+      const queued = state.items.some(item => window.DuckFlixQueue.key(item) === button.dataset.queueId);
+      button.textContent = queued ? '✓ Na fila' : '+ Na fila';
+      button.disabled = queued;
+    });
+  }
+  function stopQueue() { movieQueue.stop(); player.detachQueue(); }
+  $('queue-start').addEventListener('click', () => movieQueue.start());
+  $('queue-stop').addEventListener('click', stopQueue);
+  $('player-queue-stop').addEventListener('click', stopQueue);
+  $('queue-next').addEventListener('click', () => {
+    const state = movieQueue.snapshot();
+    player.haltQueueMovie();
+    movieQueue.advance({ token: state.token, reason: 'skipped' });
+  });
+  $('queue-clear').addEventListener('click', () => { movieQueue.clear(); player.detachQueue(); });
+
   async function render() {
     const renderId = ++catalogRender;
     $('catalog-grid').replaceChildren();
@@ -218,7 +282,8 @@
     try { visible = safety ? await safety.filter(items) : items; } catch { return; }
     if (renderId !== catalogRender) return;
     for (const item of visible) {
-      const card = node('button', undefined, 'poster-card'); card.type = 'button'; card.setAttribute('aria-label', `Assistir ${item.name}`);
+      const card = node('article', undefined, 'poster-card');
+      const playButton = node('button', undefined, 'poster-open'); playButton.type = 'button'; playButton.setAttribute('aria-label', `Assistir ${item.name}`);
       const poster = node('span', '▶', 'poster');
       if (item.poster) {
         const img = node('img'); img.src = item.poster; img.alt = ''; img.loading = 'lazy'; img.referrerPolicy = 'no-referrer';
@@ -234,10 +299,16 @@
         e.stopPropagation();
         toggleWatchlist(item);
       });
-      poster.append(favBtn);
-
-      card.append(poster, node('strong', item.name), node('small', [kind, item.releaseInfo].filter(Boolean).join(' · ')));
-      card.addEventListener('click', () => player.open(item)); $('catalog-grid').append(card);
+      playButton.append(poster, node('strong', item.name), node('small', [kind, item.releaseInfo].filter(Boolean).join(' · ')));
+      playButton.addEventListener('click', () => player.open(item));
+      card.append(playButton, favBtn);
+      if (item.type === 'movie') {
+        const queued = movieQueue.has(item);
+        const add = node('button', queued ? '✓ Na fila' : '+ Na fila', 'queue-add'); add.type = 'button';
+        add.dataset.queueId = window.DuckFlixQueue.key(item); add.disabled = queued; add.setAttribute('aria-label', `Adicionar ${item.name} à lista de reprodução`);
+        add.addEventListener('click', () => movieQueue.add(item)); card.append(add);
+      }
+      $('catalog-grid').append(card);
     }
     $('catalog-status').textContent = visible.length
       ? `${visible.length} ${visible.length === 1 ? 'título para explorar' : 'títulos para explorar'}`
@@ -322,7 +393,7 @@
     loadCatalog();
   });
   window.addEventListener('duckflix:modechange', () => {
-    catalogRender++; player.close(); renderContinuarAssistindo(); loadCatalog();
+    catalogRender++; movieQueue.stop('Filtro atualizado. Sua lista foi mantida.'); player.close(); renderQueue(); renderContinuarAssistindo(); loadCatalog();
   });
   $('clear-history')?.addEventListener('click', clearHistory);
   $('reload-catalog').addEventListener('click', () => loadCatalog());
@@ -332,6 +403,7 @@
 
   // Inicialização
   updateWatchlistBadge();
+  renderQueue();
   updateBtnModoLivre();
   renderContinuarAssistindo();
   loadCatalog();

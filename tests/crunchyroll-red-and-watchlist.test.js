@@ -43,7 +43,7 @@ test('Unified Crunchyroll Red color tokens are present in style.css, extensoes.c
 });
 
 test('Unified header navigation, Duckflix42 logo, and v2.5 Mamute footer across all pages', () => {
-  const indexHtml = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
+  const indexHtml = fs.readFileSync(path.join(__dirname, '..', 'duckflix.html'), 'utf8');
   const extensoesHtml = fs.readFileSync(path.join(__dirname, '..', 'extensoes.html'), 'utf8');
   const tvHtml = fs.readFileSync(path.join(__dirname, '..', 'tv.html'), 'utf8');
 
