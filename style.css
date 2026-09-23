@@ -515,6 +515,8 @@ header {
   gap: 10px;
   padding: 10px 50px;
   scroll-behavior: smooth;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
 }
 .row::-webkit-scrollbar { display: none; }
 
@@ -1183,22 +1185,387 @@ footer {
 }
 
 /* ========================
-   RESPONSIVO
+   RESPONSIVO / SMARTPHONE & TABLET
 ======================== */
+@media (max-width: 900px) {
+  .logo img { height: 75px; max-height: 85px; }
+  .row { padding: 10px 24px; }
+  .scroll-btn { padding: 16px 10px; font-size: 20px; }
+  #favList, #searchList, #genreList {
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  }
+}
+
 @media (max-width: 768px) {
-  header { flex-direction: column; align-items: center; gap: 12px; }
-  .logo img { height: 110px; max-height: 125px; margin: 0 auto; }
-  .busca-wrap { max-width: 100%; }
-  .busca input { font-size: 15px; }
-  #btnFav { font-size: 16px; text-align: center; }
-  .hero { height: auto; padding-bottom: 15px; }
-  #player iframe { height: 40vh; }
-  .ep-btns button { font-size: 12px; padding: 6px 10px; }
-  .ep-goto input { width: 55px; }
-  #btnRoleta::after { display: none; }
-  #btnRoleta { padding: 12px; }
-  .next-ep-bar { display: none; }
-  #trailerFrame { height: 35vh; }
-  .genre-bar-label { display: none; }
-  .genre-bar-wrapper { padding: 8px 10px; }
+  /* HEADER & LOGO MOBILE */
+  header {
+    flex-direction: column;
+    align-items: center;
+    padding: 12px 14px 10px;
+    gap: 10px;
+  }
+  .logo { margin-bottom: 2px; }
+  .logo img {
+    height: 52px;
+    max-height: 58px;
+    margin: 0 auto;
+    filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.7));
+  }
+  .busca-wrap {
+    width: 100%;
+    max-width: 100%;
+  }
+  .busca {
+    padding: 3px 4px 3px 14px;
+    border-radius: 40px;
+    box-shadow: 0 2px 14px rgba(204, 235, 32, 0.3);
+  }
+  .busca input {
+    font-size: 15px;
+    padding: 8px 6px;
+  }
+  .busca button {
+    padding: 8px 18px;
+    font-size: 16px;
+  }
+  .header-btns {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+  }
+  #btnKids, #btnFav {
+    flex: 1;
+    max-width: 190px;
+    font-size: 13px;
+    padding: 9px 12px;
+    min-height: 42px;
+    border-radius: 10px;
+    text-align: center;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* ABAS DE NAVEGAÇÃO */
+  .nav-tabs-container {
+    padding: 0 10px;
+    margin: 6px 0 10px;
+  }
+  .nav-tabs {
+    width: 100%;
+    max-width: 100%;
+    padding: 6px 8px;
+    gap: 6px;
+    border-radius: 40px;
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+  }
+  .tv-nav-link, .tab-btn {
+    padding: 8px 15px;
+    font-size: 13px;
+    min-height: 38px;
+    scroll-snap-align: start;
+    white-space: nowrap;
+  }
+
+  /* BARRA DE CHIPS DE GÊNERO */
+  .genre-bar-wrapper {
+    padding: 8px 10px;
+  }
+  .genre-bar-label {
+    display: none;
+  }
+  .genre-chips {
+    gap: 6px;
+    padding: 4px 2px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .chip {
+    padding: 7px 14px;
+    font-size: 12px;
+    min-height: 36px;
+    border-radius: 20px;
+  }
+
+  /* HERO & BANNER KIDS */
+  .hero {
+    height: auto;
+    padding-bottom: 10px;
+  }
+  .kids-banner {
+    padding: 10px 14px;
+    font-size: 12px;
+    gap: 8px;
+    flex-direction: column;
+    text-align: center;
+  }
+  .kids-banner button {
+    padding: 5px 14px;
+    font-size: 12px;
+  }
+
+  /* CARROSSÉIS & CARDS NO CELULAR */
+  .cat-header {
+    margin: 16px 12px 6px;
+    gap: 8px;
+  }
+  .cat-header h2 {
+    font-size: 18px;
+  }
+  .cat-icon {
+    height: 32px;
+  }
+  .sub-tag {
+    font-size: 11px;
+    padding: 3px 8px;
+  }
+  /* Remove setas de desktop no celular para não cobrir o conteúdo nem atrapalhar o deslize */
+  .scroll-btn {
+    display: none !important;
+  }
+  .row {
+    padding: 8px 12px;
+    gap: 10px;
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x proximity;
+    scrollbar-width: none;
+  }
+  .card {
+    flex: 0 0 115px;
+    min-width: 115px;
+    max-width: 125px;
+    scroll-snap-align: start;
+  }
+  .card p {
+    font-size: 12px;
+    line-height: 1.3;
+    margin: 4px 0 2px;
+  }
+  .badge-nota {
+    font-size: 10px;
+    padding: 2px 5px;
+    top: 6px;
+    left: 6px;
+  }
+  .badge-generos-container {
+    margin: 4px 0 6px;
+    gap: 3px;
+  }
+  .badge-genero-tag {
+    font-size: 9px;
+    padding: 2px 6px;
+  }
+
+  /* Botão de favoritar sempre acessível no celular sem depender de hover */
+  .fav-btn {
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    font-size: 14px;
+    padding: 0;
+    top: 6px;
+    right: 6px;
+    background: rgba(0, 0, 0, 0.72);
+    border-radius: 8px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
+    z-index: 5;
+  }
+  .fav-btn.favoritado {
+    background: rgba(255, 200, 0, 0.95);
+    color: black;
+  }
+
+  /* PLAYER PRINCIPAL (#playerArea) */
+  #playerArea {
+    padding: 10px 10px 16px;
+  }
+  .playerTop {
+    margin-bottom: 8px;
+  }
+  .playerTop h2 {
+    font-size: 16px;
+    line-height: 1.3;
+  }
+  .player-top-btns button {
+    padding: 7px 12px;
+    font-size: 12px;
+    min-height: 38px;
+  }
+  #player iframe {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    height: auto;
+    min-height: 200px;
+    max-height: 70vh;
+    border-radius: 8px;
+  }
+  #episodeControls {
+    padding: 10px;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+  .ep-info {
+    font-size: 12px;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .ep-info span {
+    padding: 4px 10px;
+  }
+  .ep-btns {
+    gap: 6px;
+  }
+  .ep-btns button {
+    font-size: 12px;
+    padding: 7px 10px;
+    min-height: 38px;
+  }
+  .ep-goto {
+    gap: 6px;
+    margin-top: 2px;
+  }
+  .ep-goto label {
+    font-size: 12px;
+  }
+  .ep-goto input {
+    width: 50px;
+    padding: 5px 6px;
+    font-size: 13px;
+  }
+  #btnGoTo {
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+  .timer-area {
+    font-size: 12px;
+    gap: 6px;
+  }
+  .timer-btn {
+    padding: 5px 10px;
+    font-size: 11px;
+  }
+  #nextEpBanner {
+    padding: 10px 12px;
+    gap: 10px;
+  }
+  .next-ep-bar {
+    display: none;
+  }
+  #nextEpNow {
+    padding: 7px 12px;
+    font-size: 12px;
+  }
+  #nextEpCancel {
+    padding: 6px 10px;
+    font-size: 12px;
+  }
+
+  /* MODAL ROLETA */
+  .roleta-box {
+    width: 92%;
+    max-width: 380px;
+    padding: 20px 16px;
+    border-radius: 16px;
+  }
+  .roleta-box h2 {
+    font-size: 20px;
+  }
+  .roleta-box > p {
+    font-size: 13px;
+    margin-bottom: 14px;
+  }
+  .roleta-categorias {
+    gap: 8px;
+  }
+  .cat-btn {
+    flex: 1 1 calc(50% - 8px);
+    padding: 10px 8px;
+    font-size: 13px;
+  }
+  #roletaSpinner img {
+    max-height: 180px;
+  }
+
+  /* MODAL TRAILER */
+  .trailer-box {
+    width: 96%;
+    border-radius: 12px;
+  }
+  .trailer-top h3 {
+    font-size: 15px;
+  }
+  #trailerFrame {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    height: auto;
+    min-height: 200px;
+  }
+
+  /* BOTÕES FLUTUANTES */
+  #btnRoleta {
+    bottom: 20px;
+    right: 14px;
+    padding: 10px 12px;
+    font-size: 18px;
+  }
+  #btnRoleta::after {
+    display: none;
+  }
+  #btnTopo {
+    bottom: 70px;
+    right: 14px;
+    width: 38px;
+    height: 38px;
+    font-size: 15px;
+  }
+
+  /* LISTAS EM GRADE */
+  #favPage, #searchPage, #genrePage {
+    padding: 12px 10px;
+  }
+  #favList, #searchList, #genreList {
+    grid-template-columns: repeat(auto-fill, minmax(105px, 1fr));
+    gap: 10px;
+  }
+  .genre-page-header {
+    padding: 12px 14px;
+    gap: 10px;
+  }
+  .genre-title-box h2 {
+    font-size: 17px;
+  }
+  .btn-close-genre {
+    padding: 8px 14px;
+    font-size: 12px;
+  }
+
+  footer {
+    padding: 24px 16px;
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 380px) {
+  .card {
+    flex: 0 0 105px;
+    min-width: 105px;
+  }
+  #favList, #searchList, #genreList {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .ep-btns button {
+    padding: 6px 8px;
+    font-size: 11px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  * { transition: none !important; animation: none !important; }
 }

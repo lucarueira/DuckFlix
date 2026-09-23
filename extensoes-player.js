@@ -5,20 +5,44 @@
     const value = Math.floor(seconds), hours = Math.floor(value / 3600), minutes = Math.floor(value % 3600 / 60), rest = String(value % 60).padStart(2, '0');
     return hours ? `${hours}:${String(minutes).padStart(2, '0')}:${rest}` : `${minutes}:${rest}`;
   }
-  function create({ document, getDetails, getStreams, media = globalThis.DuckFlixMedia }) {
-    const $ = id => document.getElementById(id), video = $('extension-video'), dialog = $('watch-dialog');
+  function create({ document, getDetails, getStreams, media = globalThis.DuckFlixMedia, setTimeout = globalThis.setTimeout, clearTimeout = globalThis.clearTimeout }) {
+    const $ = id => document.getElementById(id), video = $('extension-video'), dialog = $('watch-dialog'), shell = $('player-shell');
     let item, episodes = [], episodeIndex = -1, detailAbort, scanAbort, scanState, connection, currentSource, verified = [], sourceNumber = 0, playbackVersion = 0, stallTimer;
     let resumeAt = 0, lastPosition = 0, detailsReady = false;
+    let controlsTimer = null, isInteracting = false, lastTouchTime = 0;
     const node = (tag, text, cls) => { const el = document.createElement(tag); if (text !== undefined) el.textContent = text; if (cls) el.className = cls; return el; };
     const status = (id, text) => { $(id).textContent = text; };
     function placeholder(text) { $('player-placeholder').hidden = false; status('play-status', text); }
+    function setBuffering(busy) {
+      const spinner = $('player-spinner');
+      if (spinner) spinner.hidden = !busy;
+    }
+    function showControls(autoHide = true) {
+      clearTimeout(controlsTimer);
+      if (shell) shell.classList.remove('controls-hidden');
+      const controls = $('video-controls');
+      if (controls) controls.classList.remove('is-hidden');
+      if (autoHide && !video.paused && !isInteracting && controls && !controls.hidden) {
+        controlsTimer = setTimeout(() => hideControls(), 2800);
+      }
+    }
+    function hideControls() {
+      const controls = $('video-controls');
+      if (video.paused || isInteracting || !controls || controls.hidden) return;
+      if (shell) shell.classList.add('controls-hidden');
+      controls.classList.add('is-hidden');
+    }
     function stopPlayback() {
-      playbackVersion++; clearTimeout(stallTimer); connection?.dispose(); connection = null; currentSource = null;
-      $('start-video').hidden = true; $('video-controls').hidden = true;
+      playbackVersion++; clearTimeout(stallTimer); clearTimeout(controlsTimer); connection?.dispose(); connection = null; currentSource = null;
+      setBuffering(false);
+      if (shell) shell.classList.remove('controls-hidden');
+      const controls = $('video-controls');
+      if (controls) controls.classList.remove('is-hidden');
+      $('start-video').hidden = true; if (controls) controls.hidden = true;
       $('video-seek').value = '0'; $('video-seek').disabled = true; status('video-time', '0:00 / 0:00');
     }
     function close() {
-      detailAbort?.abort(); scanAbort?.abort(); stopPlayback();
+      clearTimeout(controlsTimer); detailAbort?.abort(); scanAbort?.abort(); stopPlayback();
       if (dialog.open) dialog.close();
     }
     function drawSources() {
@@ -59,7 +83,9 @@
         onReady: () => {
           if (version !== playbackVersion) return;
           $('player-placeholder').hidden = true; $('video-controls').hidden = false;
+          setBuffering(false);
           updateTime();
+          showControls(true);
         },
         onBlocked: () => {
           if (version !== playbackVersion) return;
@@ -157,8 +183,28 @@
       const duration = Number(video.duration), current = Number(video.currentTime) || 0;
       if (currentSource && current > 0) lastPosition = current;
       status('video-time', `${timeLabel(current)} / ${timeLabel(duration)}`);
-      $('video-seek').disabled = !Number.isFinite(duration) || duration <= 0;
-      if (!$('video-seek').disabled) $('video-seek').value = String(Math.round(current / duration * 1000));
+      const seek = $('video-seek');
+      seek.disabled = !Number.isFinite(duration) || duration <= 0;
+      if (!seek.disabled) {
+        const pct = Math.max(0, Math.min(100, (current / duration) * 100));
+        seek.value = String(Math.round(current / duration * 1000));
+        seek.style.setProperty('--seek-pct', `${pct.toFixed(2)}%`);
+        let bufPct = 0;
+        try {
+          if (video.buffered && video.buffered.length > 0) {
+            for (let i = 0; i < video.buffered.length; i++) {
+              if (video.buffered.start(i) <= current && current <= video.buffered.end(i)) {
+                bufPct = Math.max(0, Math.min(100, (video.buffered.end(i) / duration) * 100));
+                break;
+              }
+            }
+            if (bufPct === 0) {
+              bufPct = Math.max(0, Math.min(100, (video.buffered.end(video.buffered.length - 1) / duration) * 100));
+            }
+          }
+        } catch {}
+        seek.style.setProperty('--buf-pct', `${bufPct.toFixed(2)}%`);
+      }
     }
     function togglePlay() { if (!connection) return; if (video.paused) connection.play(); else video.pause(); }
     function seek(delta) { if (Number.isFinite(video.duration)) video.currentTime = Math.max(0, Math.min(video.duration, video.currentTime + delta)); }
@@ -178,29 +224,96 @@
     $('autoplay-next').addEventListener('change', () => { try { localStorage.setItem('duckflix.autoplay-next', String($('autoplay-next').checked)); } catch {} });
     try { $('autoplay-next').checked = localStorage.getItem('duckflix.autoplay-next') !== 'false'; } catch {}
     video.addEventListener('ended', () => {
+      showControls(false);
       if (!connection || !episodes.length) return;
       if ($('autoplay-next').checked && episodeIndex + 1 < episodes.length) chooseEpisode(episodeIndex + 1);
       else status('play-message', episodeIndex + 1 === episodes.length ? 'Você chegou ao último episódio disponível.' : 'Episódio concluído. O próximo está ao lado.');
     });
-    video.addEventListener('timeupdate', () => { clearTimeout(stallTimer); updateTime(); });
+    video.addEventListener('timeupdate', () => { clearTimeout(stallTimer); setBuffering(false); updateTime(); });
     video.addEventListener('durationchange', updateTime);
-    video.addEventListener('playing', () => { clearTimeout(stallTimer); $('start-video').hidden = true; status('play-message', ''); });
+    video.addEventListener('playing', () => {
+      clearTimeout(stallTimer);
+      setBuffering(false);
+      $('start-video').hidden = true;
+      status('play-message', '');
+      showControls(true);
+    });
     video.addEventListener('waiting', () => {
-      clearTimeout(stallTimer); const source = currentSource, version = playbackVersion;
+      clearTimeout(stallTimer);
+      setBuffering(true);
+      showControls(false);
+      const source = currentSource, version = playbackVersion;
       if (source && connection) stallTimer = setTimeout(() => { if (source === currentSource && version === playbackVersion && !video.paused) failedSource(source, Number(video.currentTime) || 0); }, 25000);
     });
-    for (const event of ['play', 'pause']) video.addEventListener(event, () => { $('toggle-play').textContent = video.paused ? '▶' : 'Ⅱ'; $('toggle-play').setAttribute('aria-label', video.paused ? 'Reproduzir' : 'Pausar'); });
+    for (const event of ['play', 'pause']) video.addEventListener(event, () => {
+      $('toggle-play').textContent = video.paused ? '▶' : 'Ⅱ';
+      $('toggle-play').setAttribute('aria-label', video.paused ? 'Reproduzir' : 'Pausar');
+      if (video.paused) showControls(false);
+      else showControls(true);
+    });
     $('toggle-play').addEventListener('click', togglePlay); $('start-video').addEventListener('click', () => connection?.play());
-    $('skip-back').addEventListener('click', () => seek(-10)); $('skip-forward').addEventListener('click', () => seek(10));
-    $('video-seek').addEventListener('input', () => { if (Number.isFinite(video.duration)) video.currentTime = Number($('video-seek').value) / 1000 * video.duration; });
-    $('video-volume').addEventListener('input', () => { video.volume = Number($('video-volume').value); video.muted = video.volume === 0; });
-    $('toggle-mute').addEventListener('click', () => { video.muted = !video.muted; });
+    $('skip-back').addEventListener('click', () => { seek(-10); showControls(true); });
+    $('skip-forward').addEventListener('click', () => { seek(10); showControls(true); });
+    $('video-seek').addEventListener('input', () => {
+      if (Number.isFinite(video.duration)) video.currentTime = Number($('video-seek').value) / 1000 * video.duration;
+      showControls(false);
+    });
+    $('video-seek').addEventListener('change', () => showControls(true));
+    $('video-volume').addEventListener('input', () => { video.volume = Number($('video-volume').value); video.muted = video.volume === 0; showControls(false); });
+    $('toggle-mute').addEventListener('click', () => { video.muted = !video.muted; showControls(true); });
     video.addEventListener('volumechange', () => { $('toggle-mute').textContent = video.muted ? '×♪' : '♪'; $('toggle-mute').setAttribute('aria-label', video.muted ? 'Ativar som' : 'Silenciar'); });
-    $('video-speed').addEventListener('change', () => { video.playbackRate = Number($('video-speed').value); });
+    $('video-speed').addEventListener('change', () => { video.playbackRate = Number($('video-speed').value); showControls(true); });
     $('fullscreen').addEventListener('click', fullscreen);
-    $('player-shell').addEventListener('keydown', event => {
+    if (shell) {
+      shell.addEventListener('pointermove', () => showControls(true));
+      shell.addEventListener('mousemove', () => showControls(true));
+      shell.addEventListener('mouseleave', () => { if (!video.paused) hideControls(); });
+      shell.addEventListener('touchstart', event => {
+        if (event.target.closest('#video-controls') || event.target.closest('#start-video') || event.target.closest('#player-placeholder')) {
+          showControls(false);
+          return;
+        }
+        lastTouchTime = Date.now();
+        if (shell.classList.contains('controls-hidden')) {
+          if (event.cancelable) event.preventDefault();
+          showControls(true);
+        } else {
+          if (event.cancelable) event.preventDefault();
+          hideControls();
+        }
+      }, { passive: false });
+      shell.addEventListener('click', event => {
+        if (Date.now() - lastTouchTime < 400) return;
+        if (event.target.closest('#video-controls') || event.target.closest('#start-video') || event.target.closest('#player-placeholder')) return;
+        if (shell.classList.contains('controls-hidden')) {
+          showControls(true);
+        } else {
+          togglePlay();
+        }
+      });
+      shell.addEventListener('dblclick', event => {
+        if (event.target.closest('#video-controls') || event.target.closest('#start-video') || event.target.closest('#player-placeholder')) return;
+        fullscreen();
+      });
+    }
+    const controls = $('video-controls');
+    if (controls) {
+      controls.addEventListener('pointerenter', () => { isInteracting = true; showControls(false); });
+      controls.addEventListener('pointerleave', () => { isInteracting = false; showControls(true); });
+      controls.addEventListener('focusin', () => { isInteracting = true; showControls(false); });
+      controls.addEventListener('focusout', () => { isInteracting = false; showControls(true); });
+    }
+    $('video-seek').addEventListener('pointerdown', () => { isInteracting = true; showControls(false); });
+    document.addEventListener('pointerup', () => {
+      if (isInteracting) {
+        isInteracting = false;
+        showControls(true);
+      }
+    });
+    shell.addEventListener('keydown', event => {
       if (['INPUT', 'SELECT', 'BUTTON'].includes(event.target.tagName)) return;
       if ([' ', 'ArrowLeft', 'ArrowRight', 'f'].includes(event.key)) event.preventDefault();
+      showControls(true);
       if (event.key === ' ') togglePlay(); else if (event.key === 'ArrowLeft') seek(-10); else if (event.key === 'ArrowRight') seek(10); else if (event.key === 'f') fullscreen();
     });
     video.controls = false;

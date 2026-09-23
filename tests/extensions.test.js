@@ -28,7 +28,9 @@ async function setup(t, override) {
   const app = fixture(), { window, document, el, media } = app;
   const calls = [], timers = new Map(); let timerID = 0;
   window.DuckFlixTMDB = { apiKey: 'test' }; window.DuckFlixExtensions = ext;
-  window.DuckFlixPlayer = { create: options => playerCore.create({ ...options, media }) };
+  const customSetTimeout = (callback, delay) => { const id = ++timerID; timers.set(id, { callback, delay }); return id; };
+  const customClearTimeout = id => timers.delete(id);
+  window.DuckFlixPlayer = { create: options => playerCore.create({ ...options, media, setTimeout: customSetTimeout, clearTimeout: customClearTimeout }) };
   const fetch = async (url, options) => {
     calls.push({ url, options }); const replacement = override?.(url, options); if (replacement) return replacement;
     const parsed = new URL(url); let data;
@@ -96,4 +98,30 @@ test('search failures release loading state and another query recovers', async t
   const app = await setup(t, url => url.includes('/search/multi') && new URL(url).searchParams.get('query') === 'Erro' && Promise.resolve({ ok: false, status: 503 }));
   await app.search('Erro'); assert.match(app.el('catalog-status').textContent, /503/); assert.equal(app.el('catalog-grid').getAttribute('aria-busy'), 'false');
   await app.search('Recuperou', false); assert.match(app.el('catalog-grid').textContent, /Recuperou/);
+});
+test('player controls auto-hide after inactivity during playback and wake on user activity', async t => {
+  const app = await setup(t);
+  app.el('catalog-grid').firstElementChild.click();
+  await settle();
+  const shell = app.el('player-shell');
+  const controls = app.el('video-controls');
+  assert.equal(controls.hidden, false);
+  assert.equal(controls.classList.contains('is-hidden'), false);
+
+  app.video.dispatchEvent(new app.window.Event('playing'));
+  const hideTimerEntry = [...app.timers.entries()].find(([_, timer]) => timer.delay === 2800);
+  assert(hideTimerEntry, 'Deve existir um timer de 2800ms para auto-ocultação');
+  const [timerId, hideTimer] = hideTimerEntry;
+  app.timers.delete(timerId);
+  hideTimer.callback();
+  await settle();
+
+  assert.equal(controls.classList.contains('is-hidden'), true);
+  assert.equal(shell.classList.contains('controls-hidden'), true);
+
+  shell.dispatchEvent(new app.window.Event('pointermove'));
+  await settle();
+
+  assert.equal(controls.classList.contains('is-hidden'), false);
+  assert.equal(shell.classList.contains('controls-hidden'), false);
 });
