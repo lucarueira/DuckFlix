@@ -15,6 +15,10 @@
     signal?.addEventListener('abort', abort, { once: true });
     const timer = setTimeout(abort, 8000);
     try {
+      const extension = globalThis.DuckFlixExtension;
+      if (extension?.connected && extension.fetchJSON && new URL(url).origin === HTTP_SOURCE.base) {
+        return await extension.fetchJSON(url, { signal: controller.signal });
+      }
       const response = await fetcher(url, { signal: controller.signal, credentials: 'omit', referrerPolicy: 'no-referrer' });
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       return await response.json();

@@ -54,7 +54,7 @@ test('cancel aborts background network work and oversized segments fail closed',
 });
 test('site bridge, content script and worker relay playlist and binary HLS resources end to end', async () => {
   const calls = [];
-  const app = worker(async (url, options) => { calls.push({ url, options }); return new Response(url.endsWith('m3u8') ? '#EXTM3U\n#EXTINF:5,\nsegment.ts' : new Uint8Array([0,255,128]), { status: options.headers.Range ? 206 : 200 }); });
+  const app = worker(async (url, options) => { calls.push({ url, options }); return new Response(url.endsWith('.json') ? JSON.stringify({ metas: [{ name: 'Canal de televisão' }] }) : url.endsWith('m3u8') ? '#EXTM3U\n#EXTINF:5,\nsegment.ts' : new Uint8Array([0,255,128]), { status: options.headers.Range ? 206 : 200 }); });
   const events = new Map(); const status = { textContent: '', hidden: true };
   const window = {
     addEventListener: (type, fn) => { if (!events.has(type)) events.set(type, []); events.get(type).push(fn); },
@@ -78,6 +78,8 @@ test('site bridge, content script and worker relay playlist and binary HLS resou
   const segment = await load({ url: 'http://video.example/segment.ts', responseType: 'arraybuffer', rangeStart: 0, rangeEnd: 3 });
   assert.deepEqual([...new Uint8Array(segment.result.data)], [0,255,128]); assert.equal(segment.stats.loaded, 3);
   assert.equal(calls[1].options.headers.Range, 'bytes=0-2');
+  const catalog = await api.fetchJSON('https://addon.example/catalog.json');
+  assert.equal(catalog.metas[0].name, 'Canal de televisão');
 });
 test('download ZIP contains exactly the shipped extension files without development data', () => {
   const zip = fs.readFileSync('downloads/duckflix-http-0.1.0.zip');

@@ -26,9 +26,7 @@
     addonButton.disabled = true; status.textContent = 'Buscando um canal HTTP no Minha TV…';
     const base = 'https://da5f663b4690-minhatv.baby-beamup.club';
     const get = async path => {
-      const response = await fetch(base + path, { signal: controller.signal, credentials: 'omit', referrerPolicy: 'no-referrer' });
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      return response.json();
+      return window.DuckFlixExtension.fetchJSON(base + path, { signal: controller.signal });
     };
     try {
       const catalog = await get('/catalog/tv/minhatv_channels.json');

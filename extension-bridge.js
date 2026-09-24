@@ -22,7 +22,8 @@
     const result = event.data;
     const finish = pending.get(result.id); if (!finish) return;
     if (result.permission) setStatus('Abra a extensão DuckFlix, autorize o servidor e recarregue esta página.');
-    finish(result.ok ? null : new Error(result.error || 'Extensão indisponível.'), result);
+    const message = result.permission ? `Autorize ${result.permission} no ícone da extensão DuckFlix e tente novamente.` : result.error || 'Extensão indisponível.';
+    finish(result.ok ? null : new Error(message), result);
   });
   function loader(Hls) {
     const Default = Hls.DefaultConfig.loader;
@@ -55,7 +56,15 @@
       getResponseHeader() { return null; }
     };
   }
-  const api = { get connected() { return connected; }, request, loader,
+  async function fetchJSON(url, { signal } = {}) {
+    const result = await request('fetch', { url }, signal);
+    if (signal?.aborted) throw new DOMException('Aborted', 'AbortError');
+    try {
+      const bytes = Uint8Array.from(atob(result.data), character => character.charCodeAt(0));
+      return JSON.parse(new TextDecoder().decode(bytes));
+    } catch { throw new Error('O addon retornou uma resposta inválida em vez do catálogo. Tente novamente mais tarde.'); }
+  }
+  const api = { get connected() { return connected; }, request, loader, fetchJSON,
     hlsConfig(url, Hls) { return connected && /^http:\/\//i.test(url) ? { loader: loader(Hls) } : {}; }
   };
   window.DuckFlixExtension = api;

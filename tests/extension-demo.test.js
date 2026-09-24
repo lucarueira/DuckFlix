@@ -12,8 +12,8 @@ function setup(fetcher) {
     static Events = { ERROR: 'error', MANIFEST_PARSED: 'parsed' };
     on() {} destroy() {} attachMedia() {} loadSource(url) { loaded.push(url); }
   }
-  window.Hls = Hls; window.DuckFlixExtension = { connected: true, hlsConfig: () => ({}) };
-  const context = vm.createContext({ window, document, Hls, fetch: fetcher, URL, AbortController, setTimeout, clearTimeout });
+  window.Hls = Hls; window.DuckFlixExtension = { connected: true, hlsConfig: () => ({}), fetchJSON: async (url, options) => (await fetcher(url, options)).json() };
+  const context = vm.createContext({ window, document, Hls, fetch: () => { throw new Error('Addon requests must use the extension'); }, URL, AbortController, setTimeout, clearTimeout });
   vm.runInContext(fs.readFileSync('extension-test.js', 'utf8'), context);
   return { window, loaded, el: id => document.getElementById(id) };
 }
@@ -36,4 +36,11 @@ test('stopping an addon lookup prevents late responses from starting a video', a
   await pending;
   assert.equal(app.loaded.length, 0);
   assert.equal(app.el('test-status').textContent, 'Teste encerrado.');
+});
+test('addon permission errors remain actionable and release the test button for retry', async () => {
+  const app = setup(async () => { throw new Error('Autorize https://addon.example/* no ícone da extensão DuckFlix e tente novamente.'); });
+  await app.el('test-minhatv').onclick();
+  assert.match(app.el('test-status').textContent, /Autorize https:\/\/addon.example/);
+  assert.equal(app.el('test-minhatv').disabled, false);
+  assert.equal(app.loaded.length, 0);
 });
