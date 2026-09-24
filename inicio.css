@@ -19,6 +19,10 @@ h2 span { display: block; font-size: 14px; font-weight: 400; letter-spacing: 0; 
 .destination-link > span { color: #ff617f; font-size: 18px; }
 footer { margin-top: 52px; color: #626275; font-size: 11px; letter-spacing: .3px; }
 footer span { padding: 0 8px; }
+.extension-install { width: 100%; margin-top: 28px; padding: 24px; border: 1px solid #ffffff18; border-radius: 18px; background: #121219; }
+.extension-install h2 { font-size: 19px; }
+.extension-install p { color: #a9a9bd; font-size: 14px; line-height: 1.6; }
+.extension-install a { display: inline-block; color: #ff8ba2; margin: 8px 12px; text-underline-offset: 4px; }
 @media (max-width: 650px) {
   .welcome { padding: 32px 20px 24px; }
   .welcome-logo { width: 130px; margin-bottom: 24px; }

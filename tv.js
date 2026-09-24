@@ -377,11 +377,11 @@
     playbackTimer = setTimeout(() => {
       if (id === playbackId) playbackFailed('O canal demorou para responder. Tente novamente ou escolha outro.');
     }, 25000);
-    if (video.canPlayType('application/vnd.apple.mpegurl')) {
+    if (video.canPlayType('application/vnd.apple.mpegurl') && !channel.url.startsWith('http:')) {
       video.src = channel.url;
       startVideo(id);
     } else if (window.Hls?.isSupported()) {
-      hls = new window.Hls({ maxBufferLength: 30, maxMaxBufferLength: 60 });
+      hls = new window.Hls({ maxBufferLength: 30, maxMaxBufferLength: 60, ...window.DuckFlixExtension?.hlsConfig(channel.url, window.Hls) });
       hls.on(window.Hls.Events.MANIFEST_PARSED, () => startVideo(id));
       hls.on(window.Hls.Events.ERROR, (_event, data) => {
         if (id === playbackId && data.fatal) playbackFailed('Este canal está indisponível ou bloqueou a reprodução neste navegador. Tente outro canal.');
@@ -480,5 +480,6 @@
     cancelScan(); el('stop-stream').click(); filtersChanged();
     if (!window.DuckFlixSafety?.enabled()) loadPlaylist();
   });
+  window.addEventListener('duckflix:extensionready', loadPlaylist);
   loadPlaylist();
 })();

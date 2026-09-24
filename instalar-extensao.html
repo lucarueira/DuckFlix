@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Instalar extensão · DuckFlix</title>
+  <link rel="icon" href="img/favicon.png"><link rel="stylesheet" href="instalar-extensao.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/hls.js@1.7.3/dist/hls.min.js" integrity="sha384-cciJ0zi8d1uMKC2zJd7jvPY4HQt7W4ByUI/FlMkltvBi31aW61rcpVBhpmW8/NwX" crossorigin="anonymous"></script>
+  <script defer src="extension-bridge.js"></script><script defer src="extension-test.js"></script>
+</head>
+<body><main>
+  <a class="back" href="index.html">← Voltar ao DuckFlix</a>
+  <p class="eyebrow">CHROME E EDGE · COMPUTADOR · VERSÃO 0.1.0</p>
+  <h1>Um passo a mais.<br>Mais fontes para testar.</h1>
+  <p class="intro">Extensão experimental para transmissões HTTP HLS (.m3u8) no DUCKTV e DuckFlix Extensões. O site continua funcionando sem ela com as fontes já compatíveis.</p>
+  <a class="download" href="downloads/duckflix-http-0.1.0.zip" download>Baixar extensão de teste (.zip)</a>
+  <p data-extension-status class="status" role="status">Verificando extensão…</p>
+  <section><h2>Instalação manual</h2><ol>
+    <li><strong>Baixe e extraia o ZIP.</strong> No Windows, clique com o botão direito e escolha “Extrair tudo”. Guarde a pasta extraída; o Chrome continuará usando seus arquivos.</li>
+    <li><strong>Abra o gerenciador de extensões.</strong> Digite <code>chrome://extensions</code> na barra do Chrome ou <code>edge://extensions</code> no Edge.</li>
+    <li><strong>Ative “Modo do desenvolvedor”.</strong> Depois clique em “Carregar sem compactação” (ou “Carregar expandida”, dependendo do navegador).</li>
+    <li><strong>Selecione a pasta <code>duckflix-http</code>.</strong> Ela deve conter o arquivo <code>manifest.json</code>. Não selecione o ZIP.</li>
+    <li><strong>Fixe a extensão.</strong> Abra o ícone de quebra-cabeça do navegador e fixe “DuckFlix HTTP — Teste” para acessar as autorizações.</li>
+    <li><strong>Recarregue o DuckFlix.</strong> Esta página deve mostrar “Extensão conectada”. Abra <a href="tv.html">DUCKTV</a> e pesquise um canal. A lista adicional de canais HTTP fica disponível quando a extensão é detectada.</li>
+    <li><strong>Autorize o servidor quando necessário.</strong> Se aparecer “!” no ícone, abra a extensão, confira o endereço e clique em “Autorizar este servidor”. Confirme no navegador e recarregue o site. Segmentos em outro servidor podem precisar de uma segunda autorização.</li>
+  </ol></section>
+  <section><h2>Teste de uma transmissão</h2><p>Use o botão abaixo para buscar um canal aberto do Minha TV e iniciar o teste HTTP. Não precisa copiar um link. Você também pode informar outra URL HLS (.m3u8); o endereço não será salvo.</p>
+    <button id="test-minhatv" type="button">Testar canal HTTP do Minha TV</button>
+    <form id="test-form"><label for="test-url">Endereço da transmissão</label><input id="test-url" type="url" placeholder="http://servidor.exemplo/canal.m3u8" required autocomplete="off"><button type="submit">Testar transmissão</button><button id="test-stop" type="button">Parar</button></form>
+    <p id="test-status" role="status">Instale a extensão antes de testar.</p><video id="test-video" controls playsinline></video>
+  </section>
+  <section><h2>O que esperar desta versão</h2><ul>
+    <li>Suporte experimental a HLS HTTP: playlists, segmentos e chaves de transporte, quando o servidor permite acesso e os codecs são compatíveis.</li>
+    <li>Não inclui torrents, conversão de codecs, DRM nem arquivos MP4 completos por HTTP. Fontes HTTPS continuam usando o player normal.</li>
+    <li>O Chrome padrão do celular não instala esta extensão de computador.</li>
+    <li>Redirecionamentos, servidores sem resposta e segmentos maiores que 24 MB são recusados nesta versão. Não há garantia de funcionamento de todos os canais.</li>
+    <li>Somente <code>https://duckflix42.netlify.app</code> e o ambiente de teste <code>http://localhost:3000</code> podem usar a extensão. Não funciona abrindo os arquivos HTML diretamente.</li>
+  </ul></section>
+  <section><h2>Permissões e privacidade</h2><p>A extensão pede acesso a cada servidor somente quando você autoriza no botão dela. Não usa cookies nas transmissões, não lê histórico e não envia os vídeos a um servidor nosso. As fontes HTTP continuam sem criptografia entre o fornecedor e seu computador.</p><p>Para remover uma autorização, abra a extensão e clique em “Remover acesso”. Para desinstalar, use “Remover” no gerenciador de extensões.</p></section>
+  <section><h2>Se não funcionar</h2><p>Confira se a extensão está ativada, se a pasta extraída ainda existe e se você está no endereço correto do DuckFlix. Após qualquer instalação, atualização ou autorização, recarregue o site. Para atualizar, substitua os arquivos da pasta e clique no botão de recarregar da extensão em <code>chrome://extensions</code>.</p><p>Se o canal continuar falhando após as autorizações, teste outra fonte. Extensão conectada confirma a comunicação; não confirma que um canal está no ar.</p></section>
+</main></body></html>

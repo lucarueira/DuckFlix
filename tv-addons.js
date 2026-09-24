@@ -3,6 +3,7 @@
   const SOURCES = Object.freeze([
     { base: 'https://frostview.cloutteam.com', type: 'channel', catalog: 'froststream-channels', paginated: true }
   ]);
+  const HTTP_SOURCE = { base: 'https://da5f663b4690-minhatv.baby-beamup.club', type: 'tv', catalog: 'minhatv_channels' };
   const normalize = text => text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
   function secure(value) {
     try { const url = new URL(value); return url.protocol === 'https:' && !url.username && !url.password ? url.href : null; } catch { return null; }
@@ -20,7 +21,8 @@
     } finally { clearTimeout(timer); signal?.removeEventListener('abort', abort); }
   }
   async function load(signal, fetcher = fetch) {
-    const settled = await Promise.allSettled(SOURCES.map(async source => {
+    const sources = globalThis.DuckFlixExtension?.connected ? [...SOURCES, HTTP_SOURCE] : SOURCES;
+    const settled = await Promise.allSettled(sources.map(async source => {
       const entries = new Map();
       for (let page = 0; page < 12; page++) {
         if (signal?.aborted) break;
@@ -44,7 +46,12 @@
   async function probe(channel, { signal, probeChannel, fetcher = fetch }) {
     try {
       const data = await json(channel.addonEndpoint, signal, fetcher);
-      const urls = [...new Set((data.streams || []).filter(stream => !stream.infoHash && !stream.behaviorHints?.proxyHeaders && !stream.externalUrl).map(stream => secure(stream.url)).filter(Boolean))];
+      const urls = [...new Set((data.streams || []).filter(stream => !stream.infoHash && !stream.behaviorHints?.proxyHeaders && !stream.externalUrl).map(stream => {
+        if (globalThis.DuckFlixExtension?.connected && /^http:\/\//.test(stream.url || '') && /\.m3u8(?:$|[?#])/i.test(stream.url)) {
+          try { const url = new URL(stream.url); if (!url.username && !url.password) return url.href; } catch {}
+        }
+        return secure(stream.url);
+      }).filter(Boolean))];
       for (const url of urls.slice(0, 4)) {
         if (signal.aborted) return null;
         const result = await probeChannel(url, { signal });

@@ -1,0 +1,23 @@
+DUCKFLIX HTTP — VERSÃO DE TESTE 0.1.0
+
+1. Extraia este ZIP e mantenha a pasta duckflix-http no computador.
+2. Abra chrome://extensions (Chrome) ou edge://extensions (Edge).
+3. Ative Modo do desenvolvedor e clique em Carregar sem compactação.
+4. Selecione a pasta duckflix-http, que contém manifest.json.
+5. Fixe a extensão no ícone de quebra-cabeça e recarregue o DuckFlix.
+6. Abra um canal. Se aparecer !, abra a extensão e autorize o servidor.
+7. Recarregue o site após autorizar. Outros servidores podem precisar de autorização.
+
+Tutorial e teste: https://duckflix42.netlify.app/instalar-extensao.html
+Ambiente local: http://localhost:3000/instalar-extensao.html
+
+Esta versão suporta apenas transmissões HLS (.m3u8) HTTP em computadores.
+Não suporta torrents, MP4 completo HTTP, DRM ou conversão de codecs.
+Não instala no Chrome padrão dos celulares. Não garante que todos os canais funcionem.
+O acesso é autorizado individualmente por servidor. Não utiliza cookies ou histórico.
+HTTP não tem criptografia entre a fonte e o computador.
+Para revogar acesso: popup > Remover acesso. Para desinstalar: gerenciador > Remover.
+Atualização manual: substitua os arquivos e clique em Recarregar no gerenciador.
+
+O site precisa estar atualizado com a integração desta versão. Só instalar a extensão
+em uma versão antiga do site não altera o player nem adiciona o suporte HTTP.

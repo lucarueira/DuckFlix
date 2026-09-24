@@ -38,12 +38,13 @@
       timer = setTimeout(failed, timeoutMs);
       try {
         const parsed = new URL(url);
-        if (parsed.protocol !== 'https:' || parsed.username || parsed.password) { failed(); return; }
-        if (video.canPlayType('application/vnd.apple.mpegurl')) {
+        const extensionHTTP = parsed.protocol === 'http:' && globalThis.DuckFlixExtension?.connected;
+        if ((!extensionHTTP && parsed.protocol !== 'https:') || parsed.username || parsed.password) { failed(); return; }
+        if (video.canPlayType('application/vnd.apple.mpegurl') && !extensionHTTP) {
           video.src = url;
           video.load();
         } else if (Hls?.isSupported()) {
-          hls = new Hls({ startLevel: 0, maxBufferLength: 1, maxMaxBufferLength: 2, backBufferLength: 0, capLevelToPlayerSize: true });
+          hls = new Hls({ startLevel: 0, maxBufferLength: 1, maxMaxBufferLength: 2, backBufferLength: 0, capLevelToPlayerSize: true, ...globalThis.DuckFlixExtension?.hlsConfig(url, Hls) });
           hls.on(Hls.Events.ERROR, (_event, data) => { if (data.fatal) failed(); });
           hls.loadSource(url);
           hls.attachMedia(video);

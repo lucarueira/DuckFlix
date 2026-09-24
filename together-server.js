@@ -132,12 +132,12 @@ function createServer({ now = Date.now, allowedOrigins = [], root = __dirname, a
       if (!['GET', 'HEAD'].includes(req.method)) throw fail(405, 'Método inválido.');
       const pathname = decodeURIComponent(url.pathname === '/' ? '/index.html' : url.pathname);
       // Only public assets. Never serve server code, tests, dotfiles, packages or local configuration.
-      const publicFile = /^\/[a-z0-9-]+\.(html|css|js)$/.test(pathname) && !pathname.endsWith('-server.js') || /^\/img\/[a-zA-Z0-9_./-]+\.(png|jpg|jpeg|svg|webp|ico)$/.test(pathname);
+      const publicFile = /^\/[a-z0-9-]+\.(html|css|js)$/.test(pathname) && !pathname.endsWith('-server.js') || /^\/img\/[a-zA-Z0-9_./-]+\.(png|jpg|jpeg|svg|webp|ico)$/.test(pathname) || /^\/downloads\/duckflix-http-[\d.]+\.zip$/.test(pathname);
       const target = path.resolve(root, '.' + pathname);
       if (!publicFile || !target.startsWith(path.resolve(root) + path.sep)) throw fail(404, 'Arquivo não encontrado.');
       const data = await fs.promises.readFile(target).catch(() => { throw fail(404, 'Arquivo não encontrado.'); });
       const types = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.svg': 'image/svg+xml', '.webp': 'image/webp', '.ico': 'image/x-icon' };
-      res.writeHead(200, { 'Content-Type': types[path.extname(target)], 'Cache-Control': 'no-cache' }); res.end(req.method === 'HEAD' ? undefined : data);
+      res.writeHead(200, { 'Content-Type': types[path.extname(target)] || 'application/zip', 'Cache-Control': 'no-cache' }); res.end(req.method === 'HEAD' ? undefined : data);
     } catch (error) { if (!res.headersSent) json(res, error.status || 500, { error: error.status ? error.message : 'Falha temporária no servidor.' }); else res.end(); }
   });
   const heartbeat = setInterval(() => {

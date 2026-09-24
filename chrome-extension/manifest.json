@@ -1,0 +1,15 @@
+{
+  "manifest_version": 3,
+  "name": "DuckFlix HTTP — Teste",
+  "version": "0.1.0",
+  "description": "Suporte experimental a transmissões HLS HTTP no DuckFlix. Autorizações por servidor.",
+  "minimum_chrome_version": "116",
+  "permissions": ["storage"],
+  "optional_host_permissions": ["http://*/*", "https://*/*"],
+  "background": { "service_worker": "background.js" },
+  "action": { "default_popup": "popup.html", "default_title": "DuckFlix HTTP" },
+  "content_scripts": [{
+    "matches": ["https://duckflix42.netlify.app/*", "http://localhost:3000/*"],
+    "js": ["content.js"], "run_at": "document_start", "all_frames": false
+  }]
+}

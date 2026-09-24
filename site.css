@@ -16,6 +16,7 @@ button, a, input, select { -webkit-tap-highlight-color: transparent; }
 button, select { touch-action: manipulation; }
 button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid #ff718d; outline-offset: 4px; }
 [hidden], .hidden { display: none !important; }
+.extension-status { margin: 18px var(--page-gutter, 24px); color: #b8b8ca; font-size: 13px; line-height: 1.6; }
 .header {
   position: sticky; top: 0; z-index: 50; width: 100%; height: auto; min-height: 84px;
   padding: 10px var(--page-gutter); display: grid; grid-template-columns: 1fr auto 1fr;

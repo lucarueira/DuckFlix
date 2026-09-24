@@ -7,7 +7,8 @@
     try { url = new URL(stream.url); } catch { return null; }
     if (!['http:', 'https:'].includes(url.protocol) || url.username || url.password) return null;
     // Tenta o endpoint TLS do próprio fornecedor; só entra na lista após decodificar imagem.
-    if (url.protocol === 'http:') { url.protocol = 'https:'; if (url.port === '80') url.port = ''; }
+    const extensionHLS = globalThis.DuckFlixExtension?.connected && /\.m3u8(?:$|[?#])/i.test(url.href);
+    if (url.protocol === 'http:' && !extensionHLS) { url.protocol = 'https:'; if (url.port === '80') url.port = ''; }
     const text = [stream.name, stream.title, stream.description].join(' ');
     const quality = text.match(/\b(2160p|1080p|720p|480p|360p|4K|FHD|HD|CAM)\b/i)?.[1].toUpperCase() || 'Auto';
     const language = /dublad|portugu[eê]s|pt-br|🇧🇷/i.test(text) ? 'Dublado' : /legendad/i.test(text) ? 'Legendado' : 'Áudio original';
@@ -48,7 +49,7 @@
       if (disposed || triedHLS || !Hls?.isSupported()) return false;
       triedHLS = true; engine = 'hls'; clearTimeout(stageTimer);
       clearMedia();
-      hls = new Hls({ startLevel: -1, maxBufferLength: 20, backBufferLength: 30, capLevelToPlayerSize: true });
+      hls = new Hls({ startLevel: -1, maxBufferLength: 20, backBufferLength: 30, capLevelToPlayerSize: true, ...globalThis.DuckFlixExtension?.hlsConfig(source.url, Hls) });
       hls.on(Hls.Events.ERROR, (_, data) => { if (data.fatal) fail(); });
       hls.loadSource(source.url); hls.attachMedia(video);
       return true;
@@ -59,7 +60,7 @@
     video.preload = 'auto'; video.playsInline = true;
     timer = setTimeout(fail, timeoutMs);
     try {
-      if (mode === 'hls' && !video.canPlayType('application/vnd.apple.mpegurl')) {
+      if (mode === 'hls' && (!video.canPlayType('application/vnd.apple.mpegurl') || source.url.startsWith('http:'))) {
         if (!startHLS()) fail();
       } else {
         video.src = source.url; video.load();

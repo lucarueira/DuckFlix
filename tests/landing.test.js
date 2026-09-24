@@ -6,7 +6,7 @@ test('landing links to each viewing mode with Together hidden and loads no playe
   const { document } = parseHTML(fs.readFileSync('index.html', 'utf8'));
   const links = [...document.querySelectorAll('.destinations a')];
   assert.deepEqual(links.map(link => link.getAttribute('href')), ['duckflix.html', 'tv.html', 'extensoes.html']);
-  assert.equal(document.querySelectorAll('script').length, 0);
+  assert.deepEqual([...document.querySelectorAll('script')].map(node => node.getAttribute('src')), ['extension-bridge.js']);
   for (const link of links) {
     const { document: page } = parseHTML(fs.readFileSync(link.getAttribute('href'), 'utf8'));
     assert.equal(page.querySelector('.brand').getAttribute('href'), 'index.html');
