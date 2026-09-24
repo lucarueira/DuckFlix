@@ -125,7 +125,6 @@ if (btnKids) btnKids.onclick = () => safety.setEnabled(!safety.enabled());
 window.addEventListener('duckflix:modechange', () => {
   kidsMode = safety.enabled();
   const searching = !searchPage.classList.contains('hidden');
-  clearTimeout(debounceTimer);
   document.getElementById('sugestoes').replaceChildren();
   document.getElementById('sugestoes').classList.add('hidden');
   searchList.replaceChildren(); favList.replaceChildren();
@@ -358,6 +357,7 @@ document.getElementById("fecharPlayer").onclick = fecharPlayer;
 ======================== */
 function fecharTodasSecoes() {
   fecharPlayer();
+  homeSearch.reset();
   favPage.classList.add("hidden");
   searchPage.classList.add("hidden");
   if (genrePage) genrePage.classList.add("hidden");
@@ -638,93 +638,28 @@ const closeFavEl = document.getElementById("closeFav");
 if (closeFavEl) closeFavEl.onclick = () => favPage.classList.add("hidden");
 
 /* ========================
-   BUSCA COM SUGESTÕES
+   BUSCA COM RESULTADOS E PAGINAÇÃO
 ======================== */
-let debounceTimer = null;
-
-document.getElementById("busca").addEventListener("input", (e) => {
-  const q = e.target.value.trim();
-  clearTimeout(debounceTimer);
-  const sug = document.getElementById("sugestoes");
-
-  if (q.length < 2) {
-    sug.classList.add("hidden");
-    sug.innerHTML = "";
-    return;
-  }
-
-  debounceTimer = setTimeout(() => {
-    safety.fetch(`https://api.themoviedb.org/3/search/multi?api_key=${apiKey}&language=pt-BR&query=${encodeURIComponent(q)}`)
-      .then(r => r.json())
-      .then(d => {
-        if (document.getElementById("busca").value.trim() !== q) return;
-        sug.innerHTML = "";
-        const res = d.results?.filter(i => i.poster_path).slice(0, 6) || [];
-        if (res.length === 0) { sug.classList.add("hidden"); return; }
-
-        res.forEach(item => {
-          const tipo  = item.title ? "Filme" : "Série";
-          const title = item.title || item.name;
-          const div   = document.createElement("div");
-          div.classList.add("sug-item");
-          div.innerHTML = `
-            <img src="https://image.tmdb.org/t/p/w92${item.poster_path}" alt="${title}">
-            <span>${title}</span>
-            <span class="sug-tipo">${tipo}</span>
-          `;
-          div.onclick = () => {
-            sug.classList.add("hidden");
-            document.getElementById("busca").value = title;
-            fecharTodasSecoes();
-            abrirPlayer({
-              id:     item.id,
-              title,
-              type:   item.title ? "filme" : "serie",
-              poster: item.poster_path
-            });
-          };
-          sug.appendChild(div);
-        });
-        sug.classList.remove("hidden");
-      })
-      .catch(() => {});
-  }, 350);
+const homeMain = document.querySelector('.home-main');
+const homeSearch = window.DuckFlixSearch.create({
+  input: document.getElementById('busca'), button: document.getElementById('btnBusca'),
+  more: document.getElementById('searchMore'), status: document.getElementById('searchStatus'), list: searchList,
+  fetchPage: async (query, page, signal) => {
+    const response = await safety.fetch('https://api.themoviedb.org/3/search/multi?' + new URLSearchParams({ api_key: apiKey, language: 'pt-BR', include_adult: 'false', query, page }), { signal });
+    if (!response.ok) throw new Error('Search HTTP ' + response.status);
+    return response.json();
+  },
+  render: item => criarCard(searchList, item, item.media_type === 'tv' ? 'serie' : 'filme'),
+  open: () => {
+    document.getElementById('sugestoes').classList.add('hidden');
+    favPage.classList.add('hidden');
+    if (genrePage) genrePage.classList.add('hidden');
+    homeMain.classList.add('hidden'); searchPage.classList.remove('hidden');
+  },
+  close: () => { searchPage.classList.add('hidden'); homeMain.classList.remove('hidden'); }
 });
-
-document.addEventListener("click", (e) => {
-  if (!e.target.closest(".busca-wrap")) {
-    document.getElementById("sugestoes").classList.add("hidden");
-  }
-});
-
-document.getElementById("btnBusca").onclick = buscar;
-document.getElementById("busca").addEventListener("keydown", (e) => {
-  if (e.key === "Enter") buscar();
-});
-
-function buscar() {
-  const q = document.getElementById("busca").value.trim();
-  if (!q) return;
-  document.getElementById("sugestoes").classList.add("hidden");
-  fecharTodasSecoes();
-
-  safety.fetch(`https://api.themoviedb.org/3/search/multi?api_key=${apiKey}&language=pt-BR&query=${encodeURIComponent(q)}`)
-    .then(r => r.json())
-    .then(d => {
-      if (document.getElementById("busca").value.trim() !== q) return;
-      searchList.innerHTML = "";
-      const res = d.results?.filter(i => i.poster_path) || [];
-      if (res.length === 0) {
-        searchList.innerHTML = `<p style="color:#aaa;padding:20px;">Nenhum resultado para "<strong>${q}</strong>".</p>`;
-      } else {
-        res.forEach(item => criarCard(searchList, item));
-      }
-      searchPage.classList.remove("hidden");
-      searchPage.scrollIntoView({ behavior: "smooth" });
-    })
-    .catch(error => { if (error.name !== "AbortError") showToast("Erro na busca"); });
-}
-document.getElementById("closeSearch").onclick = () => searchPage.classList.add("hidden");
+function buscar() { return homeSearch.search(); }
+document.getElementById('closeSearch').onclick = () => { document.getElementById('busca').value = ''; homeSearch.reset(); };
 
 /* ========================
    CRIAR CARD
@@ -747,21 +682,22 @@ function criarCard(container, item, tipoForcado = null) {
   card.setAttribute("aria-label", `Assistir ${title}`);
 
   const favoritado = isFav(item.id);
-  const nota = item.vote_average ? `${item.vote_average.toFixed(1)}` : "";
+  const nota = Number.isFinite(item.vote_average) ? item.vote_average.toFixed(1) : "";
   const ano = (item.release_date || item.first_air_date || "").slice(0, 4);
   const tipoLabel = type === "filme" ? "Filme" : (item.genre_ids?.includes(16) && item.original_language === 'ja' ? "Anime" : "Série");
   const subInfo = [tipoLabel, ano].filter(Boolean).join(" · ");
 
+  const escapeMarkup = value => String(value ?? '').replace(/[&<>"']/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[character]));
   card.innerHTML = `
     <span class="poster">
       ${nota ? `<span class="badge-nota">${nota}</span>` : ""}
-      <img src="https://image.tmdb.org/t/p/w300${item.poster_path}" alt="${title}" loading="lazy">
+      <img src="https://image.tmdb.org/t/p/w300${escapeMarkup(item.poster_path)}" alt="${escapeMarkup(title)}" loading="lazy">
       <button type="button" class="poster-fav-btn fav-btn ${favoritado ? "favoritado is-fav" : ""}" title="${favoritado ? "Remover da Minha Lista" : "Salvar na Minha Lista"}">
         ${favoritado ? "♥" : "♡"}
       </button>
     </span>
-    <strong>${title}</strong>
-    <small>${subInfo}</small>
+    <strong>${escapeMarkup(title)}</strong>
+    <small>${escapeMarkup(subInfo)}</small>
   `;
 
   const favBtn = card.querySelector(".fav-btn");
@@ -877,6 +813,8 @@ document.querySelectorAll(".tab-btn").forEach(btn => {
     document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
     btn.classList.add("active");
     const target = btn.dataset.target;
+    document.getElementById("busca").value = "";
+    homeSearch.reset();
 
     limparFiltroGenero();
     document.querySelectorAll('.tab-btn').forEach(tab => tab.classList.toggle('active', tab === btn));

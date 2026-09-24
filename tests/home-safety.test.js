@@ -4,7 +4,7 @@ const vm = require('node:vm');
 const fs = require('node:fs');
 const { parseHTML } = require('linkedom');
 const settle = () => new Promise(resolve => setImmediate(resolve));
-test('home mode toggle removes adult catalog, autocomplete, saved entries and playback without deleting history', async () => {
+test('home mode toggle removes adult catalog, search results, saved entries and playback without deleting history', async () => {
   const { window, document } = parseHTML(fs.readFileSync('duckflix.html', 'utf8'));
   const el = id => document.getElementById(id);
   const saved = { 18: { id: 18, title: 'Adult film', type: 'filme', poster: '/adult.jpg', visto: 1 }, 12: { id: 12, title: 'Family film', type: 'filme', poster: '/family.jpg', visto: 2 } };
@@ -27,15 +27,15 @@ test('home mode toggle removes adult catalog, autocomplete, saved entries and pl
     return { ok: true, json: async () => data };
   };
   window.fetch = fetch;
-  const context = vm.createContext({ window, document, localStorage, fetch, URL, AbortController, DOMException, CustomEvent: window.CustomEvent, setTimeout, clearTimeout, setInterval: () => 0, clearInterval() {}, console });
-  for (const path of ['content-policy.js', 'site.js', 'script.js']) vm.runInContext(fs.readFileSync(path, 'utf8'), context, { filename: path });
+  const context = vm.createContext({ window, document, localStorage, fetch, URL, URLSearchParams, AbortController, DOMException, CustomEvent: window.CustomEvent, setTimeout, clearTimeout, setInterval: () => 0, clearInterval() {}, console });
+  for (const path of ['content-policy.js', 'site.js', 'home-search.js', 'script.js']) vm.runInContext(fs.readFileSync(path, 'utf8'), context, { filename: path });
   await settle();
   assert.match(el('filmes').textContent, /Adult film/);
   el('busca').value = 'film';
   el('busca').dispatchEvent(new window.Event('input'));
   for (const [id, timer] of [...timers]) if (timer.delay === 350) { timers.delete(id); timer.callback(); }
   await settle();
-  assert.match(el('sugestoes').textContent, /Adult film/);
+  assert.match(el('searchList').textContent, /Adult film/);
   await vm.runInContext('abrirPlayer({ id: 18, title: "Adult film", type: "filme", poster: "/adult.jpg" })', context);
   assert.equal(el('playerArea').classList.contains('hidden'), false);
   el('btnModoLivre').click();
@@ -51,7 +51,7 @@ test('home mode toggle removes adult catalog, autocomplete, saved entries and pl
   for (const [id, timer] of [...timers]) if (timer.delay === 350) { timers.delete(id); timer.callback(); }
   el('btnBusca').click();
   await settle();
-  for (const id of ['sugestoes', 'searchList']) {
+  for (const id of ['searchList']) {
     assert.doesNotMatch(el(id).textContent, /Adult film/);
     assert.match(el(id).textContent, /Family film/);
   }

@@ -172,9 +172,11 @@
   <section id="searchPage" class="hidden">
     <div class="favHeader">
       <h2>Resultados da Busca</h2>
-      <button id="closeSearch">&times;</button>
+      <button id="closeSearch" type="button" aria-label="Fechar busca e voltar ao catálogo">&times;</button>
     </div>
     <div id="searchList" class="catalog-grid"></div>
+    <p id="searchStatus" role="status" aria-live="polite"></p>
+    <button id="searchMore" type="button" hidden>Carregar mais</button>
   </section>
 
   <main class="home-main">
@@ -235,6 +237,7 @@
   <script src="tmdb-config.js"></script>
   <script src="content-policy.js"></script>
   <script src="site.js"></script>
+  <script src="home-search.js"></script>
   <script src="script.js"></script>
 </body>
 

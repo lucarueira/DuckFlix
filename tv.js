@@ -232,6 +232,12 @@
       await health.scanChannels(queue, {
         signal: controller.signal,
         concurrency: selected ? 1 : 2,
+        probe: (url, options) => {
+          const channel = queue.find(item => item.url === url);
+          return channel?.addonEndpoint && window.DuckTVAddons
+            ? window.DuckTVAddons.probe(channel, { ...options, probeChannel: health.probeChannel })
+            : health.probeChannel(url, options);
+        },
         onResult(channel, result) {
           if (scanner !== controller || controller.signal.aborted) return;
           results.set(channel.url, result);
@@ -288,12 +294,13 @@
     el('scan-more').hidden = true;
     renderChannels();
     try {
-      const [directory, cartoons] = await Promise.allSettled([
+      const [directory, cartoons, addons] = await Promise.allSettled([
         fetchList(PLAYLISTS[playlist.value], controller.signal),
-        fetchList(animationURL, controller.signal)
+        fetchList(animationURL, controller.signal),
+        window.DuckFlixSafety?.enabled() ? Promise.resolve([]) : (window.DuckTVAddons?.load(controller.signal) || Promise.resolve([]))
       ]);
       if (request !== controller) return;
-      channels = directory.status === 'fulfilled' ? directory.value.sort((a, b) => a.name.localeCompare(b.name, 'pt-BR')) : [];
+      channels = [...(addons.status === 'fulfilled' ? addons.value : []), ...(directory.status === 'fulfilled' ? directory.value : [])];
       const localCartoons = channels.filter(channel => channel.categories.includes('Animation'));
       animations = [...new Map([...localCartoons, ...(cartoons.status === 'fulfilled' ? cartoons.value : [])].map(channel => [channel.url, channel])).values()];
       if (!channels.length && !animations.length) throw new Error('Empty playlists');
@@ -471,6 +478,7 @@
   window.addEventListener('pageshow', event => { if (event.persisted) { selected = null; el('stop-stream').click(); loadPlaylist(); } });
   window.addEventListener('duckflix:modechange', () => {
     cancelScan(); el('stop-stream').click(); filtersChanged();
+    if (!window.DuckFlixSafety?.enabled()) loadPlaylist();
   });
   loadPlaylist();
 })();

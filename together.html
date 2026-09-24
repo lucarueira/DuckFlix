@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="referrer" content="no-referrer">
+  <title>Duck Together · Uma sessão, juntos</title>
+  <link rel="icon" type="image/png" href="img/favicon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="extensoes.css">
+  <link rel="stylesheet" href="site.css">
+  <link rel="stylesheet" href="together.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/hls.js@1.7.3/dist/hls.min.js" integrity="sha384-cciJ0zi8d1uMKC2zJd7jvPY4HQt7W4ByUI/FlMkltvBi31aW61rcpVBhpmW8/NwX" crossorigin="anonymous"></script>
+  <script defer src="tmdb-config.js"></script>
+  <script defer src="content-policy.js"></script>
+  <script defer src="site.js"></script>
+  <script defer src="extensoes.js"></script>
+  <script defer src="extensoes-media.js"></script>
+  <script defer src="together-config.js"></script>
+  <script defer src="together-sync.js"></script>
+  <script defer src="together-client.js"></script>
+  <script defer src="together.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#together-main">Ir para a sala</a>
+  <header class="header">
+    <a class="brand logo" href="index.html" aria-label="DuckFlix — Início"><img src="img/logo_duckflix.png" alt="DuckFlix" class="brand-logo" width="180" height="80"></a>
+    <nav class="main-nav" aria-label="Navegação Principal">
+      <a href="duckflix.html" class="nav-item">DuckFlix</a><a href="tv.html" class="nav-item nav-tv">DUCKTV</a><a href="extensoes.html" class="nav-item nav-ext">Extensões</a><a href="together.html" class="nav-item active" aria-current="page">Duck Together</a>
+    </nav>
+    <div class="header-right"><button id="btnModoLivre" class="btn-modo-livre" type="button">MODO LIVRE</button></div>
+  </header>
+  <main id="together-main">
+    <section class="together-intro"><span class="eyebrow">LONGE NO SOFÁ. JUNTOS NO PLAY.</span><h1>Duck <span>Together</span></h1><p>Uma pessoa comanda. Todo mundo acompanha.</p></section>
+    <p id="together-status" class="together-status" role="status" aria-live="polite">Conectando ao serviço de salas…</p>
+    <button id="retry-service" type="button" class="secondary" hidden>Tentar conectar novamente</button>
+    <section id="room-entry" class="room-entry" aria-labelledby="entry-title">
+      <h2 id="entry-title">Sua próxima sessão em companhia.</h2>
+      <label for="member-name">Como você quer aparecer?</label><input id="member-name" maxlength="30" autocomplete="nickname" placeholder="Seu nome" value="">
+      <div class="entry-options">
+        <div><h3>Comece uma sala</h3><p>Escolha o título e compartilhe o convite. Você será o líder.</p><button id="create-room" class="primary" type="button" disabled>Criar sala</button></div>
+        <form id="join-form"><h3>Já tem um convite?</h3><label for="room-invite" class="sr-only">Link do convite</label><input id="room-invite" type="text" placeholder="Cole o link da sala" autocomplete="off" required><button id="join-room" class="secondary" type="submit" disabled>Entrar na sala</button></form>
+      </div>
+      <p class="room-footnote">Play, pausa e avanço acompanham o líder. O player corrige diferenças de tempo durante a sessão.</p>
+    </section>
+    <section id="room" hidden>
+      <div class="room-toolbar"><div><span id="room-role" class="eyebrow"></span><h2>Sua sala está aberta</h2></div><button id="leave-room" class="secondary" type="button">Sair da sala</button></div>
+      <div class="invite-bar"><label for="invite-link">Convide alguém</label><input id="invite-link" readonly aria-label="Link para convidar participantes"><button id="copy-invite" class="secondary" type="button">Copiar convite</button></div>
+      <div class="together-layout">
+        <section class="together-watch" aria-labelledby="together-title">
+          <div id="together-screen" class="together-screen">
+            <video id="together-video" playsinline preload="none" aria-label="Vídeo sincronizado da sala" disablepictureinpicture disableremoteplayback></video>
+            <div id="together-placeholder" class="together-placeholder"><span aria-hidden="true">▶</span><p id="media-status">O líder vai escolher o que assistir.</p></div>
+            <button id="enable-playback" class="primary enable-playback" type="button" hidden>Ativar reprodução neste aparelho</button>
+          </div>
+          <div class="together-controls">
+            <label for="together-seek" class="sr-only">Posição do vídeo (controle do líder)</label><input id="together-seek" type="range" min="0" max="1000" value="0" disabled>
+            <div class="together-control-row"><button id="room-play" class="primary" type="button" disabled>▶ Play</button><span id="together-time">0:00 / 0:00</span><span class="control-spacer"></span><button id="room-mute" class="secondary" type="button">Som ligado</button><label for="room-speed" class="sr-only">Velocidade da sala</label><select id="room-speed" disabled aria-label="Velocidade da sala"><option value="0.75">0,75×</option><option value="1" selected>1×</option><option value="1.25">1,25×</option><option value="1.5">1,5×</option><option value="2">2×</option></select><button class="secondary" data-fullscreen="together-screen" type="button" aria-label="Tela cheia">⛶</button></div>
+          </div>
+          <div class="together-video-info"><h2 id="together-title">Escolham a próxima história.</h2><p id="sync-status" role="status">Aguardando vídeo.</p><button id="retry-media" class="text-button" type="button" hidden>Tentar carregar novamente</button></div>
+        </section>
+        <aside class="room-people"><h3>Na sala <span id="member-count">0</span></h3><ul id="room-members"></ul><p>Volume e tela cheia são individuais. Play, pausa, posição e velocidade ficam com o líder.</p></aside>
+      </div>
+      <section id="host-picker" class="host-picker" hidden aria-labelledby="picker-title">
+        <div class="section-heading"><h2 id="picker-title">O que vamos assistir juntos?</h2><span class="muted">FILMES E EPISÓDIOS</span></div>
+        <form id="together-search-form" class="search-row"><label for="together-search" class="sr-only">Buscar título</label><input id="together-search" type="search" placeholder="Buscar filmes, séries e animes…" maxlength="120" required><button class="primary" type="submit">Buscar</button></form>
+        <p id="picker-status" role="status"></p><div id="together-results" class="catalog-grid"></div>
+        <div id="together-episodes" hidden><label for="together-season">Temporada</label><select id="together-season"></select><label for="together-episode">Episódio</label><select id="together-episode"></select><button id="find-episode" class="secondary" type="button">Carregar episódio</button></div>
+        <div id="together-sources" class="together-sources"></div>
+      </section>
+    </section>
+  </main>
+  <footer class="footer"><p>DuckFlix © 2026 • Feito com dedicação pelo <strong>Mamute</strong> • Versão <strong>2.5</strong></p></footer>
+</body>
+</html>
