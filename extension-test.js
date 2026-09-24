@@ -11,8 +11,15 @@
     if (!/^http:\/\//i.test(url) || !/\.m3u8(?:$|[?#])/i.test(url)) { status.textContent = 'Use uma URL HTTP terminada em .m3u8 (pode conter parâmetros).'; return; }
     if (!window.Hls?.isSupported()) { status.textContent = 'HLS não está disponível neste navegador.'; return; }
     status.textContent = 'Conectando…';
+    window.DuckFlixExtension.clearError?.();
     hls = new Hls({ ...window.DuckFlixExtension.hlsConfig(url, Hls), maxBufferLength: 15 });
-    hls.on(Hls.Events.ERROR, (_, data) => { if (data.fatal) { status.textContent = 'Falha na fonte. Confira as autorizações na extensão e tente novamente. O endereço pode estar indisponível ou usar um formato incompatível.'; stop(); } });
+    hls.on(Hls.Events.ERROR, (_, data) => {
+      if (data.fatal) {
+        const detail = window.DuckFlixExtension.lastError || data.response?.text || data.error?.message || data.details || 'A fonte não respondeu.';
+        status.textContent = `Não foi possível reproduzir: ${detail}`;
+        stop();
+      }
+    });
     hls.on(Hls.Events.MANIFEST_PARSED, () => video.play().catch(() => { status.textContent = 'Transmissão carregada. Toque em play.'; }));
     hls.loadSource(url); hls.attachMedia(video);
     return true;

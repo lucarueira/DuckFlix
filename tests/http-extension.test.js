@@ -78,6 +78,9 @@ test('site bridge, content script and worker relay playlist and binary HLS resou
   const segment = await load({ url: 'http://video.example/segment.ts', responseType: 'arraybuffer', rangeStart: 0, rangeEnd: 3 });
   assert.deepEqual([...new Uint8Array(segment.result.data)], [0,255,128]); assert.equal(segment.stats.loaded, 3);
   assert.equal(calls[1].options.headers.Range, 'bytes=0-2');
+  const complete = await load({ url: 'http://video.example/whole.ts', responseType: 'arraybuffer', rangeStart: 0, rangeEnd: 0 });
+  assert.deepEqual([...new Uint8Array(complete.result.data)], [0,255,128]);
+  assert.equal(calls[2].options.headers.Range, undefined, 'hls.js complete-segment defaults must not produce bytes=0--1');
   const catalog = await api.fetchJSON('https://addon.example/catalog.json');
   assert.equal(catalog.metas[0].name, 'Canal de televisão');
 });
