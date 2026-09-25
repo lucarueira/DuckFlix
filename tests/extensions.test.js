@@ -102,6 +102,24 @@ test('film identities query all free addons, deduplicate and display only verifi
   assert.doesNotMatch(app.el('stream-list').textContent, /SECRET|PROVIDER|Paid/);
   assert.equal(app.video.src, 'https://video.example/good.mp4');
 });
+
+test('HTTP HLS source stays visible and gets a distinct selected highlight when extension is needed', async t => {
+  const app = await setup(t, url => {
+    if (String(url).includes('/stream/')) return { ok: true, json: async () => ({ streams: [{ url: 'http://only-http.example/live.m3u8', mimeType: 'application/vnd.apple.mpegurl' }] }) };
+  });
+  app.media.probe = async () => ({ ok: false, mode: 'hls' });
+  app.el('catalog-grid').querySelector('.poster-open').click(); await settle();
+  const source = app.el('stream-list').querySelector('.stream-option-http');
+  assert.ok(source, 'keep an HTTP choice visible when its HTTPS upgrade failed');
+  assert.match(source.textContent, /Ative a extensão/);
+  source.click();
+  const selected = app.el('stream-list').querySelector('.stream-option-http');
+  assert.equal(selected.getAttribute('aria-pressed'), 'true');
+  assert.equal(selected.classList.contains('stream-option-awaiting'), true);
+  assert.equal(app.el('extension-guide-link').hidden, false);
+  assert.match(app.el('play-message').textContent, /Ative a extensão/);
+  assert.match(fs.readFileSync('extensoes.css', 'utf8'), /\.stream-option-awaiting\[aria-pressed="true"\][^{]*\{[^}]*background:\s*#ffc84b/s);
+});
 test('series resolve episodes and automatically query the next episode', async t => {
   const app = await setup(t); app.document.querySelector('[data-category="series"]').click(); await settle();
   app.el('catalog-grid').querySelector('.poster-open').click(); await settle();

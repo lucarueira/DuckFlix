@@ -7,7 +7,7 @@
   }
   function create({ document, getDetails, getStreams, onMovieFinished = () => {}, onClose = () => {}, onManualOpen = () => {}, media = globalThis.DuckFlixMedia, setTimeout = globalThis.setTimeout, clearTimeout = globalThis.clearTimeout }) {
     const $ = id => document.getElementById(id), video = $('extension-video'), dialog = $('watch-dialog'), shell = $('player-shell');
-    let item, episodes = [], episodeIndex = -1, detailAbort, scanAbort, scanState, connection, currentSource, verified = [], sourceNumber = 0, playbackVersion = 0, stallTimer;
+    let item, episodes = [], episodeIndex = -1, detailAbort, scanAbort, scanState, connection, currentSource, verified = [], extensionChoices = [], extensionChoiceIds = new Set(), sourceNumber = 0, playbackVersion = 0, stallTimer;
     let resumeAt = 0, lastPosition = 0, detailsReady = false;
     let queueToken = null, movieFinished = false, movieTimer;
     function finishMovie(reason) {
@@ -102,9 +102,14 @@
     }
     function drawSources() {
       $('stream-list').replaceChildren();
-      for (const source of verified) {
-        const button = node('button', `${source.language} · ${source.quality} · Opção ${source.number}`, 'stream-option');
+      for (const source of [...verified, ...extensionChoices]) {
+        const waitingExtension = source.requiresExtension && !globalThis.DuckFlixExtension?.connected;
+        const label = source.requiresExtension
+          ? waitingExtension ? `HTTP HLS · Ative a extensão · ${source.language} · ${source.quality}` : `HTTP HLS · Extensão · ${source.language} · ${source.quality}`
+          : `${source.language} · ${source.quality} · Opção ${source.number}`;
+        const button = node('button', label, `stream-option${source.requiresExtension ? ' stream-option-http' : ''}${waitingExtension ? ' stream-option-awaiting' : ''}`);
         button.type = 'button'; button.setAttribute('aria-pressed', String(source === currentSource));
+        if (waitingExtension) button.title = 'Esta fonte precisa da extensão. Ative-a e recarregue o DuckFlix.';
         button.addEventListener('click', () => playSource(source, Number(video.currentTime) || 0));
         $('stream-list').append(button);
       }
@@ -118,7 +123,9 @@
         finishMovie('failed'); return;
       }
       $('scan-more').hidden = busy || !remaining;
-      status('stream-status', busy ? `Verificando reprodução… ${verified.length ? `${verified.length} opções disponíveis.` : ''}` : verified.length ? `${verified.length} ${verified.length === 1 ? 'opção pronta' : 'opções prontas'} para assistir.` : 'Nenhuma opção reproduziu imagem neste navegador.');
+      const httpHint = extensionChoices.length && !globalThis.DuckFlixExtension?.connected
+        ? ` ${extensionChoices.length} fonte(s) HTTP HLS aguardam a extensão.` : '';
+      status('stream-status', busy ? `Verificando reprodução… ${verified.length ? `${verified.length} opções disponíveis.` : ''}${httpHint}` : verified.length ? `${verified.length} ${verified.length === 1 ? 'opção pronta' : 'opções prontas'} para assistir.${httpHint}` : httpHint || 'Nenhuma opção reproduziu imagem neste navegador.');
       if (!busy && !remaining && !verified.length) placeholder('Não encontramos uma opção funcionando agora. Tente verificar novamente mais tarde.');
       else if (!busy && !verified.length) placeholder('As primeiras opções não responderam. Use “Verificar mais opções” para continuar.');
     }
@@ -135,9 +142,17 @@
       }
     }
     function playSource(source, at = 0) {
+      if (source.requiresExtension && !globalThis.DuckFlixExtension?.connected) {
+        stopPlayback(); currentSource = source; drawSources(); setBuffering(false);
+        placeholder('Esta opção usa HTTP HLS e está pronta para testar.');
+        status('play-message', 'Ative a extensão DuckFlix e recarregue esta página. Depois escolha esta opção novamente.');
+        const guide = $('extension-guide-link'); if (guide) guide.hidden = false;
+        return;
+      }
       stopPlayback(); lastPosition = at; currentSource = source; const version = playbackVersion;
       placeholder('Abrindo vídeo…'); drawSources();
       status('play-message', '');
+      const guide = $('extension-guide-link'); if (guide) guide.hidden = true;
       connection = media.connect(video, source, {
         mode: source.mode, autoplay: true, startAt: at,
         onReady: () => {
@@ -163,7 +178,7 @@
         media.probe(source, { signal: state.controller.signal }).then(result => {
           if (state !== scanState || state.controller.signal.aborted) return;
           if (result?.ok) {
-            const ready = { ...source, mode: result.mode, number: ++sourceNumber };
+            const ready = { ...source, mode: result.mode, requiresExtension: Boolean(source.requiresExtension && source.url.startsWith('http:')), number: ++sourceNumber };
             verified.push(ready); drawSources();
             if (!currentSource) playSource(ready, resumeAt);
           }
@@ -175,7 +190,7 @@
       updateScanStatus(state);
     }
     async function loadStreams() {
-      scanAbort?.abort(); stopPlayback(); verified = []; sourceNumber = 0; resumeAt = 0; drawSources();
+      scanAbort?.abort(); stopPlayback(); verified = []; extensionChoices = []; extensionChoiceIds = new Set(); sourceNumber = 0; resumeAt = 0; drawSources();
       $('scan-more').hidden = true; status('play-message', ''); placeholder('Encontrando a melhor reprodução para você…');
       const controller = new AbortController(); scanAbort = controller;
       const state = { controller, queue: [], seen: new Set(), active: 0, attempted: 0, limit: 12, target: 3, fetched: false }; scanState = state;
@@ -186,6 +201,12 @@
           if (controller.signal.aborted) return;
           for (const stream of streams) {
             const source = media.candidate(stream);
+            if (source?.requiresExtension && !globalThis.DuckFlixExtension?.connected) {
+              const directHTTP = { ...source, url: source.httpURL || source.url, mode: 'hls', number: undefined };
+              if (!extensionChoiceIds.has(directHTTP.url)) {
+                extensionChoiceIds.add(directHTTP.url); extensionChoices.push(directHTTP); drawSources();
+              }
+            }
             if (!source || state.seen.has(source.url)) continue;
             state.seen.add(source.url); state.queue.push({ ...source, priority: stream.priority || 0 });
           }

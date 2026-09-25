@@ -753,6 +753,14 @@ select { font: inherit; color: #ececf0; border: 1px solid #3a3f4a; background: #
   background: rgba(255, 23, 68, 0.15);
   box-shadow: 0 0 12px rgba(255, 23, 68, 0.25);
 }
+.stream-option-http { border-color: #148c91; color: #9cf4ed; background: #07343a; }
+.stream-option-http::before { content: '↗ '; color: #6ee7dc; }
+.stream-option-http[aria-pressed="true"] { color: #042629; border-color: #5ff6e8; background: #57dfd2; box-shadow: 0 0 16px #42dace66; font-weight: 700; }
+.stream-option-awaiting { border-style: dashed; color: #ffe5a2; background: #342a13; }
+.stream-option-awaiting::before { content: '⚡ '; color: #ffd166; }
+.stream-option-awaiting[aria-pressed="true"] { color: #221600; border-color: #ffd166; background: #ffc84b; box-shadow: 0 0 16px #ffc84b66; font-weight: 700; }
+.extension-guide-link { display: inline-block; margin: 2px 0 12px; color: #ffe29a; font-size: 13px; font-weight: 700; text-underline-offset: 4px; }
+.extension-guide-link[hidden] { display: none; }
 #scan-more { margin: 15px 28px 0; font-size: 12px; }
 
 .episode-panel { padding: 22px 18px; border-left: 1px solid var(--line); background: #13141b; }
