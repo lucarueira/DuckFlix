@@ -71,6 +71,13 @@ test('simple anime category requests Japanese animation, without exposing addon 
   assert.match(app.el('catalog-grid').textContent, /Anime/);
   assert.doesNotMatch(app.document.body.textContent, /FenixFlix|Flix Streams|BestCine|Zeus|FrostStream/);
 });
+test('Torrentio info hashes become safe Webtor magnet links; malformed hashes are ignored', () => {
+  const source = ext.torrentCandidate({ infoHash: '08ada5a7a6183aae1e09d831df6748d566095a10', name: 'Sintel 1080p Dublado' });
+  assert.equal(new URL(source.magnet).searchParams.get('xt'), 'urn:btih:08ada5a7a6183aae1e09d831df6748d566095a10');
+  assert.equal(source.quality, '1080P'); assert.equal(source.language, 'Dublado');
+  assert.equal(ext.torrentCandidate({ infoHash: 'javascript:alert(1)' }), null);
+  assert.equal(ext.FIXED_ADDONS.some(addon => /torrentio/i.test(addon.name)), true);
+});
 
 test('catalog queue controls add movies, reorder the session, skip manually and stop on close', async t => {
   const app = await setup(t);
@@ -101,6 +108,18 @@ test('film identities query all free addons, deduplicate and display only verifi
   assert.equal(app.el('stream-list').children.length, 1); assert.equal(app.probes.length, 2);
   assert.doesNotMatch(app.el('stream-list').textContent, /SECRET|PROVIDER|Paid/);
   assert.equal(app.video.src, 'https://video.example/good.mp4');
+});
+test('Torrentio torrent results appear as a separate Webtor choice without entering HTTP probing', async t => {
+  const app = await setup(t, url => {
+    if (url.includes('torrentio.strem.fun') && url.includes('/stream/')) return { ok: true, json: async () => ({ streams: [
+      { infoHash: '08ada5a7a6183aae1e09d831df6748d566095a10', name: 'Sintel 1080p Dublado' }
+    ] }) };
+  });
+  app.el('catalog-grid').querySelector('.poster-open').click(); await settle();
+  const choice = app.el('stream-list').querySelector('.stream-option-webtor');
+  assert.ok(choice); assert.match(choice.textContent, /Webtor.*Dublado.*1080P/);
+  assert.equal(app.video.src, 'https://video.example/good.mp4');
+  assert.equal(app.probes.some(probe => probe.source.webtor), false);
 });
 
 test('HTTP HLS source stays visible and gets a distinct selected highlight when extension is needed', async t => {
