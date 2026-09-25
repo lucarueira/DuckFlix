@@ -6,8 +6,7 @@
     { name: 'FenixFlix', url: FENIX },
     { name: 'BestCine', url: 'https://bestcine.dpdns.org/manifest.json' },
     { name: 'Zeus', url: 'https://398fe185fed6-zeus.baby-beamup.club/v1-p64f-q3j-a3-mb-c3/manifest.json' },
-    { name: 'FrostStream', url: 'https://froststream.cloutteam.com/manifest.json' },
-    { name: 'Torrentio (teste Webtor)', url: 'https://torrentio.strem.fun/manifest.json' }
+    { name: 'FrostStream', url: 'https://froststream.cloutteam.com/manifest.json' }
   ]);
   const CINEMETA = 'https://v3-cinemeta.strem.io/manifest.json';
   function tmdbURL(path, params = {}, key) {
@@ -67,16 +66,6 @@
     if (Object.keys(stream.behaviorHints?.proxyHeaders?.request || {}).length) return { playable: false, reason: 'Exige cabeçalhos de um aplicativo ou servidor.' };
     return { playable: true, reason: stream.behaviorHints?.notWebReady ? 'Compatibilidade limitada. Tentar no navegador.' : 'Tentar reproduzir no navegador.' };
   }
-  function torrentCandidate(stream) {
-    const hash = String(stream?.infoHash || '').trim();
-    if (!/^(?:[a-f\d]{40}|[a-z2-7]{32})$/i.test(hash)) return null;
-    const text = [stream.name, stream.title, stream.description].filter(Boolean).join(' ');
-    const quality = text.match(/\b(2160p|1080p|720p|480p|360p|4K|FHD|HD|CAM)\b/i)?.[1].toUpperCase() || 'Auto';
-    const language = /dublad|portugu[eê]s|pt-br|🇧🇷/i.test(text) ? 'Dublado' : /legendad/i.test(text) ? 'Legendado' : 'Áudio original';
-    const magnet = new URL('magnet:?xt=urn:btih:' + hash);
-    if (typeof stream.name === 'string' && stream.name.length < 160) magnet.searchParams.set('dn', stream.name);
-    return { hash, magnet: magnet.href, quality, language, webtor: true };
-  }
   async function requestJSON(url, signal) {
     const controller = new AbortController();
     const abort = () => controller.abort();
@@ -103,7 +92,7 @@
       signal?.removeEventListener('abort', abort);
     }
   }
-  const api = { FENIX, FIXED_ADDONS, CINEMETA, manifestURL, resourceURL, validateManifest, supports, streamCompatibility, torrentCandidate, tmdbURL, tmdbItems, requestJSON };
+  const api = { FENIX, FIXED_ADDONS, CINEMETA, manifestURL, resourceURL, validateManifest, supports, streamCompatibility, tmdbURL, tmdbItems, requestJSON };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   if (typeof document === 'undefined') return;
 

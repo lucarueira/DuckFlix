@@ -7,7 +7,7 @@
   }
   function create({ document, getDetails, getStreams, onMovieFinished = () => {}, onClose = () => {}, onManualOpen = () => {}, media = globalThis.DuckFlixMedia, setTimeout = globalThis.setTimeout, clearTimeout = globalThis.clearTimeout }) {
     const $ = id => document.getElementById(id), video = $('extension-video'), dialog = $('watch-dialog'), shell = $('player-shell');
-    let item, episodes = [], episodeIndex = -1, detailAbort, scanAbort, scanState, connection, currentSource, verified = [], extensionChoices = [], torrentChoices = [], extensionChoiceIds = new Set(), torrentChoiceIds = new Set(), sourceNumber = 0, playbackVersion = 0, stallTimer, webtorScript;
+    let item, episodes = [], episodeIndex = -1, detailAbort, scanAbort, scanState, connection, currentSource, verified = [], extensionChoices = [], extensionChoiceIds = new Set(), sourceNumber = 0, playbackVersion = 0, stallTimer;
     let resumeAt = 0, lastPosition = 0, detailsReady = false;
     let queueToken = null, movieFinished = false, movieTimer;
     function finishMovie(reason) {
@@ -87,8 +87,6 @@
     function stopPlayback() {
       saveProgress(true);
       playbackVersion++; clearTimeout(stallTimer); stallTimer = null; clearTimeout(controlsTimer); connection?.dispose(); connection = null; currentSource = null;
-      const webtor = $('webtor-player'); if (webtor) { webtor.replaceChildren(); webtor.hidden = true; }
-      video.hidden = false;
       setBuffering(false);
       if (shell) shell.classList.remove('controls-hidden');
       const controls = $('video-controls');
@@ -104,13 +102,7 @@
     }
     function drawSources() {
       $('stream-list').replaceChildren();
-      for (const source of [...verified, ...extensionChoices, ...torrentChoices]) {
-        if (source.webtor) {
-          const button = node('button', `TORRENT · Webtor · ${source.language} · ${source.quality}`, 'stream-option stream-option-webtor');
-          button.type = 'button'; button.setAttribute('aria-pressed', String(currentSource?.hash === source.hash));
-          button.title = 'Abre esta fonte torrent no player Webtor. O carregamento pode levar alguns instantes.';
-          button.addEventListener('click', () => playWebtor(source)); $('stream-list').append(button); continue;
-        }
+      for (const source of [...verified, ...extensionChoices]) {
         const waitingExtension = source.requiresExtension && !globalThis.DuckFlixExtension?.connected;
         const label = source.requiresExtension
           ? waitingExtension ? `HTTP HLS · Ative a extensão · ${source.language} · ${source.quality}` : `HTTP HLS · Extensão · ${source.language} · ${source.quality}`
@@ -150,7 +142,6 @@
       }
     }
     function playSource(source, at = 0) {
-      if (source.webtor) { playWebtor(source); return; }
       if (source.requiresExtension && !globalThis.DuckFlixExtension?.connected) {
         stopPlayback(); currentSource = source; drawSources(); setBuffering(false);
         placeholder('Esta opção usa HTTP HLS e está pronta para testar.');
@@ -180,47 +171,6 @@
         onError: () => { if (version === playbackVersion) failedSource(source, Math.max(at, lastPosition)); }
       });
     }
-    function loadWebtorSDK() {
-      if (globalThis.webtor?.push) return Promise.resolve();
-      if (webtorScript) return webtorScript;
-      webtorScript = new Promise((resolve, reject) => {
-        const script = document.createElement('script');
-        script.src = 'https://cdn.jsdelivr.net/npm/@webtor/embed-sdk-js@0.2.19/dist/index.min.js';
-        script.async = true;
-        script.onload = () => globalThis.webtor?.push ? resolve() : reject(new Error('O SDK Webtor não iniciou.'));
-        script.onerror = () => reject(new Error('Não foi possível carregar o player Webtor.'));
-        document.head.append(script);
-      });
-      return webtorScript;
-    }
-    async function playWebtor(source) {
-      stopPlayback(); currentSource = source; const version = playbackVersion;
-      drawSources(); video.hidden = true; $('player-placeholder').hidden = false;
-      status('play-status', 'Conectando ao Webtor…'); status('play-message', 'Preparando a fonte torrent. Isso pode levar alguns instantes.');
-      status('stream-status', 'Carregando player Webtor…');
-      try {
-        await loadWebtorSDK();
-        if (version !== playbackVersion || !dialog.open) return;
-        const target = $('webtor-player'); target.replaceChildren(); target.hidden = false;
-        $('player-placeholder').hidden = true;
-        globalThis.webtor.push({
-          id: 'webtor-player', magnet: source.magnet, width: '100%', lang: 'pt',
-          title: item?.name || 'DuckFlix', controls: true,
-          on: event => {
-            if (version !== playbackVersion) return;
-            if (event?.name === 'torrent fetched') status('stream-status', 'Torrent recebido pelo Webtor. Preparando vídeo…');
-            if (event?.name === 'torrent error') { status('play-message', 'O Webtor não conseguiu abrir esta fonte. Tente outra opção.'); status('stream-status', 'Esta fonte torrent não respondeu.'); }
-          }
-        });
-        status('stream-status', 'Player Webtor aberto. A conexão torrent pode demorar para iniciar.');
-      } catch (error) {
-        if (version !== playbackVersion) return;
-        $('player-placeholder').hidden = false; video.hidden = false;
-        status('play-status', error.message || 'Não foi possível abrir o player Webtor.');
-        status('play-message', 'Tente outra fonte ou verifique sua conexão.');
-        status('stream-status', 'Falha ao iniciar o player Webtor.');
-      }
-    }
     function pump(state) {
       if (state !== scanState || state.controller.signal.aborted) return;
       while (state.active < 2 && state.queue.length && state.attempted < state.limit && verified.length < state.target) {
@@ -240,7 +190,7 @@
       updateScanStatus(state);
     }
     async function loadStreams() {
-      scanAbort?.abort(); stopPlayback(); verified = []; extensionChoices = []; torrentChoices = []; extensionChoiceIds = new Set(); torrentChoiceIds = new Set(); sourceNumber = 0; resumeAt = 0; drawSources();
+      scanAbort?.abort(); stopPlayback(); verified = []; extensionChoices = []; extensionChoiceIds = new Set(); sourceNumber = 0; resumeAt = 0; drawSources();
       $('scan-more').hidden = true; status('play-message', ''); placeholder('Encontrando a melhor reprodução para você…');
       const controller = new AbortController(); scanAbort = controller;
       const state = { controller, queue: [], seen: new Set(), active: 0, attempted: 0, limit: 12, target: 3, fetched: false }; scanState = state;
@@ -250,8 +200,6 @@
         await getStreams(id, item.type, controller.signal, streams => {
           if (controller.signal.aborted) return;
           for (const stream of streams) {
-            const torrent = globalThis.DuckFlixExtensions?.torrentCandidate?.(stream);
-            if (torrent && !torrentChoiceIds.has(torrent.hash)) { torrentChoiceIds.add(torrent.hash); torrentChoices.push(torrent); drawSources(); }
             const source = media.candidate(stream);
             if (source?.requiresExtension && !globalThis.DuckFlixExtension?.connected) {
               const directHTTP = { ...source, url: source.httpURL || source.url, mode: 'hls', number: undefined };
