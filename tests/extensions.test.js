@@ -166,3 +166,20 @@ test('player controls auto-hide after inactivity during playback and wake on use
   assert.equal(controls.classList.contains('is-hidden'), false);
   assert.equal(shell.classList.contains('controls-hidden'), false);
 });
+test('fullscreen releases stale control focus; only real waiting shows buffering and pause clears it', async t => {
+  const app = await setup(t);
+  app.el('catalog-grid').querySelector('.poster-open').click(); await settle();
+  const controls = app.el('video-controls'), spinner = app.el('player-spinner');
+  controls.dispatchEvent(new app.window.Event('focusin'));
+  assert.equal([...app.timers.values()].some(timer => timer.delay === 2800), false);
+  app.document.dispatchEvent(new app.window.Event('fullscreenchange'));
+  assert.equal([...app.timers.values()].some(timer => timer.delay === 2800), true);
+
+  app.video.dispatchEvent(new app.window.Event('stalled'));
+  assert.equal(spinner.hidden, true, 'network stalled alone should not cover a video that is still playing');
+  app.video.dispatchEvent(new app.window.Event('waiting'));
+  assert.equal(spinner.hidden, false);
+  app.video.paused = true;
+  app.video.dispatchEvent(new app.window.Event('pause'));
+  assert.equal(spinner.hidden, true, 'pausing while waiting should dismiss the spinner');
+});

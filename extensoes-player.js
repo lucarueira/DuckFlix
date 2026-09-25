@@ -341,8 +341,9 @@
       showControls(true);
     });
     function waitingForVideo() {
+      if (video.paused) { setBuffering(false); return; }
       setBuffering(true);
-      showControls(false);
+      showControls(true);
       if (stallTimer) return;
       const source = currentSource, version = playbackVersion;
       if (source && connection) stallTimer = setTimeout(() => {
@@ -351,11 +352,11 @@
       }, 25000);
     }
     video.addEventListener('waiting', waitingForVideo);
-    video.addEventListener('stalled', waitingForVideo);
     for (const event of ['play', 'pause']) video.addEventListener(event, () => {
       $('toggle-play').textContent = video.paused ? '▶' : 'Ⅱ';
       $('toggle-play').setAttribute('aria-label', video.paused ? 'Reproduzir' : 'Pausar');
       if (video.paused) {
+        clearTimeout(stallTimer); stallTimer = null; setBuffering(false);
         saveProgress(true);
         showControls(false);
       } else {
@@ -414,6 +415,12 @@
       controls.addEventListener('focusin', () => { isInteracting = true; showControls(false); });
       controls.addEventListener('focusout', () => { isInteracting = false; showControls(true); });
     }
+    document.addEventListener('fullscreenchange', () => {
+      const focused = document.activeElement;
+      if (focused && controls?.contains(focused)) focused.blur?.();
+      isInteracting = false;
+      if (!video.paused) showControls(true);
+    });
     $('video-seek').addEventListener('pointerdown', () => { isInteracting = true; showControls(false); });
     document.addEventListener('pointerup', () => {
       if (isInteracting) {
