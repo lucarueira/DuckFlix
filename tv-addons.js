@@ -4,6 +4,7 @@
     { base: 'https://frostview.cloutteam.com', type: 'channel', catalog: 'froststream-channels', paginated: true }
   ]);
   const HTTP_SOURCE = { base: 'https://da5f663b4690-minhatv.baby-beamup.club', type: 'tv', catalog: 'minhatv_channels' };
+  const BESTCINE_TV = { base: 'https://bestcine.dpdns.org', type: 'tv', catalog: 'bestcine_tv_catalog' };
   const normalize = text => text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
   function secure(value) {
     try { const url = new URL(value); return url.protocol === 'https:' && !url.username && !url.password ? url.href : null; } catch { return null; }
@@ -19,13 +20,21 @@
       if (extension?.connected && extension.fetchJSON && new URL(url).origin === HTTP_SOURCE.base) {
         return await extension.fetchJSON(url, { signal: controller.signal });
       }
-      const response = await fetcher(url, { signal: controller.signal, credentials: 'omit', referrerPolicy: 'no-referrer' });
+      let response;
+      try {
+        response = await fetcher(url, { signal: controller.signal, credentials: 'omit', referrerPolicy: 'no-referrer' });
+      } catch (error) {
+        if (!controller.signal.aborted && error instanceof TypeError && extension?.connected && extension.fetchJSON && new URL(url).origin === BESTCINE_TV.base) {
+          return await extension.fetchJSON(url, { signal: controller.signal });
+        }
+        throw error;
+      }
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       return await response.json();
     } finally { clearTimeout(timer); signal?.removeEventListener('abort', abort); }
   }
   async function load(signal, fetcher = fetch) {
-    const sources = globalThis.DuckFlixExtension?.connected ? [...SOURCES, HTTP_SOURCE] : SOURCES;
+    const sources = globalThis.DuckFlixExtension?.connected ? [...SOURCES, HTTP_SOURCE, BESTCINE_TV] : SOURCES;
     const settled = await Promise.allSettled(sources.map(async source => {
       const entries = new Map();
       for (let page = 0; page < 12; page++) {

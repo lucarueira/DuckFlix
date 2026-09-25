@@ -79,6 +79,12 @@
     } catch (error) {
       if (signal?.aborted) throw error;
       if (controller.signal.aborted) throw new Error('O servidor demorou para responder. Tente novamente.');
+      // Keep successful direct requests intact; retry only fixed addon network failures.
+      const extension = globalThis.DuckFlixExtension;
+      const fixedResource = FIXED_ADDONS.some(addon => url.startsWith(addon.url.slice(0, -'manifest.json'.length)));
+      if (error instanceof TypeError && fixedResource && extension?.connected && extension.fetchJSON) {
+        return await extension.fetchJSON(url, { signal: controller.signal });
+      }
       if (error instanceof TypeError) throw new Error('Não foi possível acessar o servidor. Ele pode estar indisponível ou bloquear o navegador (CORS).');
       throw error;
     } finally {

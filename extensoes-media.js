@@ -7,12 +7,13 @@
     try { url = new URL(stream.url); } catch { return null; }
     if (!['http:', 'https:'].includes(url.protocol) || url.username || url.password) return null;
     // Tenta o endpoint TLS do próprio fornecedor; só entra na lista após decodificar imagem.
-    const extensionHLS = globalThis.DuckFlixExtension?.connected && /\.m3u8(?:$|[?#])/i.test(url.href);
+    const isHLS = /\.m3u8(?:$|[?#])/i.test(url.href) || /mpegurl/i.test(stream.mimeType || '');
+    const extensionHLS = globalThis.DuckFlixExtension?.connected && isHLS;
     if (url.protocol === 'http:' && !extensionHLS) { url.protocol = 'https:'; if (url.port === '80') url.port = ''; }
     const text = [stream.name, stream.title, stream.description].join(' ');
     const quality = text.match(/\b(2160p|1080p|720p|480p|360p|4K|FHD|HD|CAM)\b/i)?.[1].toUpperCase() || 'Auto';
     const language = /dublad|portugu[eê]s|pt-br|🇧🇷/i.test(text) ? 'Dublado' : /legendad/i.test(text) ? 'Legendado' : 'Áudio original';
-    return { url: url.href, quality, language, mode: /\.m3u8(?:$|[?#])/i.test(url.href) || /mpegurl/i.test(stream.mimeType || '') ? 'hls' : 'auto' };
+    return { url: url.href, quality, language, mode: isHLS ? 'hls' : 'auto' };
   }
   function connect(video, source, { Hls = globalThis.Hls, onReady = () => {}, onError = () => {}, onBlocked = () => {}, timeoutMs = 14000, autoplay = false, startAt = 0, mode = source.mode } = {}) {
     let disposed = false, ready = false, hls, timer, stageTimer, triedHLS = false;

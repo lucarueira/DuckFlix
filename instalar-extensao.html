@@ -25,6 +25,8 @@
   </ol></section>
   <section><h2>Teste de uma transmissão</h2><p>Use o botão abaixo para buscar um canal aberto do Minha TV e iniciar o teste HTTP. Não precisa copiar um link. Você também pode informar outra URL HLS (.m3u8); o endereço não será salvo.</p>
     <button id="test-minhatv" type="button">Testar canal HTTP do Minha TV</button>
+    <button id="test-demo" type="button">Testar vídeo de demonstração HTTP</button>
+    <p>A demonstração usa Big Buck Bunny, sem consultar addons. Autorize <code>http://playertest.longtailvideo.com/*</code> na extensão quando solicitado. O antigo exemplo em <code>mux.dev</code> exige HTTPS no Chrome e não valida HTTP puro.</p>
     <p>A primeira autorização é para consultar o catálogo do Minha TV. Abra o ícone da extensão, autorize o endereço indicado e clique novamente no botão. Depois, a transmissão pode pedir autorização para outro servidor.</p>
     <form id="test-form"><label for="test-url">Endereço da transmissão</label><input id="test-url" type="url" placeholder="http://servidor.exemplo/canal.m3u8" required autocomplete="off"><button type="submit">Testar transmissão</button><button id="test-stop" type="button">Parar</button></form>
     <p id="test-status" role="status">Instale a extensão antes de testar.</p><video id="test-video" controls playsinline></video>

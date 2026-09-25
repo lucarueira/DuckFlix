@@ -18,7 +18,7 @@
   const categoryName = category => CATEGORY_NAMES[category] || category;
 
   // Playlist metadata is untrusted text; it is never inserted as HTML.
-  function parsePlaylist(text) {
+  function parsePlaylist(text, { allowHTTP = false } = {}) {
     if (!text.trimStart().startsWith('#EXTM3U')) throw new Error('Invalid M3U');
     const channels = [];
     const seen = new Set();
@@ -46,8 +46,9 @@
         metadata = null;
         try {
           const url = new URL(line);
-          // HTTPS-only streams work on HTTPS hosting without mixed-content downgrades.
-          if (url.protocol !== 'https:' || url.username || url.password) { skipped++; continue; }
+          // Existing HTTPS entries stay unchanged. HTTP HLS is optional and uses the extension.
+          const httpHLS = allowHTTP && url.protocol === 'http:' && /\.m3u8$/i.test(url.pathname);
+          if ((!httpHLS && url.protocol !== 'https:') || url.username || url.password) { skipped++; continue; }
           if (seen.has(url.href)) continue;
           seen.add(url.href);
           channels.push({ ...channel, url: url.href, search: normalize(channel.name) });
@@ -266,7 +267,7 @@
   async function fetchList(url, signal) {
     const response = await fetch(url, { signal, credentials: 'omit', referrerPolicy: 'no-referrer' });
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    const result = parsePlaylist(await response.text());
+    const result = parsePlaylist(await response.text(), { allowHTTP: Boolean(window.DuckFlixExtension?.connected) });
     if (!result.channels.length) throw new Error('Empty playlist');
     return result.channels;
   }

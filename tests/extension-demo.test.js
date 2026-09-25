@@ -44,3 +44,12 @@ test('addon permission errors remain actionable and release the test button for 
   assert.equal(app.el('test-minhatv').disabled, false);
   assert.equal(app.loaded.length, 0);
 });
+test('direct HTTP demo bypasses addons and rejects the misleading HSTS .dev sample', () => {
+  const app = setup(() => { throw new Error('Demo must not query addons'); });
+  app.el('test-demo').onclick();
+  assert.deepEqual(app.loaded, ['http://playertest.longtailvideo.com/adaptive/bbbfull/bbbfull.m3u8']);
+  app.el('test-url').value = 'http://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8';
+  app.el('test-form').onsubmit({ preventDefault() {} });
+  assert.equal(app.loaded.length, 1);
+  assert.match(app.el('test-status').textContent, /exige HTTPS/);
+});

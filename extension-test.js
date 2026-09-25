@@ -9,6 +9,11 @@
     if (!window.DuckFlixExtension?.connected) { status.textContent = 'Instale a extensão e recarregue esta página.'; return; }
     const url = document.getElementById('test-url').value.trim();
     if (!/^http:\/\//i.test(url) || !/\.m3u8(?:$|[?#])/i.test(url)) { status.textContent = 'Use uma URL HTTP terminada em .m3u8 (pode conter parâmetros).'; return; }
+    try {
+      if (/\.(dev|app|page)$/i.test(new URL(url).hostname)) {
+        status.textContent = 'Esse domínio exige HTTPS no Chrome e não serve para testar HTTP puro. Use “Testar vídeo de demonstração HTTP”.'; return;
+      }
+    } catch { status.textContent = 'Endereço inválido.'; return; }
     if (!window.Hls?.isSupported()) { status.textContent = 'HLS não está disponível neste navegador.'; return; }
     status.textContent = 'Conectando…';
     window.DuckFlixExtension.clearError?.();
@@ -25,6 +30,10 @@
     return true;
   }
   document.getElementById('test-form').onsubmit = event => { event.preventDefault(); play(); };
+  document.getElementById('test-demo').onclick = () => {
+    document.getElementById('test-url').value = 'http://playertest.longtailvideo.com/adaptive/bbbfull/bbbfull.m3u8';
+    play();
+  };
   addonButton.onclick = async () => {
     stop();
     if (!window.DuckFlixExtension?.connected) { status.textContent = 'Ative a extensão e recarregue esta página antes de testar.'; return; }
