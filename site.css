@@ -101,11 +101,34 @@ main > .intro.tv-hero-cinematic { margin-inline: calc(-1 * var(--page-gutter)); 
 .playerTop { order: 0; padding: 0 4px 12px; gap: 14px; }
 .playerTop h2 { flex: 1; min-width: 0; font-size: clamp(20px, 2vw, 30px); }
 .player-top-btns { flex-wrap: wrap; }
-#player { order: 1; width: 100%; background: #000; border-radius: 12px; overflow: hidden; }
+#player { position: relative; width: 100%; min-width: 0; background: #000; border-radius: 12px; overflow: hidden; }
 #player iframe { display: block; width: 100%; height: min(78dvh, 1000px); min-height: 320px; border: 0; border-radius: 0; }
-#episodeControls { order: 2; margin: 16px 0 0; padding: 16px; flex-direction: row; justify-content: space-between; flex-wrap: wrap; background: #171721; border: 1px solid var(--line); }
-.ep-info, .ep-goto { flex-wrap: wrap; }
+.home-watch-layout { order: 1; display: grid; grid-template-columns: minmax(0, 1fr); gap: 0; }
+.home-watch-layout:has(.home-episode-panel:not(.hidden)) { grid-template-columns: minmax(0, 1fr) 300px; }
+.home-episode-panel { padding: 18px; background: #14141e; border-left: 1px solid var(--line); }
+.home-episode-panel .episode-heading { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+.home-episode-panel .episode-heading h3 { margin: 0; font-size: 20px; }
+.home-episode-panel .episode-heading span { color: var(--muted); font-size: 11px; }
+#seasonSelect { width: 100%; min-height: 44px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; color: #fff; background: #0d0d15; }
+.home-current-episode { margin: 12px 0; color: var(--muted); font-size: 12px; }
+.home-episode-panel .episode-list { display: grid; gap: 8px; max-height: min(58dvh, 600px); overflow: auto; scrollbar-width: thin; }
+.home-episode-panel .episode-card { display: flex; align-items: center; gap: 13px; width: 100%; min-height: 58px; padding: 10px; border: 1px solid transparent; border-radius: 10px; color: #e8e8ef; text-align: left; background: #1a1a25; cursor: pointer; }
+.home-episode-panel .episode-card:hover { background: #232330; }
+.home-episode-panel .episode-card > span { min-width: 28px; color: #737d90; font-size: 20px; font-weight: 700; }
+.home-episode-panel .episode-card strong { display: block; font-size: 12px; line-height: 1.5; }
+.home-episode-panel .episode-card small { display: block; margin-top: 3px; color: #8d96a8; font-size: 10px; }
+.home-episode-panel .episode-card[aria-current="true"] { border-color: #ff1744aa; background: #ff174418; }
+.home-episode-panel .episode-card[aria-current="true"] > span { color: #ff1744; }
+.home-episode-panel .episode-navigation { display: flex; gap: 8px; margin-top: 16px; }
+.home-episode-panel .episode-navigation button { flex: 1; padding-inline: 8px; font-size: 11px; }
+.home-episode-panel .episode-navigation button:disabled { opacity: .4; cursor: not-allowed; }
+.home-player-loading { position: absolute; inset: 0; z-index: 1; display: grid; place-content: center; justify-items: center; gap: 9px; color: #eee; background: #08080d; transition: opacity .25s, visibility .25s; }
+.home-player-loading.is-ready { opacity: 0; visibility: hidden; pointer-events: none; }
+.home-player-loading small { color: var(--muted); }
+.home-player-spinner { width: 42px; height: 42px; border: 3px solid #ffffff24; border-top-color: #ff1744; border-radius: 50%; animation: home-player-spin .8s linear infinite; }
+@keyframes home-player-spin { to { transform: rotate(360deg); } }
 #playerArea:fullscreen { width: 100%; max-width: none; height: 100dvh; margin: 0; border: 0; border-radius: 0; overflow: auto; }
+#playerArea:fullscreen .home-watch-layout { flex: 1; min-height: 0; }
 #playerArea:fullscreen #player { flex: 1; min-height: 0; }
 #playerArea:fullscreen iframe { height: 100%; min-height: 0; }
 .watch-panel { margin: 0 0 48px; border-radius: 18px; border: 1px solid var(--line); box-shadow: none; }
@@ -134,6 +157,9 @@ html[data-safe-mode='true'] .channels-section :is(.filters, .verification-bar, .
   .header .nav-item { padding: 12px; min-width: 66px; }
   .catalog-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
   .watch-layout:has(.episode-panel:not([hidden])) { grid-template-columns: 1fr; overflow-y: auto; display: block; }
+  .home-watch-layout:has(.home-episode-panel:not(.hidden)) { grid-template-columns: 1fr; }
+  .home-episode-panel { border-left: 0; border-top: 1px solid var(--line); }
+  .home-episode-panel .episode-list { max-height: 340px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .watch-main { height: auto; overflow: visible; }
   .episode-panel { border: 0; border-top: 1px solid var(--line); }
   .episode-list { max-height: 340px; overflow-y: auto; }
@@ -175,9 +201,8 @@ html[data-safe-mode='true'] .channels-section :is(.filters, .verification-bar, .
   #player iframe { height: auto; aspect-ratio: 16 / 9; min-height: 0; }
   .playerTop { align-items: flex-start; }
   .playerTop h2 { flex-basis: 100%; }
-  #episodeControls { padding: 12px; gap: 16px; }
-  .ep-btns { display: grid; grid-template-columns: 1fr 1fr; width: 100%; }
-  .ep-info { gap: 6px; font-size: 12px; }
+  .home-episode-panel { padding: 14px; }
+  .home-episode-panel .episode-list { grid-template-columns: 1fr; }
   .screen { height: auto; aspect-ratio: 16 / 9; }
   .player-info { padding: 18px; }
   .player-info > [data-fullscreen] { float: none; margin: 0 0 16px; }

@@ -127,31 +127,27 @@
       </div>
     </div>
 
-    <!-- CONTROLES DE EPISÓDIO -->
-    <div id="episodeControls" class="hidden">
+    <div class="home-watch-layout">
+      <div id="player" aria-live="polite"></div>
 
-      <div class="ep-info">
-        <span>Temporada <strong id="numTemporada">1</strong> <small id="totalTemporadas"></small></span>
-        <span>Episódio <strong id="numEpisodio">1</strong> <small id="totalEpisodios"></small></span>
-      </div>
-
-      <div class="ep-btns">
-        <button id="btnTemporadaMenos">Temp. Anterior</button>
-        <button id="btnEpMenos">Anterior</button>
-        <button id="btnEpMais">Próximo</button>
-        <button id="btnTemporadaMais">Próxima Temp.</button>
-      </div>
-
-      <div class="ep-goto">
-        <label>Ir para:</label>
-        <input id="inputTemp" type="number" min="1" value="1" placeholder="Temp.">
-        <input id="inputEp" type="number" min="1" value="1" placeholder="Ep.">
-        <button id="btnGoTo">Ir</button>
-      </div>
-
+      <!-- Mesmo padrão de navegação usado no DuckFlix Extensões. -->
+      <aside id="episodeControls" class="home-episode-panel hidden" aria-label="Episódios da série">
+        <div class="episode-heading">
+          <h3>Episódios</h3>
+          <span id="episodeCount"></span>
+        </div>
+        <label for="seasonSelect" class="sr-only">Temporada</label>
+        <select id="seasonSelect" aria-label="Temporada"></select>
+        <div class="home-current-episode" aria-live="polite">
+          Temporada <strong id="numTemporada">1</strong> · Episódio <strong id="numEpisodio">1</strong>
+        </div>
+        <div id="homeEpisodeList" class="episode-list"></div>
+        <div class="episode-navigation">
+          <button id="btnEpMenos" class="secondary" type="button">← Anterior</button>
+          <button id="btnEpMais" class="primary" type="button">Próximo →</button>
+        </div>
+      </aside>
     </div>
-
-    <div id="player"></div>
 
   </section>
 

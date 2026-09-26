@@ -18,6 +18,7 @@
   }
   function connect(video, source, { Hls = globalThis.Hls, onReady = () => {}, onError = () => {}, onBlocked = () => {}, timeoutMs = 14000, autoplay = false, startAt = 0, mode = source.mode } = {}) {
     let disposed = false, ready = false, hls, timer, stageTimer, triedHLS = false;
+    let networkRecoveries = 0, mediaRecoveries = 0;
     let engine = 'native';
     const clearMedia = () => {
       hls?.destroy(); hls = null;
@@ -51,8 +52,36 @@
       if (disposed || triedHLS || !Hls?.isSupported()) return false;
       triedHLS = true; engine = 'hls'; clearTimeout(stageTimer);
       clearMedia();
-      hls = new Hls({ startLevel: -1, maxBufferLength: 20, backBufferLength: 30, capLevelToPlayerSize: true, ...globalThis.DuckFlixExtension?.hlsConfig(source.url, Hls) });
-      hls.on(Hls.Events.ERROR, (_, data) => { if (data.fatal) fail(); });
+      hls = new Hls({
+        enableWorker: true,
+        lowLatencyMode: false,
+        startLevel: -1,
+        capLevelToPlayerSize: true,
+        maxBufferLength: 45,
+        maxMaxBufferLength: 90,
+        backBufferLength: 60,
+        maxBufferHole: 0.5,
+        highBufferWatchdogPeriod: 2,
+        nudgeOffset: 0.1,
+        nudgeMaxRetry: 3,
+        manifestLoadingMaxRetry: 3,
+        levelLoadingMaxRetry: 3,
+        fragLoadingMaxRetry: 4,
+        fragLoadingRetryDelay: 1000,
+        fragLoadingMaxRetryTimeout: 8000,
+        ...globalThis.DuckFlixExtension?.hlsConfig(source.url, Hls)
+      });
+      hls.on(Hls.Events.ERROR, (_, data) => {
+        if (!data?.fatal || disposed) return;
+        if (data.type === Hls.ErrorTypes?.NETWORK_ERROR && networkRecoveries < 2 && typeof hls.startLoad === 'function') {
+          networkRecoveries++; hls.startLoad(); return;
+        }
+        if (data.type === Hls.ErrorTypes?.MEDIA_ERROR && mediaRecoveries < 2 && typeof hls.recoverMediaError === 'function') {
+          mediaRecoveries++; hls.recoverMediaError(); return;
+        }
+        fail();
+      });
+      if (Hls.Events.FRAG_LOADED) hls.on(Hls.Events.FRAG_LOADED, () => { networkRecoveries = 0; });
       hls.loadSource(source.url); hls.attachMedia(video);
       return true;
     };

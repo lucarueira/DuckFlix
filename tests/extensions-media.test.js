@@ -35,6 +35,30 @@ test('opaque HLS falls back from native playback and shares the confirmed engine
   video.dispatchEvent(new Event('error')); assert.equal(hls.url, 'https://example.com/opaque'); video.image();
   assert.deepEqual(await pending, { ok: true, mode: 'hls' }); assert.equal(hls.destroyed, true);
 });
+test('HLS player keeps a larger adaptive buffer and recovers transient fatal errors before failing', () => {
+  let hls, failed = 0;
+  class Hls {
+    static Events = { ERROR: 'error', FRAG_LOADED: 'fragment' };
+    static ErrorTypes = { NETWORK_ERROR: 'network', MEDIA_ERROR: 'media' };
+    static isSupported() { return true; }
+    constructor(config) { hls = this; this.config = config; this.handlers = {}; }
+    on(event, callback) { this.handlers[event] = callback; }
+    loadSource() {} attachMedia() {} destroy() { this.destroyed = true; }
+    startLoad() { this.networkRecoveries = (this.networkRecoveries || 0) + 1; }
+    recoverMediaError() { this.mediaRecoveries = (this.mediaRecoveries || 0) + 1; }
+  }
+  const connection = connect(new Video(), { url: 'https://example.com/a.m3u8', mode: 'hls' }, { Hls, onError: () => failed++ });
+  assert.equal(hls.config.enableWorker, true);
+  assert.equal(hls.config.lowLatencyMode, false);
+  assert.equal(hls.config.maxBufferLength, 45);
+  assert.equal(hls.config.maxMaxBufferLength, 90);
+  hls.handlers.error(null, { fatal: true, type: 'network' });
+  hls.handlers.error(null, { fatal: true, type: 'media' });
+  assert.equal(hls.networkRecoveries, 1);
+  assert.equal(hls.mediaRecoveries, 1);
+  assert.equal(failed, 0);
+  connection.dispose();
+});
 test('autoplay denial asks for user play rather than rejecting a working source', async () => {
   const video = new Video(); let blocked = 0, failed = 0;
   video.play = () => Promise.reject(Object.assign(new Error(), { name: 'NotAllowedError' }));

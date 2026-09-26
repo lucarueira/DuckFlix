@@ -79,6 +79,9 @@ const tituloPlayer        = document.getElementById("tituloPlayer");
 const episodeControls     = document.getElementById("episodeControls");
 const numTemporada        = document.getElementById("numTemporada");
 const numEpisodio         = document.getElementById("numEpisodio");
+const seasonSelect        = document.getElementById("seasonSelect");
+const homeEpisodeList     = document.getElementById("homeEpisodeList");
+const episodeCount        = document.getElementById("episodeCount");
 const overlay             = document.getElementById("overlay");
 const favPage             = document.getElementById("favPage");
 const favList             = document.getElementById("favList");
@@ -377,66 +380,85 @@ function carregarPlayer() {
     ? `https://myembed.biz/filme/${currentItem.id}`
     : `https://myembed.biz/serie/${currentItem.id}/${currentSeason}/${currentEp}`;
 
-  player.innerHTML = `
-    <iframe src="${url}" allowfullscreen loading="lazy"
-      allow="fullscreen; picture-in-picture"></iframe>
-  `;
+  player.replaceChildren();
+  const loading = document.createElement("div");
+  loading.className = "home-player-loading";
+  loading.setAttribute("role", "status");
+  loading.innerHTML = '<span class="home-player-spinner" aria-hidden="true"></span><strong>Preparando reprodução…</strong><small>O tempo depende da fonte selecionada.</small>';
+  const frame = document.createElement("iframe");
+  frame.src = url;
+  frame.title = currentItem.type === "filme"
+    ? `Player de ${currentItem.title}`
+    : `Player de ${currentItem.title}, temporada ${currentSeason}, episódio ${currentEp}`;
+  frame.allowFullscreen = true;
+  frame.loading = "eager";
+  frame.allow = "autoplay; fullscreen; picture-in-picture; encrypted-media";
+  frame.addEventListener("load", () => loading.classList.add("is-ready"), { once: true });
+  player.append(loading, frame);
 }
 
 async function atualizarEpInfo() {
   numTemporada.textContent = currentSeason;
   numEpisodio.textContent  = currentEp;
 
-  const inputTemp   = document.getElementById("inputTemp");
-  const inputEp     = document.getElementById("inputEp");
-  const totalTempEl = document.getElementById("totalTemporadas");
-  const totalEpEl   = document.getElementById("totalEpisodios");
+  if (!currentItem || currentItem.type !== "serie") return;
+  const itemId = currentItem.id;
+  const detalhes = await carregarDetalhesSerie(itemId);
+  if (!currentItem || currentItem.id !== itemId || !detalhes) return;
 
-  if (inputTemp) inputTemp.value = currentSeason;
-  if (inputEp)   inputEp.value   = currentEp;
-
-  if (currentItem && currentItem.type === "serie") {
-    const detalhes = await carregarDetalhesSerie(currentItem.id);
-    if (detalhes) {
-      const maxSeasons = detalhes.number_of_seasons || 1;
-      const sInfo = (detalhes.seasons || []).find(s => s.season_number === currentSeason);
-      const maxEps = sInfo ? sInfo.episode_count : 24;
-
-      if (totalTempEl) totalTempEl.textContent = `(de ${maxSeasons})`;
-      if (totalEpEl)   totalEpEl.textContent   = `(de ${maxEps})`;
-
-      if (inputTemp) {
-        inputTemp.max = maxSeasons;
-        inputTemp.min = 1;
-      }
-      if (inputEp) {
-        inputEp.max = maxEps;
-        inputEp.min = 1;
-      }
-    }
-  } else {
-    if (totalTempEl) totalTempEl.textContent = "";
-    if (totalEpEl)   totalEpEl.textContent   = "";
+  const seasons = (detalhes.seasons || [])
+    .filter(s => Number(s.season_number) > 0 && Number(s.episode_count) > 0)
+    .sort((a, b) => Number(a.season_number) - Number(b.season_number));
+  let selectedSeason = seasons.find(s => Number(s.season_number) === currentSeason);
+  if (!selectedSeason && seasons.length) {
+    selectedSeason = seasons[0];
+    currentSeason = Number(selectedSeason.season_number);
+    currentEp = 1;
+    numTemporada.textContent = currentSeason;
   }
+  const maxEps = Number(selectedSeason?.episode_count) || 1;
+  currentEp = Math.max(1, Math.min(currentEp, maxEps));
+  numEpisodio.textContent = currentEp;
+
+  seasonSelect.replaceChildren();
+  for (const season of seasons) {
+    const option = document.createElement("option");
+    option.value = String(season.season_number);
+    option.textContent = `Temporada ${season.season_number}`;
+    seasonSelect.append(option);
+  }
+  seasonSelect.value = String(currentSeason);
+  episodeCount.textContent = `${maxEps} ${maxEps === 1 ? "episódio" : "episódios"}`;
+  homeEpisodeList.replaceChildren();
+  for (let episode = 1; episode <= maxEps; episode++) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "episode-card";
+    button.setAttribute("aria-current", String(episode === currentEp));
+    button.innerHTML = `<span>${String(episode).padStart(2, "0")}</span><div><strong>Episódio ${episode}</strong><small>Temporada ${currentSeason} · Episódio ${episode}</small></div>`;
+    button.addEventListener("click", () => selecionarEpisodio(currentSeason, episode));
+    homeEpisodeList.append(button);
+  }
+  document.getElementById("btnEpMenos").disabled = currentSeason === Number(seasons[0]?.season_number || 1) && currentEp === 1;
+  const lastSeason = seasons[seasons.length - 1];
+  document.getElementById("btnEpMais").disabled = currentSeason === Number(lastSeason?.season_number || currentSeason) && currentEp >= maxEps;
+  homeEpisodeList.querySelector('[aria-current="true"]')?.scrollIntoView({ block: "nearest" });
 }
 
-// Limita digitação manual dos inputs em tempo real
-const inputTempEl = document.getElementById("inputTemp");
-const inputEpEl   = document.getElementById("inputEp");
-
-if (inputTempEl) {
-  inputTempEl.addEventListener("input", () => {
-    const max = parseInt(inputTempEl.max) || 99;
-    if (parseInt(inputTempEl.value) > max) inputTempEl.value = max;
-    if (parseInt(inputTempEl.value) < 1) inputTempEl.value = 1;
-  });
-}
-if (inputEpEl) {
-  inputEpEl.addEventListener("input", () => {
-    const max = parseInt(inputEpEl.max) || 99;
-    if (parseInt(inputEpEl.value) > max) inputEpEl.value = max;
-    if (parseInt(inputEpEl.value) < 1) inputEpEl.value = 1;
-  });
+async function selecionarEpisodio(season, episode) {
+  if (!currentItem || currentItem.type !== "serie") return;
+  const itemId = currentItem.id;
+  const detalhes = await carregarDetalhesSerie(itemId);
+  if (!currentItem || currentItem.id !== itemId) return;
+  const seasons = (detalhes?.seasons || []).filter(s => Number(s.season_number) > 0 && Number(s.episode_count) > 0);
+  const selectedSeason = seasons.find(s => Number(s.season_number) === Number(season));
+  if (!selectedSeason) return;
+  currentSeason = Number(selectedSeason.season_number);
+  currentEp = Math.max(1, Math.min(Number(episode) || 1, Number(selectedSeason.episode_count) || 1));
+  salvarProgresso(currentItem.id, currentSeason, currentEp);
+  await atualizarEpInfo();
+  carregarPlayer();
+  showToast(`Temporada ${currentSeason} — Episódio ${currentEp}`);
 }
 
 /* ========================
@@ -445,111 +467,28 @@ if (inputEpEl) {
 document.getElementById("btnEpMais").onclick = async () => {
   if (!currentItem || currentItem.type !== "serie") return;
   const detalhes = await carregarDetalhesSerie(currentItem.id);
-  const maxSeasons = detalhes ? (detalhes.number_of_seasons || 1) : 99;
-  const sInfo = detalhes ? (detalhes.seasons || []).find(s => s.season_number === currentSeason) : null;
-  const maxEps = sInfo ? sInfo.episode_count : 99;
-
-  if (currentEp < maxEps) {
-    currentEp++;
-    atualizarEpInfo();
-    carregarPlayer();
-    salvarProgresso(currentItem.id, currentSeason, currentEp);
-    showToast(`Episódio ${currentEp} — Temporada ${currentSeason}`);
-  } else if (currentSeason < maxSeasons) {
-    currentSeason++;
-    currentEp = 1;
-    atualizarEpInfo();
-    carregarPlayer();
-    salvarProgresso(currentItem.id, currentSeason, currentEp);
-    showToast(`Avançando para a Temporada ${currentSeason}`);
-  } else {
-    showToast(`Você já está no último episódio da série! (T${currentSeason} E${currentEp})`);
-  }
+  const seasons = (detalhes?.seasons || []).filter(s => Number(s.season_number) > 0 && Number(s.episode_count) > 0);
+  const position = seasons.findIndex(s => Number(s.season_number) === currentSeason);
+  const maxEps = Number(seasons[position]?.episode_count) || 1;
+  if (currentEp < maxEps) return selecionarEpisodio(currentSeason, currentEp + 1);
+  if (position >= 0 && position + 1 < seasons.length) return selecionarEpisodio(Number(seasons[position + 1].season_number), 1);
+  showToast(`Você já está no último episódio da série! (T${currentSeason} E${currentEp})`);
 };
 
 document.getElementById("btnEpMenos").onclick = async () => {
   if (!currentItem || currentItem.type !== "serie") return;
-  if (currentEp > 1) {
-    currentEp--;
-    atualizarEpInfo();
-    carregarPlayer();
-    salvarProgresso(currentItem.id, currentSeason, currentEp);
-    showToast(`Episódio ${currentEp} — Temporada ${currentSeason}`);
-  } else if (currentSeason > 1) {
-    currentSeason--;
-    const detalhes = await carregarDetalhesSerie(currentItem.id);
-    const sInfo = detalhes ? (detalhes.seasons || []).find(s => s.season_number === currentSeason) : null;
-    currentEp = sInfo ? sInfo.episode_count : 1;
-    atualizarEpInfo();
-    carregarPlayer();
-    salvarProgresso(currentItem.id, currentSeason, currentEp);
-    showToast(`Voltando para a Temporada ${currentSeason}`);
-  } else {
-    showToast("Este é o primeiro episódio da série!");
-  }
-};
-
-document.getElementById("btnTemporadaMais").onclick = async () => {
-  if (!currentItem || currentItem.type !== "serie") return;
   const detalhes = await carregarDetalhesSerie(currentItem.id);
-  const maxSeasons = detalhes ? (detalhes.number_of_seasons || 1) : 99;
-
-  if (currentSeason < maxSeasons) {
-    currentSeason++;
-    currentEp = 1;
-    atualizarEpInfo();
-    carregarPlayer();
-    salvarProgresso(currentItem.id, currentSeason, currentEp);
-    showToast(`Temporada ${currentSeason}`);
-  } else {
-    showToast(`A série tem no máximo ${maxSeasons} temporada(s)!`);
+  const seasons = (detalhes?.seasons || []).filter(s => Number(s.season_number) > 0 && Number(s.episode_count) > 0);
+  const position = seasons.findIndex(s => Number(s.season_number) === currentSeason);
+  if (currentEp > 1) return selecionarEpisodio(currentSeason, currentEp - 1);
+  if (position > 0) {
+    const previous = seasons[position - 1];
+    return selecionarEpisodio(Number(previous.season_number), Number(previous.episode_count) || 1);
   }
+  showToast("Este é o primeiro episódio da série!");
 };
 
-document.getElementById("btnTemporadaMenos").onclick = () => {
-  if (!currentItem || currentItem.type !== "serie") return;
-  if (currentSeason > 1) {
-    currentSeason--;
-    currentEp = 1;
-    atualizarEpInfo();
-    carregarPlayer();
-    salvarProgresso(currentItem.id, currentSeason, currentEp);
-    showToast(`Temporada ${currentSeason}`);
-  } else {
-    showToast("Primeira temporada!");
-  }
-};
-
-document.getElementById("btnGoTo").onclick = async () => {
-  if (!currentItem || currentItem.type !== "serie") return;
-  let t = parseInt(document.getElementById("inputTemp").value) || 1;
-  let e = parseInt(document.getElementById("inputEp").value)   || 1;
-
-  const detalhes = await carregarDetalhesSerie(currentItem.id);
-  if (detalhes) {
-    const maxSeasons = detalhes.number_of_seasons || 1;
-    if (t > maxSeasons) {
-      t = maxSeasons;
-      showToast(`Temporada ajustada para o máximo (${maxSeasons})`);
-    }
-    if (t < 1) t = 1;
-
-    const sInfo = (detalhes.seasons || []).find(s => s.season_number === t);
-    const maxEps = sInfo ? sInfo.episode_count : 24;
-    if (e > maxEps) {
-      e = maxEps;
-      showToast(`Episódio ajustado para o máximo na T${t} (E${maxEps})`);
-    }
-    if (e < 1) e = 1;
-  }
-
-  currentSeason = t;
-  currentEp     = e;
-  atualizarEpInfo();
-  carregarPlayer();
-  salvarProgresso(currentItem.id, currentSeason, currentEp);
-  showToast(`Temporada ${currentSeason} — Episódio ${currentEp}`);
-};
+seasonSelect.addEventListener("change", () => selecionarEpisodio(Number(seasonSelect.value), 1));
 
 /* ========================
    TRAILER
