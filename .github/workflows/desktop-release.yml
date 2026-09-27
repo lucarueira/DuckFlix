@@ -1,0 +1,25 @@
+name: DuckFlix Desktop for Windows
+
+on:
+  push:
+    tags: ["desktop-v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run desktop:make
+      - uses: softprops/action-gh-release@v2
+        with:
+          name: DuckFlix Desktop ${{ github.ref_name }}
+          generate_release_notes: true
+          files: out/make/squirrel.windows/x64/*

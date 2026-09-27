@@ -1,18 +1,25 @@
 /* Site-side HLS loader; extension permissions remain controlled by the user. */
 (() => {
-  let connected = false, lastError = '';
+  let connected = Boolean(window.DuckFlixDesktop?.connected), lastError = '';
   const pending = new Map();
   function request(type, payload = {}, signal) {
     return new Promise((resolve, reject) => {
       if (signal?.aborted) { reject(new DOMException('Aborted', 'AbortError')); return; }
       const id = crypto.randomUUID();
       const abort = () => {
-        window.postMessage({ channel: 'duckflix-http-request', id, type: 'cancel' }, location.origin);
+        if (window.DuckFlixDesktop?.connected) window.DuckFlixDesktop.cancel(id);
+        else window.postMessage({ channel: 'duckflix-http-request', id, type: 'cancel' }, location.origin);
         finish(new DOMException('Aborted', 'AbortError'));
       };
       const finish = (error, result) => { clearTimeout(timer); pending.delete(id); signal?.removeEventListener('abort', abort); error ? reject(error) : resolve(result); };
       const timer = setTimeout(() => { abort(); }, type === 'ping' ? 1500 : 25000);
       pending.set(id, finish); signal?.addEventListener('abort', abort, { once: true });
+      if (window.DuckFlixDesktop?.connected) {
+        window.DuckFlixDesktop.request(type, { ...payload, id }).then(result => {
+          if (pending.has(id)) finish(null, result);
+        }).catch(error => { if (pending.has(id)) finish(error); });
+        return;
+      }
       window.postMessage({ channel: 'duckflix-http-request', id, type, ...payload }, location.origin);
     });
   }
@@ -79,7 +86,7 @@
   async function detect() {
     try {
       const result = await request('ping'); connected = true;
-      setStatus(`Extensão conectada · ${result.version} · HTTP HLS disponível`);
+      setStatus(result.desktop ? `DuckFlix Desktop conectado · v${result.version} · HTTP HLS disponível` : `Extensão conectada · ${result.version} · HTTP HLS disponível`);
       window.dispatchEvent(new CustomEvent('duckflix:extensionready'));
     } catch { setStatus('Extensão não conectada. Instalação manual disponível para Chrome e Edge no computador.'); }
   }
