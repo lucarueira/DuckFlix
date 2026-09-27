@@ -11,10 +11,17 @@
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="inicio.css">
   <script defer src="extension-bridge.js"></script>
+  <script defer src="welcome-intro.js"></script>
 </head>
 <body>
   <main class="welcome">
     <img class="welcome-logo" src="img/logo_duckflix.png" alt="DuckFlix" width="180" height="80">
+    <section class="welcome-intro" aria-label="Apresentação DuckFlix">
+      <video id="welcome-intro-video" autoplay muted playsinline preload="metadata" poster="img/logo_duckflix.png">
+        <source src="media/duckflix42_intro.mp4" type="video/mp4">
+      </video>
+      <button id="skip-intro" class="intro-skip" type="button">Pular introdução</button>
+    </section>
     <p class="eyebrow">UM PLAY. VÁRIAS POSSIBILIDADES.</p>
     <h1>O que vamos assistir?</h1>
     <p class="welcome-subtitle">Escolha seu espaço e aproveite.</p>
@@ -39,7 +46,11 @@
       <p class="eyebrow">VERSÃO DE TESTE · WINDOWS</p>
       <h2>DuckFlix para Windows</h2>
       <p>Instale o aplicativo para testar transmissões HLS HTTP sem instalar a extensão do navegador. Torrent ainda não está disponível nesta versão de teste.</p>
-      <a href="https://github.com/lucarueira/DuckFlix/releases/latest">Baixar DuckFlix para Windows (.exe)</a>
+      <div class="desktop-download">
+        <img src="img/logo_duckflix.png" alt="Logo DuckFlix" width="112" height="88">
+        <div><strong>DuckFlix para Windows</strong><p>Aplicativo de teste · Windows 64 bits</p></div>
+        <a href="https://github.com/lucarueira/DuckFlix/releases/latest/download/DuckFlix-Setup.exe">Baixar o aplicativo (.exe)</a>
+      </div>
       <p class="eyebrow">OPÇÃO PARA NAVEGADOR</p>
       <h2>Mais opções para assistir no computador</h2>
       <p>Teste fontes HTTP HLS com a extensão DuckFlix para Chrome e Edge.</p>

@@ -2,13 +2,13 @@
   "name": "duckflix",
   "private": true,
   "productName": "DuckFlix",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "main": "desktop/main.cjs",
   "scripts": {
     "package:extension": "node scripts/package-extension.js",
     "start": "node together-server.js",
     "desktop:start": "electron .",
-    "desktop:make": "electron-forge make --platform win32 --arch x64",
+    "desktop:make": "node scripts/create-desktop-icon.cjs && electron-forge make --platform win32 --arch x64",
     "desktop:publish": "electron-forge publish --platform win32 --arch x64",
     "test": "node --test tests/*.test.js"
   },
@@ -16,6 +16,7 @@
     "forge": {
       "packagerConfig": {
         "executableName": "DuckFlix",
+        "icon": "img/duckflix42.ico",
         "asar": true
       },
       "makers": [
@@ -48,7 +49,8 @@
     "@electron-forge/maker-squirrel": "^7.11.2",
     "@electron-forge/publisher-github": "^7.11.2",
     "electron": "^44.4.5",
-    "linkedom": "0.18.13"
+    "linkedom": "0.18.13",
+    "sharp": "^0.35.5"
   },
   "dependencies": {
     "update-electron-app": "^3.3.0"

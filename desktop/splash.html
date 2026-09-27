@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DuckFlix</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100vh; display: grid; place-items: center; overflow: hidden; background: #09090e; color: white; font: 14px Segoe UI, sans-serif; }
+    main { width: min(100vw, 920px); position: relative; aspect-ratio: 16 / 9; background: #09090e; }
+    video { width: 100%; height: 100%; object-fit: contain; }
+    img { position: absolute; top: 16px; left: 18px; width: 110px; height: 88px; object-fit: contain; filter: drop-shadow(0 3px 8px #000); }
+    button { position: absolute; right: 18px; bottom: 18px; border: 1px solid #ffffff66; border-radius: 999px; padding: 10px 16px; color: white; background: #09090ee8; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <main>
+    <video id="intro" autoplay muted playsinline preload="auto">
+      <source src="../media/duckflix42_intro.mp4" type="video/mp4">
+    </video>
+    <img src="../img/logo_duckflix.png" alt="DuckFlix">
+    <button id="continue" type="button">Continuar</button>
+  </main>
+  <script>
+    const complete = () => window.DuckFlixIntro.complete();
+    document.getElementById('continue').addEventListener('click', complete);
+    document.getElementById('intro').addEventListener('ended', complete, { once: true });
+    document.getElementById('intro').addEventListener('error', complete, { once: true });
+    window.DuckFlixIntro.onFallback(complete);
+  </script>
+</body>
+</html>

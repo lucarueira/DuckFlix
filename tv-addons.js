@@ -1,14 +1,14 @@
 /* Fixed HTTP TV sources. Catalog entries become visible only after decoding a frame. */
 (() => {
   const SOURCES = Object.freeze([
-    { base: 'https://frostview.cloutteam.com', type: 'channel', catalog: 'froststream-channels', paginated: true },
-    { base: 'https://dev.nebulawp.org/stremio/pluto-tv-addon', type: 'tv', catalog: 'pluto', name: 'Pluto TV' },
-    { base: 'https://tvvoo.hayd.uk/cfg-it-uk-fr', type: 'tv', catalog: 'vavoo_tv_it', name: 'TvVoo · Itália' },
-    { base: 'https://tvvoo.hayd.uk/cfg-it-uk-fr', type: 'tv', catalog: 'vavoo_tv_uk', name: 'TvVoo · Reino Unido' },
-    { base: 'https://tvvoo.hayd.uk/cfg-it-uk-fr', type: 'tv', catalog: 'vavoo_tv_fr', name: 'TvVoo · França' }
+    { base: 'https://frostview.cloutteam.com', type: 'channel', catalog: 'froststream-channels', paginated: true, country: 'BR' },
+    { base: 'https://dev.nebulawp.org/stremio/pluto-tv-addon', type: 'tv', catalog: 'pluto', name: 'Pluto TV', country: 'US' },
+    { base: 'https://tvvoo.hayd.uk/cfg-it-uk-fr', type: 'tv', catalog: 'vavoo_tv_it', name: 'TvVoo · Itália', country: 'IT' },
+    { base: 'https://tvvoo.hayd.uk/cfg-it-uk-fr', type: 'tv', catalog: 'vavoo_tv_uk', name: 'TvVoo · Reino Unido', country: 'GB' },
+    { base: 'https://tvvoo.hayd.uk/cfg-it-uk-fr', type: 'tv', catalog: 'vavoo_tv_fr', name: 'TvVoo · França', country: 'FR' }
   ]);
-  const HTTP_SOURCE = { base: 'https://da5f663b4690-minhatv.baby-beamup.club', type: 'tv', catalog: 'minhatv_channels' };
-  const BESTCINE_TV = { base: 'https://bestcine.dpdns.org', type: 'tv', catalog: 'bestcine_tv_catalog' };
+  const HTTP_SOURCE = { base: 'https://da5f663b4690-minhatv.baby-beamup.club', type: 'tv', catalog: 'minhatv_channels', name: 'Minha TV', country: 'BR' };
+  const BESTCINE_TV = { base: 'https://bestcine.dpdns.org', type: 'tv', catalog: 'bestcine_tv_catalog', name: 'BestCine', country: 'BR' };
   const normalize = text => text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
   function secure(value) {
     try { const url = new URL(value); return url.protocol === 'https:' && !url.username && !url.password ? url.href : null; } catch { return null; }
@@ -57,7 +57,7 @@
           const genres = meta.genre || meta.genres || [];
           const categories = (Array.isArray(genres) ? genres : [genres]).filter(value => typeof value === 'string');
           if (source.name) categories.push(source.name);
-          entries.set(meta.id, { name: meta.name, logo: secure(meta.logo) || secure(meta.poster) || '', categories: categories.length ? categories : ['Undefined'], search: normalize(`${meta.name} ${source.name || ''}`), url: endpoint, addonEndpoint: endpoint });
+          entries.set(meta.id, { name: meta.name, logo: secure(meta.logo) || secure(meta.poster) || '', categories: categories.length ? categories : ['Undefined'], search: normalize(`${meta.name} ${source.name || ''}`), country: source.country || '', url: endpoint, addonEndpoint: endpoint });
         }
         if (!source.paginated || (data.metas?.length || 0) < 100 || entries.size === before) break;
       }

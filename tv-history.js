@@ -31,6 +31,7 @@
             search: entry.name.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase(),
             url,
             addonEndpoint,
+            country: /^[A-Z]{2}$/.test(entry.country || '') ? entry.country : '',
             watchedAt: Number(entry.watchedAt) || 0
           };
         }).filter(Boolean).sort((a, b) => b.watchedAt - a.watchedAt).slice(0, limit);
@@ -46,6 +47,7 @@
         categories: Array.isArray(channel.categories) ? channel.categories.filter(value => typeof value === 'string').slice(0, 8) : ['Undefined'],
         url,
         addonEndpoint,
+        country: /^[A-Z]{2}$/.test(channel.country || '') ? channel.country : '',
         watchedAt
       };
       const next = [entry, ...list().filter(item => (item.addonEndpoint || item.url) !== url)].slice(0, limit);

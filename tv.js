@@ -92,6 +92,15 @@
   let listError = false;
 
   const allowedChannel = channel => !window.DuckFlixSafety || window.DuckFlixSafety.channelAllowed(channel);
+  function countryOf(channel) {
+    if (/^[A-Z]{2}$/.test(channel.country || '')) return channel.country;
+    const endpoint = channel.addonEndpoint || '';
+    if (/tvvoo\.hayd\.uk/i.test(endpoint)) {
+      try { return decodeURIComponent(endpoint).match(/group:(it|uk|fr)/i)?.[1]?.toUpperCase() || ''; } catch { return ''; }
+    }
+    return /dev\.nebulawp\.org\/stremio\/pluto-tv-addon/i.test(endpoint) ? 'US' : '';
+  }
+  const matchesPlaylist = channel => playlist.value !== 'br' || !countryOf(channel) || countryOf(channel) === 'BR';
   const available = channel => allowedChannel(channel) && health.isAvailable(results.get(channel.url));
   const matches = channel => allowedChannel(channel) && channel.search.includes(normalize(search.value.trim())) && (!category.value || channel.categories.includes(category.value));
 
@@ -139,7 +148,7 @@
     const section = el('recent-channels');
     const container = el('recent-channel-grid');
     if (!section || !container || !history) return;
-    const items = history.list().filter(allowedChannel);
+    const items = history.list().filter(channel => allowedChannel(channel) && matchesPlaylist(channel));
     section.hidden = !items.length || Boolean(window.DuckFlixSafety?.enabled());
     container.replaceChildren(...items.map(channel => createCard(channel, false, true)));
     if (!items.length) statusRecent('');
@@ -157,7 +166,7 @@
     button.setAttribute('aria-pressed', String(saved));
     button.textContent = saved ? '★ Remover dos favoritos' : '☆ Favoritar canal';
     el('favorite-channels').hidden = Boolean(window.DuckFlixSafety?.enabled());
-    const items = favorites?.list().filter(allowedChannel) || [];
+    const items = favorites?.list().filter(channel => allowedChannel(channel) && matchesPlaylist(channel)) || [];
     el('favorite-empty').hidden = Boolean(items.length);
     el('favorite-channel-grid').replaceChildren(...items.map(channel => {
       const wrapper = document.createElement('div');
@@ -351,6 +360,8 @@
 
   async function loadPlaylist() {
     clearTimeout(searchTimer);
+    renderRecentChannels();
+    renderFavorites();
     request?.abort();
     cancelScan();
     const controller = new AbortController();
@@ -398,7 +409,8 @@
       Promise.resolve(addonsPromise).then(addonChannels => {
         if (request !== controller || controller.signal.aborted || !addonChannels.length) return;
         const seen = new Set(channels.map(channel => channel.addonEndpoint || channel.url));
-        channels = [...addonChannels.filter(channel => !seen.has(channel.addonEndpoint || channel.url)), ...channels];
+        const regionalAddons = addonChannels.filter(channel => matchesPlaylist(channel));
+        channels = [...regionalAddons.filter(channel => !seen.has(channel.addonEndpoint || channel.url)), ...channels];
         listError = false;
         populateCategories();
         filterChannels();
