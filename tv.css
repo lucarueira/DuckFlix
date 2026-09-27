@@ -319,6 +319,10 @@ input:focus, select:focus {
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 14px;
 }
+.recent-channels { margin: 8px 0 26px; padding: 26px; border: 1px solid var(--line); border-radius: 18px; background: #101118; }
+.recent-channel-grid { display: flex; gap: 14px; overflow-x: auto; padding: 2px 2px 12px; scroll-snap-type: x proximity; scrollbar-width: thin; }
+.recent-channel-grid .channel-card { flex: 0 0 min(310px, 82vw); scroll-snap-align: start; }
+.recent-channel-grid .signal-badge { color: #b7b7c8; }
 .channel-card {
   display: flex;
   align-items: center;

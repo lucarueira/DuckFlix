@@ -17,6 +17,9 @@ Fontes:
 - Documentação: https://github.com/iptv-org/iptv
 
 Os canais são carregados ao abrir a página e ao mudar ou atualizar a lista.
+A lista pública aparece sem esperar os addons: os catálogos externos são consultados
+em segundo plano e, quando respondem, seus candidatos entram na mesma verificação de
+imagem. Assim, um addon lento ou fora do ar não bloqueia a navegação principal.
 A busca e o filtro de categoria são locais. Ao pesquisar, os próximos testes
 incluem apenas os canais correspondentes, sem esperar pela fila de animações.
 É possível fazer novas buscas enquanto outro canal toca: nesse caso, há apenas
@@ -26,6 +29,14 @@ de verificações canceladas não podem substituir uma pesquisa mais recente.
 O carrossel de animação é independente desses filtros e inclui canais de outros
 países; os canais classificados como animação na lista atual são testados primeiro.
 Os resultados da lista aparecem em lotes de 48.
+
+## Últimos canais vistos
+
+Depois que um canal realmente começa a reproduzir, ele entra em “Últimos canais
+vistos”. São mantidos localmente até oito canais, sem sincronização ou reprodução
+automática. O usuário pode limpar a lista. Ao reabrir um item salvo, o DuckTV testa
+novamente a imagem antes de tocar; fontes de addon guardam o endpoint do addon em vez
+de tokens ou URLs temporárias de mídia.
 
 ## Filtragem de disponibilidade
 
@@ -56,6 +67,10 @@ fazer canais reproduzíveis não passarem no prazo.
 O player usa HLS nativo quando disponível e hls.js 1.7.3 nos navegadores
 compatíveis. A biblioteca vem do jsDelivr com versão fixa e verificação de
 integridade (SRI). Ao atualizar a versão, atualize também o hash.
+
+No hls.js, o DuckTV usa seleção automática de qualidade, buffer progressivo de até
+45 segundos (máximo de 90), worker e até duas recuperações para falhas transitórias
+de rede ou mídia antes de declarar o sinal indisponível.
 
 Somente URLs HTTPS sem credenciais são aceitas. Metadados são exibidos como
 texto, sem executar HTML da playlist. Trocar de canal encerra a conexão anterior.

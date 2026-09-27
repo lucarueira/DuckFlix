@@ -1,4 +1,25 @@
-# Integrações verificadas em 24/09/2026
+# Integrações verificadas
+
+## Nova varredura de TV em 27/09/2026
+
+- **FrostView TV**: manifesto e catálogo responderam HTTP 408 nesta verificação.
+- **Minha TV**: o manifesto não respondeu dentro de 12 segundos.
+- **BestCine**: o manifesto respondeu HTTP 403.
+- **USA TV**: o host publicado não resolveu no DNS.
+- **Watchio.live TV**: manifesto e catálogo responderam, mas os endpoints de stream
+  testados retornaram listas vazias. Não foi incluído.
+- **Pluto TV community addon**: manifesto, catálogo e resolução de stream responderam,
+  porém o HLS autorizou CORS somente para `http://pluto.tv`, não para o domínio do
+  DuckFlix. Não foi incluído como fonte enganosa.
+- **Tvvio**: manifesto, catálogo e HLS responderam, mas a seleção inclui canais adultos
+  e canais pagos sem metadados confiáveis de classificação ou licença. Não foi
+  incorporado ao catálogo público.
+- **IPTV Addon by Savi/NexoTV**: as opções públicas reutilizam IPTV-org, que o DuckTV
+  já consulta diretamente, sem uma camada adicional sujeita a indisponibilidade.
+
+Como correção, as listas diretas agora carregam sem aguardar addons instáveis. Addons
+que responderem entram depois e continuam sujeitos à prova de imagem. O player ganhou
+recuperação de erros HLS e o histórico local guarda somente canais que chegaram a tocar.
 
 ## Revisão após o teste bem-sucedido da extensão HTTP
 

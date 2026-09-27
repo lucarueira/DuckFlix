@@ -23,6 +23,8 @@ async function setup(t, { manual = false } = {}) {
   Object.defineProperty(el('category'), 'value', { value: '', writable: true });
   el('category').add = option => el('category').append(option);
   const video = el('live-video');
+  const storageValues = new Map();
+  window.localStorage = { getItem: key => storageValues.get(key) ?? null, setItem: (key, value) => storageValues.set(key, String(value)), removeItem: key => storageValues.delete(key) };
   video.canPlayType = () => 'probably';
   video.pause = () => { pauses++; video.paused = true; };
   video.load = () => {};
@@ -51,6 +53,7 @@ async function setup(t, { manual = false } = {}) {
     Option: function(text, value) { const option = document.createElement('option'); option.textContent = text; option.value = value; return option; },
     fetch: async url => ({ ok: true, text: async () => url.includes('/categories/') ? cartoons : directory })
   });
+  vm.runInContext(fs.readFileSync(path.join(__dirname, '../tv-history.js'), 'utf8'), context);
   vm.runInContext(fs.readFileSync(path.join(__dirname, '../tv.js'), 'utf8'), context);
   await settle();
   t.after(() => window.dispatchEvent(new window.Event('pagehide')));
@@ -81,6 +84,18 @@ test('second and third searches verify new channels while the first channel keep
   assert.doesNotMatch(app.el('channel-grid').textContent, /Canal 29/);
   assert.equal(app.video.src, currentSource);
   assert.equal(app.pauses, pauses, 'search must not stop current playback');
+});
+
+test('a channel enters recent history only after playback starts and the history can be cleared', async t => {
+  const app = await setup(t);
+  assert.equal(app.el('recent-channels').hidden, true);
+  app.el('channel-grid').firstElementChild.click();
+  assert.equal(app.el('recent-channels').hidden, true);
+  app.video.dispatchEvent(new app.window.Event('playing'));
+  assert.equal(app.el('recent-channels').hidden, false);
+  assert.match(app.el('recent-channel-grid').textContent, /Canal 00/);
+  app.el('clear-recent-channels').click();
+  assert.equal(app.el('recent-channels').hidden, true);
 });
 
 test('a search with no matches completes immediately; clearing it restores the verified directory', async t => {

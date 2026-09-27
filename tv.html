@@ -17,6 +17,7 @@
   <script defer src="tv-health.js"></script>
   <script defer src="extension-bridge.js"></script>
   <script defer src="tv-addons.js"></script>
+  <script defer src="tv-history.js"></script>
   <script defer src="tv.js"></script>
 </head>
 <body>
@@ -65,6 +66,18 @@
         <button id="stop-stream" class="secondary" hidden>Fechar transmissão</button>
         <p class="player-note">Os canais da lista carregaram imagem neste navegador nos últimos 5 minutos. Se um sinal cair, ele sai da seleção até passar em um novo teste.</p>
       </div>
+    </section>
+
+    <section id="recent-channels" class="recent-channels" aria-labelledby="recent-channels-title" hidden>
+      <div class="section-heading">
+        <div>
+          <span class="eyebrow">CONTINUE DE ONDE PAROU</span>
+          <h2 id="recent-channels-title">Últimos canais vistos</h2>
+        </div>
+        <button id="clear-recent-channels" class="secondary" type="button">Limpar histórico</button>
+      </div>
+      <p id="recent-status" class="list-status" role="status" aria-live="polite"></p>
+      <div id="recent-channel-grid" class="recent-channel-grid"></div>
     </section>
 
     <section id="channels" class="channels-section" aria-labelledby="channels-title">
