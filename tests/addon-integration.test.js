@@ -46,7 +46,7 @@ test('BestCine TV is additive with extension and a failed new provider preserves
     return { ok: true, json: async () => ({ metas: [{ id: 'old', name: 'Existing' }] }) };
   });
   assert.ok(calls.some(url => url.includes('bestcine_tv_catalog')));
-  assert.equal(channels.length, 2);
+  assert.equal(channels.length, 4, 'old providers plus Pluto and deduplicated TvVoo remain available');
   globalThis.DuckFlixExtension.connected = false; calls.length = 0;
   await tv.load(new AbortController().signal, async url => { calls.push(url); return { ok: true, json: async () => ({ metas: [] }) }; });
   assert.equal(calls.some(url => url.includes('bestcine')), false);

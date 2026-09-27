@@ -1,6 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { load, probe } = require('../tv-addons');
+const { load, probe, SOURCES } = require('../tv-addons');
 const json = data => ({ ok: true, json: async () => data });
 test('FrostView reports server errors instead of retrying through the extension', async t => {
   globalThis.DuckFlixExtension = { connected: true, fetchJSON: async () => json({ metas: [] }).json() };
@@ -25,7 +25,10 @@ test('FrostView catalog can use authorized extension after a browser network fai
 test('TV catalog follows pagination, ignores adult flags and stops when providers repeat a page', async () => {
   let calls = 0;
   const metas = Array.from({ length: 100 }, (_, id) => ({ id: `channel:${id}`, name: `Canal ${id}`, genre: ['TV'], poster: 'http://unsafe/logo', adult: id === 0 }));
-  const channels = await load(new AbortController().signal, async () => { calls++; return json({ metas }); });
+  const channels = await load(new AbortController().signal, async url => {
+    if (!url.includes('frostview')) return json({ metas: [] });
+    calls++; return json({ metas });
+  });
   assert.equal(calls, 2); assert.equal(channels.length, 99); assert.equal(channels[0].logo, '');
   assert.match(channels[0].addonEndpoint, /channel%3A1.json$/);
 });
@@ -40,4 +43,22 @@ test('unavailable or cancelled TV addon never becomes an available channel', asy
   assert.equal(result.ok, false); assert.equal(channel.url, channel.addonEndpoint);
   const controller = new AbortController(); controller.abort();
   assert.equal(await probe(channel, { signal: controller.signal }), null);
+});
+
+test('new TV catalogs preserve base paths, label providers and interleave independent sources', async () => {
+  const calls = [];
+  const channels = await load(new AbortController().signal, async url => {
+    calls.push(url);
+    if (url.includes('frostview')) throw new Error('offline');
+    return json({ metas: [{ id: 'live:a%20b', name: 'Canal A' }, { id: 'second', name: 'Canal B' }] });
+  });
+  assert.equal(channels.length, 4, 'three TvVoo catalogs share channel identity in this fixture');
+  assert.ok(calls.includes('https://dev.nebulawp.org/stremio/pluto-tv-addon/catalog/tv/pluto.json'));
+  for (const source of SOURCES.filter(source => source.name)) {
+    assert.ok(calls.includes(`${source.base}/catalog/tv/${source.catalog}.json`));
+  }
+  assert.match(channels[0].addonEndpoint, /pluto-tv-addon\/stream\/tv\/live%3Aa%2520b.json$/);
+  assert.match(channels[1].addonEndpoint, /cfg-it-uk-fr\/stream\/tv\/live%3Aa%2520b.json$/);
+  assert.ok(channels[0].categories.includes('Pluto TV'));
+  assert.match(channels[1].search, /tvvoo/);
 });
