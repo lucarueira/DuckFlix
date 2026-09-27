@@ -1,0 +1,70 @@
+:root {
+  color-scheme: dark;
+  --bg: #070b16 !important;
+  --panel: #0d1528 !important;
+  --panel-card: #111e35 !important;
+  --line: #243653 !important;
+  --muted: #aebbd0 !important;
+  --accent: #59a9ff !important;
+  --accent-glow: rgb(56 139 253 / 38%) !important;
+  --accent-hover: #83c1ff !important;
+  --accent-gradient: linear-gradient(135deg, #2d8cff, #2453bc) !important;
+}
+
+html { background: #070b16 !important; }
+body {
+  background-color: #070b16 !important;
+  background-image: radial-gradient(ellipse at 50% 0, rgb(45 140 255 / 12%), transparent 55%) !important;
+}
+.header {
+  background: rgb(5 10 22 / 88%) !important;
+  border-bottom-color: rgb(123 171 235 / 18%) !important;
+  box-shadow: 0 10px 34px rgb(0 0 0 / 24%) !important;
+}
+.brand img, .brand-logo, .logo img { filter: drop-shadow(0 4px 18px rgb(63 148 255 / 38%)) !important; }
+.nav-item, .header .nav-item { border-color: transparent !important; }
+.nav-item:hover, .header .nav-item:hover { background: rgb(130 174 233 / 12%) !important; }
+.nav-item.active, .nav-item[aria-current="page"], .header .nav-item.active {
+  background: rgb(59 137 233 / 24%) !important;
+  box-shadow: inset 0 0 0 1px rgb(105 170 255 / 38%) !important;
+}
+.hero.hero-cinematic, .tv-hero-cinematic, .intro.tv-hero-cinematic {
+  background-image: linear-gradient(180deg, rgb(5 10 22 / 40%), #070b16 95%) !important;
+}
+.hero-title span, .eyebrow { color: #83bdff !important; }
+.hero-content .busca, .search-row, .search-row:focus-within {
+  border-color: rgb(113 171 249 / 38%) !important;
+  background: #101b30 !important;
+  box-shadow: 0 12px 40px rgb(0 0 0 / 34%) !important;
+}
+.nav-tabs .tab-btn.active, .category-tabs button[aria-pressed="true"] {
+  background: rgb(59 137 233 / 24%) !important;
+  border-color: rgb(105 170 255 / 48%) !important;
+}
+.destination, .extension-install, .movie-queue, .episode-panel, .home-episode-panel {
+  border-color: rgb(122 164 222 / 20%) !important;
+  background: linear-gradient(145deg, #111d33, #0c1425) !important;
+  box-shadow: 0 18px 40px rgb(0 0 0 / 20%) !important;
+}
+.destination:hover { border-color: rgb(105 170 255 / 60%) !important; background: #16243d !important; }
+.destination-icon { color: #83bdff !important; background: rgb(59 137 233 / 16%) !important; }
+.poster, .card .poster {
+  border-radius: 12px !important;
+  border-color: rgb(164 193 233 / 20%) !important;
+  box-shadow: 0 10px 26px rgb(0 0 0 / 42%) !important;
+}
+.poster-card:hover .poster, .card:hover .poster,
+.poster-card:focus-visible .poster, .card:focus-visible .poster {
+  border-color: #78b8ff !important;
+  box-shadow: 0 12px 32px rgb(42 119 215 / 35%) !important;
+}
+button.primary, .primary, .destination-link > span { color: #fff !important; }
+button.primary, .primary { background: linear-gradient(135deg, #2d8cff, #2453bc) !important; }
+button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible {
+  outline-color: #83bdff !important;
+}
+#playerArea, .watch-dialog, .modal-content { background-color: #090f1d !important; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; transition-duration: .01ms !important; }
+}

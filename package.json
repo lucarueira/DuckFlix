@@ -1,12 +1,41 @@
 {
   "name": "duckflix",
   "private": true,
+  "productName": "DuckFlix",
+  "version": "0.2.0",
+  "main": "desktop/main.cjs",
   "scripts": {
     "package:extension": "node scripts/package-extension.js",
     "start": "node together-server.js",
+    "desktop:start": "electron .",
+    "desktop:make": "electron-forge make --platform win32 --arch x64",
     "test": "node --test tests/*.test.js"
   },
+  "config": {
+    "forge": {
+      "packagerConfig": {
+        "executableName": "DuckFlix",
+        "asar": true
+      },
+      "makers": [
+        {
+          "name": "@electron-forge/maker-squirrel",
+          "config": {
+            "name": "duckflix",
+            "authors": "DuckFlix",
+            "description": "DuckFlix para Windows"
+          }
+        }
+      ]
+    }
+  },
   "devDependencies": {
+    "@electron-forge/cli": "^7.11.2",
+    "@electron-forge/maker-squirrel": "^7.11.2",
+    "electron": "^44.4.5",
     "linkedom": "0.18.13"
+  },
+  "allowScripts": {
+    "electron-winstaller@5.4.4": true
   }
 }
