@@ -21,7 +21,7 @@ jobs:
       - name: Create direct download asset
         shell: pwsh
         run: |
-          $setup = Get-ChildItem out/make/squirrel.windows/x64 -Filter 'DuckFlix-*.Setup.exe' | Select-Object -First 1
+          $setup = Get-ChildItem out/make/squirrel.windows/x64 -Filter 'DuckFlix-*Setup.exe' | Select-Object -First 1
           if (-not $setup) { throw 'Windows installer was not created.' }
           Rename-Item -LiteralPath $setup.FullName -NewName 'DuckFlix-Setup.exe'
       - uses: softprops/action-gh-release@v2

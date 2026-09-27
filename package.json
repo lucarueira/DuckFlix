@@ -2,7 +2,7 @@
   "name": "duckflix",
   "private": true,
   "productName": "DuckFlix",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "main": "desktop/main.cjs",
   "scripts": {
     "package:extension": "node scripts/package-extension.js",
