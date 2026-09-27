@@ -1,61 +1,12 @@
 {
   "name": "duckflix",
   "private": true,
-  "productName": "DuckFlix",
-  "version": "0.1.2",
-  "main": "desktop/main.cjs",
   "scripts": {
     "package:extension": "node scripts/package-extension.js",
     "start": "node together-server.js",
-    "desktop:start": "electron .",
-    "desktop:make": "node scripts/create-desktop-icon.cjs && electron-forge make --platform win32 --arch x64",
-    "desktop:publish": "electron-forge publish --platform win32 --arch x64",
     "test": "node --test tests/*.test.js"
   },
-  "config": {
-    "forge": {
-      "packagerConfig": {
-        "executableName": "DuckFlix",
-        "icon": "img/duckflix42.ico",
-        "asar": true
-      },
-      "makers": [
-        {
-          "name": "@electron-forge/maker-squirrel",
-          "config": {
-            "name": "duckflix",
-            "authors": "DuckFlix",
-            "description": "DuckFlix para Windows"
-          }
-        }
-      ],
-      "publishers": [
-        {
-          "name": "@electron-forge/publisher-github",
-          "config": {
-            "repository": {
-              "owner": "lucarueira",
-              "name": "DuckFlix"
-            },
-            "prerelease": false,
-            "draft": false
-          }
-        }
-      ]
-    }
-  },
   "devDependencies": {
-    "@electron-forge/cli": "^7.11.2",
-    "@electron-forge/maker-squirrel": "^7.11.2",
-    "@electron-forge/publisher-github": "^7.11.2",
-    "electron": "^44.4.5",
-    "linkedom": "0.18.13",
-    "sharp": "^0.35.5"
-  },
-  "dependencies": {
-    "update-electron-app": "^3.3.0"
-  },
-  "allowScripts": {
-    "electron-winstaller@5.4.4": true
+    "linkedom": "0.18.13"
   }
 }
