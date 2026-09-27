@@ -24,7 +24,7 @@
       try {
         response = await fetcher(url, { signal: controller.signal, credentials: 'omit', referrerPolicy: 'no-referrer' });
       } catch (error) {
-        if (!controller.signal.aborted && error instanceof TypeError && extension?.connected && extension.fetchJSON && new URL(url).origin === BESTCINE_TV.base) {
+        if (!controller.signal.aborted && error instanceof TypeError && extension?.connected && extension.fetchJSON && [BESTCINE_TV.base, ...SOURCES.map(source => source.base)].includes(new URL(url).origin)) {
           return await extension.fetchJSON(url, { signal: controller.signal });
         }
         throw error;
@@ -33,7 +33,7 @@
       return await response.json();
     } finally { clearTimeout(timer); signal?.removeEventListener('abort', abort); }
   }
-  async function load(signal, fetcher = fetch) {
+  async function load(signal, fetcher = fetch, onStatus = () => {}) {
     const sources = globalThis.DuckFlixExtension?.connected ? [...SOURCES, HTTP_SOURCE, BESTCINE_TV] : SOURCES;
     const settled = await Promise.allSettled(sources.map(async source => {
       const entries = new Map();
@@ -42,12 +42,16 @@
         const suffix = page ? `/skip=${page * 100}` : '';
         let data;
         try { data = await json(`${source.base}/catalog/${source.type}/${source.catalog}${suffix}.json`, signal, fetcher); }
-        catch { break; }
+        catch (error) {
+          if (!signal?.aborted) onStatus({ source: source.base, error: error.message });
+          break;
+        }
         const before = entries.size;
         for (const meta of data.metas || []) {
           if (!meta.id || !meta.name || meta.adult) continue;
           const endpoint = `${source.base}/stream/${source.type}/${encodeURIComponent(meta.id)}.json`;
-          const categories = (meta.genre || meta.genres || []).filter(value => typeof value === 'string');
+          const genres = meta.genre || meta.genres || [];
+          const categories = (Array.isArray(genres) ? genres : [genres]).filter(value => typeof value === 'string');
           entries.set(meta.id, { name: String(meta.name), logo: secure(meta.poster) || '', categories: categories.length ? categories : ['Undefined'], search: normalize(String(meta.name)), url: endpoint, addonEndpoint: endpoint });
         }
         if (!source.paginated || (data.metas?.length || 0) < 100 || entries.size === before) break;

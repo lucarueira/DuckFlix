@@ -2,6 +2,21 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const { create, KEY } = require('../tv-history');
 
+test('favorites persist independently and remove by stable addon endpoint', () => {
+  const storage = memory();
+  const history = create(storage);
+  const favorites = create(storage, { key: 'duckflix.tv.favorites', limit: 100 });
+  const channel = { name: 'TV', url: 'https://video.example/temporary', addonEndpoint: 'https://addon.example/stream/tv/a.json' };
+  favorites.add(channel);
+  channel.url = 'https://video.example/renewed';
+  assert.equal(favorites.has(channel), true);
+  assert.equal(create(storage, { key: favorites.key }).list().length, 1);
+  history.clear();
+  assert.equal(favorites.list().length, 1);
+  favorites.remove(channel);
+  assert.equal(favorites.list().length, 0);
+});
+
 function memory(initial) {
   const values = new Map(initial ? [[KEY, initial]] : []);
   return { getItem: key => values.get(key) ?? null, setItem: (key, value) => values.set(key, String(value)), removeItem: key => values.delete(key) };

@@ -63,11 +63,18 @@
         <h2 id="channel-title">O que vamos assistir?</h2>
         <p id="player-status" role="status" aria-live="polite">Selecione um canal na lista abaixo.</p>
         <button id="retry-stream" class="primary" hidden>Tentar novamente</button>
+        <button id="favorite-channel" class="secondary" type="button" disabled aria-pressed="false">☆ Favoritar canal</button>
         <button id="stop-stream" class="secondary" hidden>Fechar transmissão</button>
         <p class="player-note">Os canais da lista carregaram imagem neste navegador nos últimos 5 minutos. Se um sinal cair, ele sai da seleção até passar em um novo teste.</p>
       </div>
     </section>
 
+    <section id="favorite-channels" class="recent-channels" aria-labelledby="favorite-channels-title">
+      <div class="section-heading"><div><span class="eyebrow">SUA SELEÇÃO</span><h2 id="favorite-channels-title">Canais favoritos</h2></div></div>
+      <p id="favorite-empty">Selecione um canal e use “Favoritar canal”. Seus favoritos ficam salvos neste navegador.</p>
+      <p id="favorite-status" class="list-status" role="status" aria-live="polite"></p>
+      <div id="favorite-channel-grid" class="recent-channel-grid"></div>
+    </section>
     <section id="recent-channels" class="recent-channels" aria-labelledby="recent-channels-title" hidden>
       <div class="section-heading">
         <div>
@@ -97,6 +104,7 @@
       <button id="clear-filters" class="secondary clear-filters" type="button">Limpar busca e categoria</button>
       <div class="verification-bar"><span class="live-dot" aria-hidden="true"></span><p id="scan-status" role="status">Preparando a verificação dos sinais…</p><button id="scan-more" class="secondary" hidden>Verificar mais canais</button></div>
       <p id="list-status" class="list-status" role="status" aria-live="polite">Carregando canais…</p>
+      <p id="addon-status" class="list-status" role="status" aria-live="polite"></p>
       <div id="channel-grid" class="channel-grid" aria-busy="true"></div>
       <button id="load-more" class="secondary load-more" hidden>Mostrar mais canais</button>
     </section>

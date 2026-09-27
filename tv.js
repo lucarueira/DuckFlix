@@ -71,6 +71,7 @@
   const playerStatus = el('player-status');
   const health = window.DuckTVHealth;
   const history = window.DuckTVHistory;
+  const favorites = window.DuckTVFavorites;
   const results = new Map();
   const animationURL = 'https://iptv-org.github.io/iptv/categories/animation.m3u';
   const carousel = el('animation-carousel');
@@ -129,7 +130,8 @@
     badge.textContent = recent ? '↻ Assistido recentemente' : '● Sinal verificado';
     copy.append(badge, name, detail);
     button.append(icon, copy);
-    button.addEventListener('click', () => recent ? verifyRecentChannel(channel) : playChannel(channel));
+    button.addEventListener('click', () => recent ? verifyRecentChannel(channel, recent === 'favorite' ? 'favorite-status' : 'recent-status') : playChannel(channel));
+    if (recent === 'favorite') badge.textContent = '★ Favorito · verificar sinal';
     return button;
   }
 
@@ -138,7 +140,7 @@
     const container = el('recent-channel-grid');
     if (!section || !container || !history) return;
     const items = history.list().filter(allowedChannel);
-    section.hidden = !items.length;
+    section.hidden = !items.length || Boolean(window.DuckFlixSafety?.enabled());
     container.replaceChildren(...items.map(channel => createCard(channel, false, true)));
     if (!items.length) statusRecent('');
   }
@@ -148,22 +150,53 @@
     if (target) target.textContent = message;
   }
 
-  async function verifyRecentChannel(channel) {
+  function renderFavorites() {
+    const button = el('favorite-channel');
+    const saved = Boolean(selected && favorites?.has(selected));
+    button.disabled = !selected;
+    button.setAttribute('aria-pressed', String(saved));
+    button.textContent = saved ? '★ Remover dos favoritos' : '☆ Favoritar canal';
+    el('favorite-channels').hidden = Boolean(window.DuckFlixSafety?.enabled());
+    const items = favorites?.list().filter(allowedChannel) || [];
+    el('favorite-empty').hidden = Boolean(items.length);
+    el('favorite-channel-grid').replaceChildren(...items.map(channel => {
+      const wrapper = document.createElement('div');
+      wrapper.className = 'favorite-item';
+      const remove = document.createElement('button');
+      remove.type = 'button';
+      remove.className = 'secondary';
+      remove.textContent = 'Remover favorito';
+      remove.setAttribute('aria-label', `Remover ${channel.name} dos favoritos`);
+      remove.addEventListener('click', () => { favorites.remove(channel); renderFavorites(); });
+      wrapper.append(createCard(channel, false, 'favorite'), remove);
+      return wrapper;
+    }));
+  }
+
+  async function verifyRecentChannel(channel, statusId = 'recent-status') {
+    if (!allowedChannel(channel) || window.DuckFlixSafety?.enabled()) return;
+    if (channel.url.startsWith('http:') && !window.DuckFlixExtension?.connected) {
+      el(statusId).textContent = 'Este canal HTTP precisa da extensão DuckFlix conectada e autorizada.';
+      return;
+    }
     recentRequest?.abort();
+    statusRecent('');
+    el('favorite-status').textContent = '';
+    const status = message => { el(statusId).textContent = message; };
     const controller = new AbortController();
     recentRequest = controller;
-    statusRecent(`Verificando o sinal de ${channel.name}…`);
+    status(`Verificando o sinal de ${channel.name}…`);
     try {
       const result = channel.addonEndpoint && window.DuckTVAddons
         ? await window.DuckTVAddons.probe(channel, { signal: controller.signal, probeChannel: health.probeChannel })
         : await health.probeChannel(channel.url, { signal: controller.signal });
       if (recentRequest !== controller || controller.signal.aborted) return;
-      if (!result?.ok) { statusRecent(`${channel.name} não respondeu agora. Tente novamente mais tarde.`); return; }
+      if (!result?.ok) { status(`${channel.name} não respondeu agora. Tente novamente mais tarde.`); return; }
       results.set(channel.url, result);
-      statusRecent('');
+      status('');
       playChannel(channel);
     } catch {
-      if (!controller.signal.aborted) statusRecent(`${channel.name} não pôde ser verificado agora.`);
+      if (!controller.signal.aborted) status(`${channel.name} não pôde ser verificado agora.`);
     } finally { if (recentRequest === controller) recentRequest = null; }
   }
 
@@ -335,13 +368,18 @@
     category.disabled = true;
     el('load-more').hidden = true;
     listStatus.textContent = 'Carregando canais…';
+    el('addon-status').textContent = '';
     el('scan-status').textContent = 'Carregando listas para testar a reprodução…';
     el('scan-more').hidden = true;
     renderChannels();
     try {
       const addonsPromise = window.DuckFlixSafety?.enabled()
         ? Promise.resolve([])
-        : (window.DuckTVAddons?.load(controller.signal) || Promise.resolve([]));
+        : (window.DuckTVAddons?.load(controller.signal, undefined, ({ source, error }) => {
+          if (request !== controller || controller.signal.aborted) return;
+          const reason = /^HTTP \d+$/.test(error) ? error : 'falha de conexão ou permissão';
+          el('addon-status').textContent = `Addon ${new URL(source).hostname} indisponível (${reason}). Outros canais continuam disponíveis. A extensão não corrige falhas do servidor.`;
+        }) || Promise.resolve([]));
       const [directory, cartoons] = await Promise.allSettled([
         fetchList(PLAYLISTS[playlist.value], controller.signal),
         fetchList(animationURL, controller.signal)
@@ -350,9 +388,8 @@
       channels = directory.status === 'fulfilled' ? directory.value : [];
       const localCartoons = channels.filter(channel => channel.categories.includes('Animation'));
       animations = [...new Map([...localCartoons, ...(cartoons.status === 'fulfilled' ? cartoons.value : [])].map(channel => [channel.url, channel])).values()];
-      if (!channels.length && !animations.length) throw new Error('Empty playlists');
       listError = !channels.length;
-      if (listError) listStatus.textContent = 'A lista de canais não carregou. As animações continuam disponíveis; tente “Verificar novamente”.';
+      if (listError) listStatus.textContent = 'A lista principal não carregou. Tentando os addons disponíveis; você também pode usar “Verificar novamente”.';
       if (cartoons.status === 'rejected' && el('animation-empty')) el('animation-empty').querySelector('p').textContent = 'A lista mundial de animação não carregou. Tentando os canais da lista selecionada.';
       populateCategories();
       loading = false;
@@ -362,6 +399,7 @@
         if (request !== controller || controller.signal.aborted || !addonChannels.length) return;
         const seen = new Set(channels.map(channel => channel.addonEndpoint || channel.url));
         channels = [...addonChannels.filter(channel => !seen.has(channel.addonEndpoint || channel.url)), ...channels];
+        listError = false;
         populateCategories();
         filterChannels();
         if (!selected) scanMore();
@@ -383,6 +421,10 @@
   }
 
   function stopPlayback() {
+    recentRequest?.abort();
+    recentRequest = null;
+    statusRecent('');
+    el('favorite-status').textContent = '';
     playbackId++;
     clearTimeout(playbackTimer);
     if (hls) { hls.destroy(); hls = null; }
@@ -416,6 +458,7 @@
     cancelScan();
     stopPlayback();
     selected = channel;
+    renderFavorites();
     el('scan-status').textContent = 'Varredura automática pausada enquanto você assiste. Você pode buscar outro canal normalmente.';
     el('scan-more').hidden = true;
     const id = playbackId;
@@ -498,10 +541,18 @@
   playlist.addEventListener('change', loadPlaylist);
   el('reload-list').addEventListener('click', () => { results.clear(); loadPlaylist(); });
   el('clear-recent-channels')?.addEventListener('click', () => { history?.clear(); renderRecentChannels(); });
+  el('favorite-channel').addEventListener('click', () => {
+    if (!selected || !favorites) return;
+    if (favorites.has(selected)) favorites.remove(selected);
+    else favorites.add(selected);
+    renderFavorites();
+    if (!favorites.has(selected)) el('favorite-status').textContent = 'Canal não está salvo nos favoritos.';
+  });
   el('scan-more').addEventListener('click', () => scanMore({ userRequested: true }));
   el('stop-stream').addEventListener('click', () => {
     stopPlayback();
     selected = null;
+    renderFavorites();
     video.hidden = true;
     el('player-placeholder').hidden = false;
     el('stop-stream').hidden = el('retry-stream').hidden = true;
@@ -517,7 +568,7 @@
   carousel?.addEventListener('keydown', event => {
     if (event.key === 'ArrowRight' || event.key === 'ArrowLeft') { event.preventDefault(); moveCarousel(event.key === 'ArrowRight' ? 1 : -1); }
   });
-  el('retry-stream').addEventListener('click', () => { if (selected) playChannel(selected); });
+  el('retry-stream').addEventListener('click', () => { if (selected) selected.addonEndpoint ? verifyRecentChannel(selected, 'player-status') : playChannel(selected); });
   el('load-more').addEventListener('click', () => {
     const firstNew = visibleCount;
     visibleCount += 48;
@@ -539,9 +590,11 @@
   window.addEventListener('pageshow', event => { if (event.persisted) { selected = null; el('stop-stream').click(); loadPlaylist(); } });
   window.addEventListener('duckflix:modechange', () => {
     cancelScan(); el('stop-stream').click(); filtersChanged();
+    renderRecentChannels(); renderFavorites();
     if (!window.DuckFlixSafety?.enabled()) loadPlaylist();
   });
   window.addEventListener('duckflix:extensionready', loadPlaylist);
   renderRecentChannels();
+  renderFavorites();
   loadPlaylist();
 })();

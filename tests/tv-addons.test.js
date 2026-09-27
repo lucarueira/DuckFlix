@@ -2,6 +2,26 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const { load, probe } = require('../tv-addons');
 const json = data => ({ ok: true, json: async () => data });
+test('FrostView reports server errors instead of retrying through the extension', async t => {
+  globalThis.DuckFlixExtension = { connected: true, fetchJSON: async () => json({ metas: [] }).json() };
+  t.after(() => { delete globalThis.DuckFlixExtension; });
+  const reports = [];
+  await load(new AbortController().signal, async () => ({ ok: false, status: 408 }), status => reports.push(status));
+  assert.ok(reports.some(report => report.source.includes('frostview') && report.error === 'HTTP 408'));
+});
+
+test('FrostView catalog can use authorized extension after a browser network failure', async t => {
+  const requests = [];
+  globalThis.DuckFlixExtension = { connected: true, fetchJSON: async url => {
+    requests.push(url);
+    return { metas: url.includes('frostview') ? [{ id: 'a', name: 'TV', genre: 'News' }] : [] };
+  } };
+  t.after(() => { delete globalThis.DuckFlixExtension; });
+  const channels = await load(new AbortController().signal, async () => { throw new TypeError('Failed to fetch'); });
+  assert.equal(channels.length, 1);
+  assert.deepEqual(channels[0].categories, ['News']);
+  assert.ok(requests.some(url => url.includes('frostview')));
+});
 test('TV catalog follows pagination, ignores adult flags and stops when providers repeat a page', async () => {
   let calls = 0;
   const metas = Array.from({ length: 100 }, (_, id) => ({ id: `channel:${id}`, name: `Canal ${id}`, genre: ['TV'], poster: 'http://unsafe/logo', adult: id === 0 }));

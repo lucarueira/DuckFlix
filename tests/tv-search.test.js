@@ -69,6 +69,40 @@ async function setup(t, { manual = false } = {}) {
   return { el, window, video, batches, search, runTimers, get pauses() { return pauses; } };
 }
 
+test('favorites can be saved and removed separately from playback history', async t => {
+  const app = await setup(t);
+  await app.search('Canal 01');
+  app.el('channel-grid').firstElementChild.click();
+  app.el('favorite-channel').click();
+  assert.match(app.el('favorite-channel-grid').textContent, /Canal 01/);
+  assert.equal(app.window.DuckTVFavorites.list().length, 1);
+  app.el('clear-recent-channels').click();
+  assert.equal(app.window.DuckTVFavorites.list().length, 1);
+  app.el('favorite-channel-grid').querySelector('.secondary').click();
+  assert.equal(app.window.DuckTVFavorites.list().length, 0);
+  assert.equal(app.el('favorite-channel').getAttribute('aria-pressed'), 'false');
+});
+
+test('closing playback cancels a pending favorite check', async t => {
+  const app = await setup(t);
+  await app.search('Canal 01');
+  app.el('channel-grid').firstElementChild.click();
+  app.el('favorite-channel').click();
+  let resolveProbe;
+  let signal;
+  app.window.DuckTVHealth.probeChannel = (_url, options) => {
+    signal = options.signal;
+    return new Promise(resolve => { resolveProbe = resolve; });
+  };
+  app.el('favorite-channel-grid').querySelector('.channel-card').click();
+  app.el('stop-stream').click();
+  assert.equal(signal.aborted, true);
+  resolveProbe({ ok: true, checkedAt: Date.now() });
+  await settle();
+  assert.equal(app.video.hidden, true);
+  assert.equal(app.el('channel-title').textContent, 'O que vamos assistir?');
+});
+
 test('second and third searches verify new channels while the first channel keeps playing', async t => {
   const app = await setup(t);
   await app.search('Canal 01');
