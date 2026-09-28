@@ -37,6 +37,21 @@
       <a class="primary adult-back" href="duckflix.html">Voltar ao DuckFlix</a>
     </section>
 
+    <section id="adult-login" class="adult-panel" hidden aria-labelledby="adult-login-title">
+      <p class="eyebrow">ACESSO RESTRITO · 18+</p>
+      <h1 id="adult-login-title">Entrar na área +18</h1>
+      <p>Digite a senha para continuar.</p>
+      <form id="adult-login-form">
+        <label for="adult-user">Login</label>
+        <input id="adult-user" type="text" autocomplete="username" required>
+        <label for="adult-password">Senha</label>
+        <input id="adult-password" type="password" autocomplete="current-password" required>
+        <button class="primary" type="submit">Entrar</button>
+      </form>
+      <p id="adult-login-status" class="adult-login-status" role="status" aria-live="polite"></p>
+      <a class="adult-back" href="duckflix.html">Voltar ao DuckFlix</a>
+    </section>
+
     <section id="adult-gate" class="adult-panel" hidden aria-labelledby="adult-title">
       <p class="eyebrow">ÁREA SEPARADA · 18+</p>
       <h1 id="adult-title">Confirme sua idade</h1>
@@ -70,6 +85,7 @@
       <section id="adult-player-section" class="adult-player-section" hidden aria-label="Reprodutor da área adulta">
         <div class="adult-player-heading"><h2 id="adult-player-title"></h2><button id="adult-player-close" class="secondary" type="button">Fechar player</button></div>
         <video id="adult-video" controls playsinline preload="none"></video>
+        <button id="adult-play-button" class="primary adult-play-button" type="button" hidden>▶ Reproduzir</button>
         <p id="adult-player-status" role="status" aria-live="polite"></p>
         <div id="adult-streams" class="adult-streams"></div>
       </section>

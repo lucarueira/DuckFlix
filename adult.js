@@ -1,7 +1,7 @@
 (() => {
   'use strict';
   const byId = id => document.getElementById(id);
-  const blocked = byId('adult-blocked'), gate = byId('adult-gate'), app = byId('adult-app');
+  const blocked = byId('adult-blocked'), login = byId('adult-login'), gate = byId('adult-gate'), app = byId('adult-app');
   const consent = byId('adult-confirm'), enter = byId('adult-enter'), status = byId('adult-status');
   const catalogsNode = byId('adult-catalogs'), resultsNode = byId('adult-results');
   const sourceTabs = [...document.querySelectorAll('[data-source]')];
@@ -16,6 +16,8 @@
       adultCatalog: /(?:\b(?:porn|hentai)\b|18\+)/i
     }
   });
+  let authenticated = false;
+  try { authenticated = sessionStorage.getItem('duckflix.adult.auth') === 'true'; } catch {}
   const state = { enabled: false, confirmed: false, selectedSource: 'onlyporn', manifests: new Map(), catalogs: [], items: [], request: null, playback: null, epoch: 0 };
   const noop = () => {};
   const safeModeOn = () => window.DuckFlixSafety?.enabled?.() ?? (() => {
@@ -25,6 +27,7 @@
   function clearPlayer() {
     state.playback?.dispose(); state.playback = null;
     video.pause(); video.removeAttribute('src'); video.load();
+    byId('adult-play-button').hidden = true;
     byId('adult-streams').replaceChildren(); playerSection.hidden = true;
   }
   function clearContent() {
@@ -39,13 +42,17 @@
     const mode = safeModeOn();
     if (mode) {
       state.enabled = false; state.confirmed = false; state.epoch++;
+      authenticated = false;
+      try { sessionStorage.removeItem('duckflix.adult.auth'); } catch {}
       consent.checked = false; enter.disabled = true;
-      clearContent(); gate.hidden = true; app.hidden = true; blocked.hidden = false;
+      clearContent(); login.hidden = true; gate.hidden = true; app.hidden = true; blocked.hidden = false;
       return;
     }
     blocked.hidden = true;
     state.enabled = true;
-    gate.hidden = state.confirmed; app.hidden = !state.confirmed;
+    login.hidden = authenticated;
+    gate.hidden = !authenticated || state.confirmed;
+    app.hidden = !state.confirmed;
   }
   function makeRequest() {
     state.request?.abort();
@@ -212,14 +219,37 @@
     state.playback?.dispose(); state.playback = null;
     const media = window.DuckFlixMedia;
     if (!media || safeModeOn() || !state.confirmed) return;
-    byId('adult-player-status').textContent = 'Conferindo reprodução…';
+    byId('adult-play-button').hidden = true;
+    byId('adult-player-status').textContent = 'Carregando e conferindo a fonte…';
     state.playback = media.connect(video, source, {
-      timeoutMs: 18000,
-      onReady: () => { byId('adult-player-status').textContent = 'Stream carregado. Use os controles do vídeo para reproduzir.'; },
-      onError: () => { byId('adult-player-status').textContent = 'Este stream não abriu no navegador. Tente outra opção.'; },
+      timeoutMs: 12000,
+      onReady: () => {
+        byId('adult-play-button').hidden = false;
+        byId('adult-player-status').textContent = 'Fonte carregada. Toque em Reproduzir para começar.';
+      },
+      onError: () => { byId('adult-play-button').hidden = true; byId('adult-player-status').textContent = 'A fonte não iniciou em 12 segundos. Tente outra opção da lista.'; },
       onBlocked: noop
     });
   }
+  byId('adult-play-button').addEventListener('click', () => {
+    video.play().then(() => { byId('adult-play-button').hidden = true; }).catch(() => {
+      byId('adult-player-status').textContent = 'O navegador bloqueou a reprodução. Toque no botão de play dentro do vídeo.';
+    });
+  });
+  byId('adult-login-form').addEventListener('submit', event => {
+    event.preventDefault();
+    if (safeModeOn()) { showState(); return; }
+    if (byId('adult-user').value.trim().toLowerCase() !== 'duckflix' || byId('adult-password').value !== 'duck42') {
+      byId('adult-login-status').textContent = 'Login ou senha incorretos.';
+      byId('adult-password').select(); return;
+    }
+    authenticated = true;
+    byId('adult-login-status').textContent = '';
+    byId('adult-user').value = '';
+    byId('adult-password').value = '';
+    try { sessionStorage.setItem('duckflix.adult.auth', 'true'); } catch {}
+    showState();
+  });
   function enterAdult() {
     if (!consent.checked || safeModeOn()) return;
     state.confirmed = true; showState(); selectSource(state.selectedSource);
