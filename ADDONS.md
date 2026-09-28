@@ -17,6 +17,24 @@
 - **IPTV Addon by Savi/NexoTV**: as opções públicas reutilizam IPTV-org, que o DuckTV
   já consulta diretamente, sem uma camada adicional sujeita a indisponibilidade.
 
+## Catálogos adultos isolados em 28/09/2026
+
+- **OnlyPorn**: manifesto e catálogos responderam; amostras de Eporner e Porntrex
+  trouxeram listas HLS HTTPS. Xhamster retornou itens sem URL direta nesta consulta e
+  outros catálogos estavam vazios. Agora é carregado somente na página +18, após
+  confirmação de idade, sem entrar na busca, nos favoritos ou no player principal.
+- **Midnight**: manifesto e catálogos responderam; a amostra de Porn Top Videos trouxe
+  links diretos HTTPS e links externos. O servidor não libera CORS para o DuckFlix; a
+  página +18 consulta Midnight pela extensão DuckFlix depois da autorização explícita do
+  domínio. Links externos são descartados; só são oferecidos links HTTPS HLS/vídeo. Os
+  catálogos selecionados são filtrados pelo nome (Porn, Hentai e 18+) para evitar outras
+  coleções.
+- A entrada +18 fica recolhida no fim da página e some enquanto o Modo Livre estiver
+  ativo. A página bloqueia também o acesso direto nesse modo. A confirmação de idade é
+  uma declaração do visitante, não uma verificação documental.
+
+Fontes: [OnlyPorn](https://stremio-addons.net/addons/onlyporn), [Midnight](https://stremio-addons.net/addons/midnight).
+
 Como correção, as listas diretas agora carregam sem aguardar addons instáveis. Addons
 que responderem entram depois e continuam sujeitos à prova de imagem. O player ganhou
 recuperação de erros HLS e o histórico local guarda somente canais que chegaram a tocar.

@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="referrer" content="no-referrer">
+  <title>Área +18 • DuckFlix</title>
+  <link rel="icon" type="image/png" href="img/favicon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="site.css">
+  <link rel="stylesheet" href="adult.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/hls.js@1.7.3/dist/hls.min.js" integrity="sha384-cciJ0zi8d1uMKC2zJd7jvPY4HQt7W4ByUI/FlMkltvBi31aW61rcpVBhpmW8/NwX" crossorigin="anonymous"></script>
+  <script defer src="content-policy.js"></script>
+  <script defer src="extension-bridge.js"></script>
+  <script defer src="extensoes-media.js"></script>
+  <script defer src="adult.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#adult-main">Ir para o conteúdo</a>
+  <header class="header adult-header">
+    <a class="brand logo" href="index.html" aria-label="DuckFlix — Início"><img src="img/logo_duckflix.png" alt="DuckFlix" class="brand-logo" width="180" height="80"></a>
+    <nav class="main-nav" aria-label="Navegação Principal">
+      <a href="duckflix.html" class="nav-item">DuckFlix</a>
+      <a href="tv.html" class="nav-item nav-tv">DUCKTV</a>
+      <a href="extensoes.html" class="nav-item nav-ext">DuckFlix Extensões</a>
+    </nav>
+    <span class="adult-badge">18+</span>
+  </header>
+
+  <main id="adult-main" class="adult-main">
+    <section id="adult-blocked" class="adult-panel" hidden>
+      <p class="eyebrow">MODO LIVRE ATIVO</p>
+      <h1>Área +18 indisponível</h1>
+      <p>Desative o Modo Livre na página DuckFlix para abrir esta área.</p>
+      <a class="primary adult-back" href="duckflix.html">Voltar ao DuckFlix</a>
+    </section>
+
+    <section id="adult-gate" class="adult-panel" hidden aria-labelledby="adult-title">
+      <p class="eyebrow">ÁREA SEPARADA · 18+</p>
+      <h1 id="adult-title">Confirme sua idade</h1>
+      <p>Os catálogos desta página são destinados exclusivamente a adultos.</p>
+      <label class="adult-consent"><input id="adult-confirm" type="checkbox"><span>Confirmo que tenho 18 anos ou mais e quero abrir conteúdo adulto.</span></label>
+      <button id="adult-enter" class="primary" type="button" disabled>Continuar</button>
+      <a class="adult-back" href="duckflix.html">Voltar ao DuckFlix</a>
+    </section>
+
+    <section id="adult-app" hidden aria-labelledby="adult-app-title">
+      <div class="adult-heading">
+        <div><p class="eyebrow">CATÁLOGOS ISOLADOS</p><h1 id="adult-app-title">Área <span>+18</span></h1></div>
+        <a class="adult-back" href="duckflix.html">Sair da área +18</a>
+      </div>
+      <p id="adult-status" class="adult-status" role="status" aria-live="polite"></p>
+      <div class="adult-sources" role="group" aria-label="Escolher catálogo adulto">
+        <button type="button" data-source="onlyporn" class="active" aria-pressed="true">OnlyPorn</button>
+        <button type="button" data-source="midnight" aria-pressed="false">Midnight</button>
+      </div>
+      <p id="midnight-extension-note" class="adult-extension-note" hidden>Midnight exige a extensão DuckFlix por uma restrição de CORS do addon. <a href="instalar-extensao.html">Veja como conectar</a> e autorize <code>https://midnight.stravo.site</code> no ícone da extensão.</p>
+      <p data-extension-status class="adult-extension-status" hidden role="status" aria-live="polite"></p>
+      <section class="adult-browser" aria-label="Catálogos adultos">
+        <div class="adult-catalogs" id="adult-catalogs"></div>
+        <div class="adult-results-wrap">
+          <div class="adult-results-heading"><h2 id="adult-catalog-title">Escolha um catálogo</h2><span id="adult-result-count"></span></div>
+          <label class="adult-filter-label" for="adult-filter">Filtrar resultados carregados</label>
+          <input id="adult-filter" type="search" maxlength="100" autocomplete="off" placeholder="Filtrar este catálogo">
+          <div id="adult-results" class="adult-results"></div>
+        </div>
+      </section>
+      <section id="adult-player-section" class="adult-player-section" hidden aria-label="Reprodutor da área adulta">
+        <div class="adult-player-heading"><h2 id="adult-player-title"></h2><button id="adult-player-close" class="secondary" type="button">Fechar player</button></div>
+        <video id="adult-video" controls playsinline preload="none"></video>
+        <p id="adult-player-status" role="status" aria-live="polite"></p>
+        <div id="adult-streams" class="adult-streams"></div>
+      </section>
+    </section>
+  </main>
+  <footer class="footer"><p>DuckFlix © 2026 • Área adulta separada</p></footer>
+</body>
+</html>
