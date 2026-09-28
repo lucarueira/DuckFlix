@@ -7,14 +7,18 @@
   const sourceTabs = [...document.querySelectorAll('[data-source]')];
   const video = byId('adult-video'), playerSection = byId('adult-player-section');
   const ADDONS = Object.freeze({
-    mindgeek: {
-      name: 'MindGeek', base: 'https://www.mindgeek.app',
-      catalogTypes: new Set(['MindGeek', 'MindGeek Compact'])
+    notxo: {
+      name: 'Notxo', base: 'https://notxo.vercel.app',
+      catalogTypes: new Set(['movie'])
+    },
+    animeShorts: {
+      name: 'Adult Anime & Shorts', base: 'https://stremio-addon-olive.vercel.app',
+      catalogTypes: new Set(['movie'])
     }
   });
   let authenticated = false;
   try { authenticated = sessionStorage.getItem('duckflix.adult.auth') === 'true'; } catch {}
-  const state = { enabled: false, confirmed: false, selectedSource: 'mindgeek', manifests: new Map(), catalogs: [], items: [], request: null, playback: null, epoch: 0 };
+  const state = { enabled: false, confirmed: false, selectedSource: 'notxo', manifests: new Map(), catalogs: [], items: [], request: null, playback: null, epoch: 0 };
   const noop = () => {};
   const safeModeOn = () => window.DuckFlixSafety?.enabled?.() ?? (() => {
     try { return localStorage.getItem('duckflix.modoLivre') === 'true' || localStorage.getItem('kidsMode') === 'true'; }
@@ -114,7 +118,6 @@
     byId('adult-filter').value = ''; byId('adult-catalog-title').textContent = 'Catálogos';
     byId('adult-result-count').textContent = '';
     sourceTabs.forEach(tab => { const active = tab.dataset.source === source; tab.classList.toggle('active', active); tab.setAttribute('aria-pressed', String(active)); });
-    byId('adult-extension-note').hidden = source !== 'mindgeek';
     status.textContent = `Carregando ${ADDONS[source].name}…`;
     try {
       const result = state.manifests.get(source) || await loadManifest(source, controller.signal);
@@ -192,12 +195,13 @@
         byId('adult-player-status').textContent = 'Este título não retornou um stream HTTPS direto compatível com o player. Torrent e links externos ficam ocultos.';
         return;
       }
-      byId('adult-player-status').textContent = 'Fontes HLS encontradas. Conecte a extensão DuckFlix e autorize o domínio da fonte quando solicitado.';
+      byId('adult-player-status').textContent = 'Iniciando a primeira fonte. Se ela falhar, tente outra opção.';
       const list = byId('adult-streams');
       for (const source of candidates) {
         const button = document.createElement('button'); button.type = 'button'; button.textContent = source.quality;
         button.addEventListener('click', () => playSource(source)); list.append(button);
       }
+      playSource(candidates[0]);
     } catch (error) {
       if (!controller.signal.aborted && epoch === state.epoch) byId('adult-player-status').textContent = `O addon não entregou streams agora (${error.message}).`;
     }
