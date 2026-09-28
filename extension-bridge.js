@@ -73,13 +73,15 @@
     } catch { throw new Error('O addon retornou uma resposta inválida em vez do catálogo. Tente novamente mais tarde.'); }
   }
   const api = { get connected() { return connected; }, get lastError() { return lastError; }, clearError() { lastError = ''; }, request, loader, fetchJSON,
-    hlsConfig(url, Hls) { return connected && /^http:\/\//i.test(url) ? { loader: loader(Hls) } : {}; }
+    // Use extension fetch for HLS over either HTTP or HTTPS. Several otherwise
+    // healthy providers omit CORS headers on playlists and media segments.
+    hlsConfig(url, Hls) { return connected && /^https?:\/\//i.test(url) ? { loader: loader(Hls) } : {}; }
   };
   window.DuckFlixExtension = api;
   async function detect() {
     try {
       const result = await request('ping'); connected = true;
-      setStatus(`Extensão conectada · ${result.version} · HTTP HLS disponível`);
+      setStatus(`Extensão conectada · ${result.version} · HLS com autorização de domínio`);
       window.dispatchEvent(new CustomEvent('duckflix:extensionready'));
     } catch { setStatus('Extensão não conectada. Instalação manual disponível para Chrome e Edge no computador.'); }
   }

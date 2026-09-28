@@ -7,18 +7,14 @@
   const sourceTabs = [...document.querySelectorAll('[data-source]')];
   const video = byId('adult-video'), playerSection = byId('adult-player-section');
   const ADDONS = Object.freeze({
-    onlyporn: {
-      name: 'OnlyPorn', base: 'https://07b88951aaab-jaxxx-v2.baby-beamup.club',
-      catalogs: new Set(['eporner', 'xhamster.hd+', 'xhamster.4k', 'porntrex.top-rated', 'spankbang', 'missav'])
-    },
-    midnight: {
-      name: 'Midnight', base: 'https://midnight.stravo.site/default',
-      adultCatalog: /(?:\b(?:porn|hentai)\b|18\+)/i
+    mindgeek: {
+      name: 'MindGeek', base: 'https://www.mindgeek.app',
+      catalogTypes: new Set(['MindGeek', 'MindGeek Compact'])
     }
   });
   let authenticated = false;
   try { authenticated = sessionStorage.getItem('duckflix.adult.auth') === 'true'; } catch {}
-  const state = { enabled: false, confirmed: false, selectedSource: 'onlyporn', manifests: new Map(), catalogs: [], items: [], request: null, playback: null, epoch: 0 };
+  const state = { enabled: false, confirmed: false, selectedSource: 'mindgeek', manifests: new Map(), catalogs: [], items: [], request: null, playback: null, epoch: 0 };
   const noop = () => {};
   const safeModeOn = () => window.DuckFlixSafety?.enabled?.() ?? (() => {
     try { return localStorage.getItem('duckflix.modoLivre') === 'true' || localStorage.getItem('kidsMode') === 'true'; }
@@ -63,11 +59,6 @@
     const parsed = new URL(url);
     const base = Object.values(ADDONS).find(addon => parsed.origin === new URL(addon.base).origin);
     if (!base || parsed.protocol !== 'https:' || parsed.username || parsed.password) throw new Error('Endereço de addon bloqueado.');
-    if (base.name === 'Midnight') {
-      const extension = window.DuckFlixExtension;
-      if (!extension?.connected || !extension.fetchJSON) throw new Error('Midnight precisa da extensão DuckFlix conectada e autorizada para este domínio.');
-      return extension.fetchJSON(url, { signal });
-    }
     const controller = new AbortController();
     const abort = () => controller.abort();
     if (signal.aborted) throw new DOMException('Consulta cancelada.', 'AbortError');
@@ -86,9 +77,6 @@
     return manifest.resources.some(resource => resource === resourceName || resource?.name === resourceName);
   }
   function resourceURL(addon, resource, type, id) {
-    // Midnight redirects series streams to a movie route; use its canonical endpoint
-    // directly because the extension intentionally rejects HTTP redirects.
-    if (addon.name === 'Midnight' && resource === 'stream' && type === 'series') type = 'movie';
     return `${addon.base}/${resource}/${encodeURIComponent(type)}/${encodeURIComponent(id)}.json`;
   }
   function validMeta(meta) {
@@ -101,9 +89,8 @@
       throw new Error(`${addon.name}: manifesto inesperado.`);
     }
     const catalogs = manifest.catalogs.filter(catalog => {
-      if (!catalog || typeof catalog.id !== 'string' || typeof catalog.name !== 'string' || !['movie', 'series'].includes(catalog.type)) return false;
-      if (source === 'onlyporn') return addon.catalogs.has(catalog.id);
-      return addon.adultCatalog.test(catalog.name);
+      if (!catalog || typeof catalog.id !== 'string' || typeof catalog.name !== 'string') return false;
+      return addon.catalogTypes.has(catalog.type);
     });
     return { manifest, catalogs };
   }
@@ -127,7 +114,7 @@
     byId('adult-filter').value = ''; byId('adult-catalog-title').textContent = 'Catálogos';
     byId('adult-result-count').textContent = '';
     sourceTabs.forEach(tab => { const active = tab.dataset.source === source; tab.classList.toggle('active', active); tab.setAttribute('aria-pressed', String(active)); });
-    byId('midnight-extension-note').hidden = source !== 'midnight';
+    byId('adult-extension-note').hidden = source !== 'mindgeek';
     status.textContent = `Carregando ${ADDONS[source].name}…`;
     try {
       const result = state.manifests.get(source) || await loadManifest(source, controller.signal);
@@ -172,7 +159,7 @@
     try {
       const addon = ADDONS[state.selectedSource], data = await json(catalogURL(addon, catalog), controller.signal);
       if (controller.signal.aborted || epoch !== state.epoch || safeModeOn()) return;
-      state.items = (Array.isArray(data?.metas) ? data.metas : []).filter(validMeta).slice(0, 100).map(item => ({ ...item, type: catalog.type }));
+      state.items = (Array.isArray(data?.metas) ? data.metas : []).filter(validMeta).slice(0, 100).map(item => ({ ...item, type: typeof item.type === 'string' ? item.type : catalog.type }));
       drawItems();
       status.textContent = `${addon.name}: catálogo carregado.`;
     } catch (error) {
@@ -205,7 +192,7 @@
         byId('adult-player-status').textContent = 'Este título não retornou um stream HTTPS direto compatível com o player. Torrent e links externos ficam ocultos.';
         return;
       }
-      byId('adult-player-status').textContent = 'Escolha um stream. Alguns provedores podem estar temporariamente indisponíveis.';
+      byId('adult-player-status').textContent = 'Fontes HLS encontradas. Conecte a extensão DuckFlix e autorize o domínio da fonte quando solicitado.';
       const list = byId('adult-streams');
       for (const source of candidates) {
         const button = document.createElement('button'); button.type = 'button'; button.textContent = source.quality;
