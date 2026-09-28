@@ -18,7 +18,7 @@
   });
   let authenticated = false;
   try { authenticated = sessionStorage.getItem('duckflix.adult.auth') === 'true'; } catch {}
-  const state = { enabled: false, confirmed: false, selectedSource: 'notxo', manifests: new Map(), catalogs: [], items: [], request: null, playback: null, epoch: 0 };
+  const state = { enabled: false, confirmed: false, selectedSource: 'notxo', manifests: new Map(), catalogs: [], items: [], visibleCount: 100, request: null, playback: null, epoch: 0 };
   const noop = () => {};
   const safeModeOn = () => window.DuckFlixSafety?.enabled?.() ?? (() => {
     try { return localStorage.getItem('duckflix.modoLivre') === 'true' || localStorage.getItem('kidsMode') === 'true'; }
@@ -32,7 +32,7 @@
   }
   function clearContent() {
     state.request?.abort(); state.request = null;
-    clearPlayer(); state.catalogs = []; state.items = [];
+    clearPlayer(); state.catalogs = []; state.items = []; state.visibleCount = 100; byId('adult-load-more').hidden = true;
     catalogsNode.replaceChildren(); resultsNode.replaceChildren();
     byId('adult-filter').value = ''; byId('adult-catalog-title').textContent = 'Escolha um catálogo';
     byId('adult-result-count').textContent = '';
@@ -114,7 +114,7 @@
     if (!state.confirmed || !state.enabled || safeModeOn()) return;
     state.selectedSource = source; state.epoch++;
     const epoch = state.epoch, controller = makeRequest(); clearPlayer();
-    state.items = []; resultsNode.replaceChildren(); catalogsNode.replaceChildren();
+    state.items = []; state.visibleCount = 100; byId('adult-load-more').hidden = true; resultsNode.replaceChildren(); catalogsNode.replaceChildren();
     byId('adult-filter').value = ''; byId('adult-catalog-title').textContent = 'Catálogos';
     byId('adult-result-count').textContent = '';
     sourceTabs.forEach(tab => { const active = tab.dataset.source === source; tab.classList.toggle('active', active); tab.setAttribute('aria-pressed', String(active)); });
@@ -131,15 +131,22 @@
   function drawItems() {
     resultsNode.replaceChildren();
     const query = byId('adult-filter').value.trim().toLocaleLowerCase('pt-BR');
-    const items = state.items.filter(item => (item.name || item.title).toLocaleLowerCase('pt-BR').includes(query));
-    byId('adult-result-count').textContent = items.length ? `${items.length} resultados` : '';
+    const items = state.items.filter(item => [item.name, item.title, item.id, item.description, ...(Array.isArray(item.genres) ? item.genres : [])]
+      .filter(value => typeof value === 'string').join(' ').toLocaleLowerCase('pt-BR').includes(query));
+    const shownItems = items.slice(0, state.visibleCount);
+    byId('adult-result-count').textContent = items.length
+      ? (shownItems.length < items.length ? `Mostrando ${shownItems.length} de ${items.length}` : `${items.length} resultados`)
+      : '';
+    const loadMore = byId('adult-load-more');
+    loadMore.hidden = shownItems.length >= items.length;
+    if (!loadMore.hidden) loadMore.textContent = `Mostrar mais ${Math.min(100, items.length - shownItems.length)} resultados`;
     if (!items.length) {
       const message = document.createElement('p'); message.className = 'adult-empty';
       message.textContent = state.items.length ? 'Nenhum resultado corresponde ao filtro.' : 'Este catálogo não retornou títulos agora.';
       resultsNode.append(message); return;
     }
     const source = ADDONS[state.selectedSource];
-    for (const item of items) {
+    for (const item of shownItems) {
       const card = document.createElement('article'); card.className = 'adult-card';
       const button = document.createElement('button'); button.type = 'button';
       const poster = item.poster || item.logo;
@@ -152,7 +159,7 @@
   }
   async function loadCatalog(catalog) {
     if (!state.confirmed || !state.enabled || safeModeOn()) return;
-    const epoch = ++state.epoch, controller = makeRequest(); clearPlayer(); state.items = [];
+    const epoch = ++state.epoch, controller = makeRequest(); clearPlayer(); state.items = []; state.visibleCount = 100; byId('adult-load-more').hidden = true;
     byId('adult-catalog-title').textContent = catalog.name;
     byId('adult-result-count').textContent = ''; resultsNode.replaceChildren();
     for (const button of catalogsNode.querySelectorAll('button')) {
@@ -162,7 +169,7 @@
     try {
       const addon = ADDONS[state.selectedSource], data = await json(catalogURL(addon, catalog), controller.signal);
       if (controller.signal.aborted || epoch !== state.epoch || safeModeOn()) return;
-      state.items = (Array.isArray(data?.metas) ? data.metas : []).filter(validMeta).slice(0, 100).map(item => ({ ...item, type: typeof item.type === 'string' ? item.type : catalog.type }));
+      state.items = (Array.isArray(data?.metas) ? data.metas : []).filter(validMeta).map(item => ({ ...item, type: typeof item.type === 'string' ? item.type : catalog.type }));
       drawItems();
       status.textContent = `${addon.name}: catálogo carregado.`;
     } catch (error) {
@@ -248,7 +255,8 @@
   consent.addEventListener('change', () => { enter.disabled = !consent.checked; });
   enter.addEventListener('click', enterAdult);
   sourceTabs.forEach(tab => tab.addEventListener('click', () => selectSource(tab.dataset.source)));
-  byId('adult-filter').addEventListener('input', drawItems);
+  byId('adult-filter').addEventListener('input', () => { state.visibleCount = 100; drawItems(); });
+  byId('adult-load-more').addEventListener('click', () => { state.visibleCount += 100; drawItems(); });
   byId('adult-player-close').addEventListener('click', clearPlayer);
   window.addEventListener('duckflix:modechange', showState);
   window.addEventListener('storage', event => { if (!event.key || ['duckflix.modoLivre', 'kidsMode'].includes(event.key)) showState(); });

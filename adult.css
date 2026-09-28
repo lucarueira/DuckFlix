@@ -33,6 +33,8 @@
 .adult-filter-label { display: block; margin: 18px 0 7px; color: var(--muted); font-size: 12px; }
 #adult-filter { width: 100%; min-height: 46px; padding: 10px 13px; border: 1px solid var(--line); border-radius: 10px; background: #111119; color: white; }
 .adult-results { display: grid; grid-template-columns: repeat(auto-fill, minmax(148px, 1fr)); gap: 14px; margin-top: 18px; }
+.adult-load-more { display: block; width: min(100%, 300px); min-height: 46px; margin: 20px auto 0; padding: 10px 16px; border: 1px solid #ff174477; border-radius: 10px; color: white; background: #ff17441c; cursor: pointer; }
+.adult-load-more:hover { background: #ff174433; }
 .adult-card { min-width: 0; overflow: hidden; border: 1px solid var(--line); border-radius: 12px; background: #14141d; }
 .adult-card button { display: block; width: 100%; padding: 0; border: 0; color: inherit; background: transparent; text-align: left; cursor: pointer; }
 .adult-card img { display: block; width: 100%; aspect-ratio: 2/3; object-fit: cover; background: #09090e; }
