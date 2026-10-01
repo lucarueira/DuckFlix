@@ -6,7 +6,8 @@
     { name: 'FenixFlix', url: FENIX },
     { name: 'BestCine', url: 'https://bestcine.dpdns.org/manifest.json' },
     { name: 'Zeus', url: 'https://398fe185fed6-zeus.baby-beamup.club/v1-p64f-q3j-a3-mb-c3/manifest.json' },
-    { name: 'FrostStream', url: 'https://froststream.cloutteam.com/manifest.json' }
+    { name: 'FrostStream', url: 'https://froststream.cloutteam.com/manifest.json' },
+    { name: 'UnioFlix', url: 'https://bcf125302240-unioflix.baby-beamup.club/manifest.json' }
   ]);
   const CINEMETA = 'https://v3-cinemeta.strem.io/manifest.json';
   function tmdbURL(path, params = {}, key) {

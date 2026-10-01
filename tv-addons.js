@@ -2,6 +2,11 @@
 (() => {
   const SOURCES = Object.freeze([
     { base: 'https://frostview.cloutteam.com', type: 'channel', catalog: 'froststream-channels', paginated: true, country: 'BR' },
+    { base: 'https://fenixtv.fenixhub.online', type: 'tv', catalog: 'tv_eventos', name: 'Fenix TV · Eventos ao vivo', paginated: true, country: 'BR' },
+    { base: 'https://fenixtv.fenixhub.online', type: 'tv', catalog: 'tv_nettv', name: 'Fenix TV · UPtv', paginated: true, country: 'BR' },
+    { base: 'https://fenixtv.fenixhub.online', type: 'tv', catalog: 'tv_exploud', name: 'Fenix TV · Cinegardem', paginated: true, country: 'BR' },
+    { base: 'https://fenixtv.fenixhub.online', type: 'tv', catalog: 'tv_embedtv', name: 'Fenix TV · Almofadinhas', paginated: true, country: 'BR' },
+    { base: 'https://fenixtv.fenixhub.online', type: 'tv', catalog: 'tv_reidoscanais', name: 'Fenix TV · Rabicho', paginated: true, country: 'BR' },
     { base: 'https://dev.nebulawp.org/stremio/pluto-tv-addon', type: 'tv', catalog: 'pluto', name: 'Pluto TV', country: 'US' },
     { base: 'https://tvvoo.hayd.uk/cfg-it-uk-fr', type: 'tv', catalog: 'vavoo_tv_it', name: 'TvVoo · Itália', country: 'IT' },
     { base: 'https://tvvoo.hayd.uk/cfg-it-uk-fr', type: 'tv', catalog: 'vavoo_tv_uk', name: 'TvVoo · Reino Unido', country: 'GB' },
@@ -76,7 +81,7 @@
   async function probe(channel, { signal, probeChannel, fetcher = fetch }) {
     try {
       const data = await json(channel.addonEndpoint, signal, fetcher);
-      const urls = [...new Set((data.streams || []).filter(stream => !stream.infoHash && !stream.behaviorHints?.proxyHeaders && !stream.externalUrl).map(stream => {
+      const urls = [...new Set((data.streams || []).filter(stream => !stream.infoHash && !stream.behaviorHints?.proxyHeaders && !stream.externalUrl && !/\bOFFLINE\b/i.test(`${stream.name || ''} ${stream.title || ''}`)).map(stream => {
         if (globalThis.DuckFlixExtension?.connected && /^http:\/\//.test(stream.url || '') && /\.m3u8(?:$|[?#])/i.test(stream.url)) {
           try { const url = new URL(stream.url); if (!url.username && !url.password) return url.href; } catch {}
         }
