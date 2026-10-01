@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="DuckMangás: busque e leia capítulos de mangás disponíveis em português.">
+  <title>DuckMangás · Histórias para ler</title>
+  <link rel="icon" type="image/png" href="img/favicon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="mangas.css">
+  <script defer src="mangas.js"></script>
+</head>
+<body>
+  <div class="manga-shell">
+    <header class="topbar">
+      <a class="home-link" href="index.html">← Início</a>
+      <a class="brand" href="mangas.html"><span class="brand-icon" aria-hidden="true">▣</span> Duck<span>Mangás</span></a>
+      <button id="library-nav" class="plain-button" type="button">Minha leitura</button>
+    </header>
+    <main>
+      <section id="catalog-view">
+        <div class="hero">
+          <p class="eyebrow">BEM-VINDO À SUA PRÓXIMA HISTÓRIA</p>
+          <h1>Abra um mangá.<br><span>Entre em outro mundo.</span></h1>
+          <p>Explore obras com capítulos traduzidos para português e continue de onde parou.</p>
+          <form id="search-form" class="search-form">
+            <label class="sr-only" for="search-input">Nome do mangá</label>
+            <input id="search-input" type="search" maxlength="100" placeholder="Busque pelo nome do mangá" autocomplete="off">
+            <button type="submit">Buscar</button>
+          </form>
+        </div>
+        <section aria-labelledby="results-title" class="section">
+          <div class="section-head"><div><p class="eyebrow">DESCUBRA</p><h2 id="results-title">Mangás populares</h2></div><span id="result-count"></span></div>
+          <p id="catalog-status" class="status" role="status" aria-live="polite"></p>
+          <div id="manga-results" class="manga-grid"></div>
+          <button id="more-results" class="more-button" type="button" hidden>Mostrar mais</button>
+        </section>
+      </section>
+      <section id="detail-view" class="section" hidden>
+        <button id="back-to-catalog" class="back-button" type="button">← Voltar ao catálogo</button>
+        <div id="manga-detail"></div>
+        <div class="section-head chapter-head"><div><p class="eyebrow">LEITURA</p><h2>Capítulos em português</h2></div><span id="chapter-count"></span></div>
+        <p id="chapter-status" class="status" role="status" aria-live="polite"></p>
+        <div id="chapter-list" class="chapter-list"></div>
+        <button id="more-chapters" class="more-button" type="button" hidden>Mostrar mais capítulos</button>
+      </section>
+      <section id="reader-view" class="reader-view" hidden>
+        <div class="reader-toolbar"><button id="back-to-detail" class="back-button" type="button">← Capítulos</button><div><h2 id="reader-title"></h2><p id="reader-credit"></p></div><button id="reader-mode" class="plain-button" type="button">Modo cascata</button></div>
+        <p id="reader-status" class="status" role="status" aria-live="polite"></p>
+        <div id="reader-pages" class="reader-pages"></div>
+        <div class="reader-controls"><button id="prev-page" type="button">← Anterior</button><span id="page-count"></span><button id="next-page" type="button">Próxima →</button></div>
+        <a id="chapter-source" class="source-link" href="#" target="_blank" rel="noopener noreferrer">Abrir capítulo no MangaDex ↗</a>
+      </section>
+      <section id="library-view" class="section" hidden>
+        <button id="back-from-library" class="back-button" type="button">← Voltar ao catálogo</button>
+        <div class="section-head"><div><p class="eyebrow">SEUS FAVORITOS</p><h2>Minha leitura</h2></div></div>
+        <p class="library-hint">Favoritos e último capítulo lido ficam salvos neste navegador.</p>
+        <div id="library-results" class="manga-grid"></div>
+      </section>
+    </main>
+    <footer>DuckMangás usa o catálogo e as páginas do <a href="https://mangadex.org/" target="_blank" rel="noopener noreferrer">MangaDex</a>. Cada capítulo mostra o grupo responsável pela tradução.</footer>
+  </div>
+</body>
+</html>

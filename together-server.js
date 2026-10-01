@@ -5,6 +5,7 @@ const path = require('node:path');
 const crypto = require('node:crypto');
 const { position } = require('./together-sync');
 const { searchMusic } = require('./youtube-music-catalog.cjs');
+const { catalog: mangaCatalog, image: mangaImage } = require('./manga-catalog.cjs');
 const token = () => crypto.randomBytes(24).toString('base64url');
 const fail = (status, message) => Object.assign(new Error(message), { status });
 const name = value => String(value || 'Visitante').replace(/[\x00-\x1f]/g, '').trim().slice(0, 30) || 'Visitante';
@@ -50,10 +51,10 @@ function createServer({ now = Date.now, allowedOrigins = [], root = __dirname, a
     if (origin) {
       let originUrl, requestHost;
       try { originUrl = new URL(origin); requestHost = new URL(`http://${req.headers.host}`).hostname; } catch {}
-      const localMusicPreview = /^\/api\/music\/search(?:\?|$)/.test(req.url || '') &&
+      const localMediaPreview = /^\/api\/(?:music\/search|manga\/(?:catalog|image))(?:\?|$)/.test(req.url || '') &&
         ['localhost', '127.0.0.1'].includes(originUrl?.hostname) &&
         ['localhost', '127.0.0.1'].includes(requestHost) && originUrl.protocol === 'http:';
-      if (originUrl?.host !== req.headers.host && !allowedOrigins.includes(origin) && !localMusicPreview) return json(res, 403, { error: 'Origem não autorizada.' });
+      if (originUrl?.host !== req.headers.host && !allowedOrigins.includes(origin) && !localMediaPreview) return json(res, 403, { error: 'Origem não autorizada.' });
       res.setHeader('Access-Control-Allow-Origin', origin); res.setHeader('Vary', 'Origin');
       res.setHeader('Access-Control-Allow-Headers', 'Authorization, Content-Type');
       res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
@@ -64,6 +65,15 @@ function createServer({ now = Date.now, allowedOrigins = [], root = __dirname, a
       if (url.pathname === '/api/music/search' && req.method === 'GET') {
         throttle(req);
         return json(res, 200, await searchMusic(url.searchParams.get('q')));
+      }
+      if (url.pathname === '/api/manga/catalog' && req.method === 'GET') {
+        throttle(req);
+        return json(res, 200, await mangaCatalog(url.searchParams.get('action'), Object.fromEntries(url.searchParams)));
+      }
+      if (url.pathname === '/api/manga/image' && req.method === 'GET') {
+        const { bytes, type } = await mangaImage(Object.fromEntries(url.searchParams));
+        res.writeHead(200, { 'Content-Type': type, 'Cache-Control': 'public, max-age=600', 'Content-Length': bytes.length });
+        res.end(bytes); return;
       }
       if (url.pathname === '/api/together/clock' && req.method === 'GET') return json(res, 200, { serverTime: now(), service: 'duck-together' });
       if (url.pathname === '/api/together/rooms' && req.method === 'POST') {

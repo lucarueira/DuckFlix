@@ -1,0 +1,74 @@
+:root { color-scheme: dark; font-family: 'Outfit', sans-serif; background: #090a10; color: #f5f5fa; }
+* { box-sizing: border-box; }
+body { margin: 0; min-height: 100vh; background: radial-gradient(ellipse at 50% -10%, #6b3ce71a, transparent 55%), #090a10; }
+button, input { font: inherit; }
+button { cursor: pointer; }
+a { color: inherit; }
+[hidden] { display: none !important; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+.manga-shell { width: min(1200px, calc(100% - 40px)); margin: auto; }
+.topbar { height: 82px; display: flex; align-items: center; justify-content: space-between; gap: 18px; border-bottom: 1px solid #ffffff16; }
+.home-link, .brand { text-decoration: none; }
+.home-link { color: #a9a8ba; font-size: 14px; }
+.home-link:hover, a:hover { color: #d9cfff; }
+.brand { font-size: 25px; font-weight: 800; letter-spacing: -.8px; }
+.brand > span:last-child { color: #a98cfb; }
+.brand-icon { display: inline-grid; place-items: center; width: 31px; height: 31px; margin-right: 4px; border-radius: 8px; background: #8155f2; color: white; font-size: 20px; }
+.plain-button, .back-button { color: #e9e5f9; border: 1px solid #ffffff28; background: #16151e; border-radius: 10px; padding: 10px 15px; }
+.plain-button:hover, .back-button:hover { border-color: #a98cfb; }
+.hero { margin: 34px 0 48px; padding: clamp(30px, 5vw, 68px); border: 1px solid #9e7cfc36; border-radius: 26px; background: radial-gradient(circle at 82% 23%, #935dff43 0, transparent 34%), linear-gradient(115deg,#1d1836,#10111d 70%); }
+.eyebrow { color: #ba9dff; font-size: 11px; font-weight: 700; letter-spacing: 2.2px; margin: 0 0 12px; }
+h1 { font-size: clamp(35px,5vw,62px); line-height: 1.06; letter-spacing: -2.3px; margin: 0; }
+h1 span { color: #b39bff; }
+.hero > p:not(.eyebrow) { color: #b8b5c9; max-width: 540px; line-height: 1.7; margin: 20px 0 28px; }
+.search-form { display: flex; gap: 10px; max-width: 660px; }
+.search-form input { flex: 1; min-width: 0; padding: 16px 18px; color: white; background: #090a10b8; border: 1px solid #ffffff30; border-radius: 12px; outline: 0; }
+.search-form input:focus { border-color: #ab8cff; box-shadow: 0 0 0 3px #ab8cff26; }
+.search-form button, .more-button, .reader-controls button, .primary-button { padding: 13px 20px; border: 0; border-radius: 11px; background: #8f64fa; color: white; font-weight: 700; }
+.search-form button:hover, .more-button:hover, .reader-controls button:hover:not(:disabled), .primary-button:hover { background: #a583ff; }
+.section { margin: 40px 0 70px; }
+.section-head { display: flex; align-items: end; justify-content: space-between; gap: 16px; margin-bottom: 18px; }
+.section-head h2 { font-size: 27px; margin: 0; letter-spacing: -.7px; }
+.section-head > span { color: #aaa6bd; font-size: 13px; }
+.status { color: #bcb8d1; min-height: 22px; }
+.manga-grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(165px,1fr)); gap: 18px; }
+.manga-card { width: 100%; padding: 0; text-align: left; border: 1px solid #ffffff17; border-radius: 14px; background: #171722; color: inherit; overflow: hidden; transition: transform .2s, border-color .2s; }
+.manga-card:hover { border-color: #aa8bff; transform: translateY(-3px); }
+.manga-card:focus-visible { outline: 2px solid #bc9bff; outline-offset: 3px; }
+.manga-cover { display: grid; place-items: center; aspect-ratio: 3/4; width: 100%; object-fit: cover; background: #302744; color: #b39aff; font-size: 32px; }
+.card-info { display: block; padding: 13px; min-height: 87px; }
+.card-info strong { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.35; font-size: 14px; }
+.card-info small { display: block; margin-top: 7px; color: #9e9aaf; }
+.more-button { display: block; margin: 26px auto 0; }
+.back-button { margin: 0 0 25px; }
+.detail-hero { display: grid; grid-template-columns: 210px 1fr; gap: 34px; padding: 25px; border: 1px solid #ffffff1c; border-radius: 20px; background: #171722; }
+.detail-hero .manga-cover { border-radius: 12px; }
+.detail-hero h1 { font-size: clamp(28px,3.2vw,42px); letter-spacing: -1.2px; }
+.detail-hero p { color: #c3c0d0; line-height: 1.65; white-space: pre-line; }
+.detail-hero > .detail-description, .detail-hero > .source-link { grid-column: 2; margin: 0; }
+.detail-meta { margin: 10px 0; color: #aaa5bf; font-size: 14px; }
+.detail-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 22px; }
+.secondary-button { padding: 12px 17px; color: #e5dafd; border: 1px solid #a98cfb70; background: #241c36; border-radius: 10px; }
+.source-link { display: inline-block; margin-top: 20px; color: #c4b0ff; text-underline-offset: 4px; }
+.chapter-head { margin-top: 38px; }
+.chapter-list { display: grid; gap: 9px; }
+.chapter-item { width: 100%; padding: 15px 18px; text-align: left; display: flex; justify-content: space-between; align-items: center; gap: 12px; border: 1px solid #ffffff16; border-radius: 11px; background: #15151e; color: #eeeaf9; }
+.chapter-item:hover { border-color: #a98cfb; background: #211b31; }
+.chapter-item strong { display: block; font-weight: 600; }
+.chapter-item small { display: block; margin-top: 3px; color: #a9a4bc; }
+.chapter-item em { color: #b8a0ff; font-style: normal; font-size: 12px; }
+.reader-view { padding: 25px 0 65px; }
+.reader-toolbar { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px; padding: 12px 0 20px; border-bottom: 1px solid #ffffff18; }
+.reader-toolbar .back-button { margin: 0; }
+.reader-toolbar h2 { font-size: 18px; margin: 0; }
+.reader-toolbar p { margin: 5px 0 0; color: #b8b0cc; font-size: 12px; }
+.reader-pages { margin: 28px auto; max-width: 850px; min-height: 320px; text-align: center; }
+.reader-pages img { display: block; width: 100%; height: auto; margin: auto; background: #181822; }
+.reader-pages.cascade img { margin: 0 auto; }
+.reader-controls { display: flex; align-items: center; justify-content: center; gap: 20px; }
+.reader-controls button:disabled { opacity: .45; cursor: default; }
+.library-hint { color: #aaa5bd; }
+footer { border-top: 1px solid #ffffff18; padding: 30px 0 42px; margin-top: 50px; color: #88869a; font-size: 12px; text-align: center; }
+footer a { color: #b9a2ff; }
+@media (max-width: 650px) { .manga-shell { width: min(100% - 28px,1200px); } .topbar { height: 70px; } .brand { font-size: 19px; } .brand-icon { width: 25px; height: 25px; font-size: 16px; } .home-link { font-size: 12px; } .plain-button { font-size: 12px; padding: 9px; } .hero { margin-top: 20px; padding: 28px 20px; } .search-form { flex-direction: column; } .manga-grid { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 10px; } .detail-hero { grid-template-columns: 115px 1fr; gap: 15px; padding: 14px; } .detail-hero h1 { font-size: 23px; } .detail-hero > .detail-description, .detail-hero > .source-link { grid-column: 1/-1; } .reader-toolbar > div { order: 3; width: 100%; } .reader-controls { gap: 10px; } .reader-controls button { padding: 10px; } }
+@media (prefers-reduced-motion: reduce) { .manga-card { transition: none; } }
