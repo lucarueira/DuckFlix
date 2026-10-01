@@ -10,6 +10,19 @@
   const artist = document.getElementById('playing-artist');
   const source = document.getElementById('music-source');
   const playerStatus = document.getElementById('player-status');
+  const playlistPanel = document.querySelector('.playlist-panel');
+  const playlistForm = document.getElementById('playlist-create');
+  const playlistNameInput = document.getElementById('playlist-new-name');
+  const playlistList = document.getElementById('playlist-list');
+  const playlistCurrentName = document.getElementById('playlist-current-name');
+  const playlistCount = document.getElementById('playlist-count');
+  const playlistTracks = document.getElementById('playlist-tracks');
+  const playlistStatus = document.getElementById('playlist-status');
+  const playlistPlay = document.getElementById('playlist-play');
+  const playlistPrevious = document.getElementById('playlist-previous');
+  const playlistNext = document.getElementById('playlist-next');
+  const playlistDelete = document.getElementById('playlist-delete');
+  const playlistStorageKey = 'duckmusic-playlists-v1';
   let currentRequest;
   let ytPlayer;
   let ytPlayerReady = false;
@@ -18,6 +31,164 @@
   let playableTracks = [];
   let fallbackCount = 0;
   const unavailable = new Set();
+  let playlists = [];
+  let selectedPlaylistId = null;
+  let queue = null;
+
+  function cleanTrack(value) {
+    const id = String(value?.id || '');
+    const title = String(value?.title || '').trim().slice(0, 160);
+    if (!/^[A-Za-z0-9_-]{11}$/.test(id) || !title) return null;
+    return { id, title, artist: String(value.artist || 'Artista desconhecido').slice(0, 180),
+      kind: value.kind === 'video' ? 'video' : 'song' };
+  }
+
+  function loadPlaylists() {
+    let saved;
+    try { saved = JSON.parse(localStorage.getItem(playlistStorageKey) || '{}'); } catch { return; }
+    if (!saved || !Array.isArray(saved.playlists)) return;
+    const seen = new Set();
+    playlists = saved.playlists.slice(0, 30).flatMap(item => {
+      const id = String(item?.id || '').slice(0, 80);
+      const name = String(item?.name || '').trim().slice(0, 60);
+      if (!id || !name || seen.has(id)) return [];
+      seen.add(id);
+      const trackIds = new Set();
+      const tracks = (Array.isArray(item.tracks) ? item.tracks : []).slice(0, 300).flatMap(value => {
+        const track = cleanTrack(value);
+        if (!track || trackIds.has(track.id)) return [];
+        trackIds.add(track.id);
+        return [track];
+      });
+      return [{ id, name, tracks }];
+    });
+    selectedPlaylistId = playlists.some(item => item.id === saved.selectedId) ? saved.selectedId : playlists[0]?.id || null;
+  }
+
+  function savePlaylists() {
+    try {
+      localStorage.setItem(playlistStorageKey, JSON.stringify({ playlists, selectedId: selectedPlaylistId }));
+      return true;
+    } catch {
+      playlistStatus.textContent = 'Não foi possível guardar a playlist neste navegador.';
+      return false;
+    }
+  }
+
+  function selectedPlaylist() {
+    return playlists.find(item => item.id === selectedPlaylistId);
+  }
+
+  function renderPlaylists() {
+    playlistList.replaceChildren();
+    playlists.forEach(item => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.textContent = `${item.name} · ${item.tracks.length}`;
+      button.setAttribute('aria-current', String(item.id === selectedPlaylistId));
+      button.addEventListener('click', () => {
+        selectedPlaylistId = item.id;
+        playlistStatus.textContent = '';
+        savePlaylists();
+        renderPlaylists();
+      });
+      playlistList.append(button);
+    });
+    const active = selectedPlaylist();
+    playlistCurrentName.textContent = active?.name || 'Escolha uma playlist';
+    playlistCount.textContent = active ? `${active.tracks.length} ${active.tracks.length === 1 ? 'música' : 'músicas'}` : '';
+    playlistPlay.disabled = !active?.tracks.length;
+    playlistDelete.disabled = !active;
+    const queuedHere = !!queue && queue.playlistId === active?.id;
+    playlistPrevious.disabled = !queuedHere || queue.index <= 0;
+    playlistNext.disabled = !queuedHere || queue.index >= active.tracks.length - 1;
+    playlistTracks.replaceChildren();
+    if (!active?.tracks.length) {
+      const message = document.createElement('p');
+      message.className = 'playlist-empty';
+      message.textContent = active ? 'Use + Playlist nos resultados da busca para adicionar músicas.' : 'Crie uma playlist para começar.';
+      playlistTracks.append(message);
+      return;
+    }
+    active.tracks.forEach((track, index) => {
+      const row = document.createElement('div');
+      row.className = 'track-row';
+      if (queuedHere && queue.index === index) row.classList.add('is-playing');
+      const number = document.createElement('span'); number.className = 'track-number'; number.textContent = String(index + 1).padStart(2, '0');
+      const info = document.createElement('div'); info.className = 'track-info';
+      const name = document.createElement('strong'); name.textContent = track.title;
+      const artist = document.createElement('small'); artist.textContent = track.artist;
+      info.append(name, artist);
+      const actions = document.createElement('div'); actions.className = 'track-actions';
+      const play = document.createElement('button'); play.type = 'button'; play.textContent = 'Ouvir'; play.setAttribute('aria-label', `Ouvir ${track.title} da playlist`);
+      play.addEventListener('click', () => playPlaylistAt(active.id, index));
+      const remove = document.createElement('button'); remove.type = 'button'; remove.textContent = 'Remover'; remove.setAttribute('aria-label', `Remover ${track.title} da playlist`);
+      remove.addEventListener('click', () => removePlaylistTrack(active.id, track.id));
+      actions.append(play, remove); row.append(number, info, actions); playlistTracks.append(row);
+    });
+  }
+
+  function addToPlaylist(track) {
+    const active = selectedPlaylist();
+    if (!active) {
+      playlistStatus.textContent = 'Crie uma playlist antes de adicionar músicas.';
+      playlistPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      playlistNameInput.focus();
+      return;
+    }
+    if (active.tracks.some(item => item.id === track.id)) {
+      playlistStatus.textContent = 'Esta música já está na playlist.';
+      return;
+    }
+    if (active.tracks.length >= 300) {
+      playlistStatus.textContent = 'Esta playlist já tem 300 músicas.';
+      return;
+    }
+    active.tracks.push(cleanTrack(track));
+    const saved = savePlaylists();
+    renderPlaylists();
+    if (saved) playlistStatus.textContent = `“${track.title}” adicionada à playlist “${active.name}”.`;
+  }
+
+  function removePlaylistTrack(playlistId, trackId) {
+    const item = playlists.find(value => value.id === playlistId);
+    if (!item) return;
+    const index = item.tracks.findIndex(track => track.id === trackId);
+    if (index < 0) return;
+    item.tracks.splice(index, 1);
+    if (queue?.playlistId === playlistId) {
+      if (queue.index === index) queue = null;
+      else if (index < queue.index) queue.index--;
+    }
+    const saved = savePlaylists();
+    renderPlaylists();
+    if (saved) playlistStatus.textContent = 'Música removida da playlist.';
+  }
+
+  function playPlaylistAt(playlistId, index) {
+    const item = playlists.find(value => value.id === playlistId);
+    const track = item?.tracks[index];
+    if (!track) return false;
+    queue = { playlistId, index };
+    chooseTrack(track, { keepQueue: true });
+    renderPlaylists();
+    return true;
+  }
+
+  function advancePlaylist(direction = 1) {
+    if (!queue) return false;
+    const item = playlists.find(value => value.id === queue.playlistId);
+    const index = queue.index + direction;
+    if (!item?.tracks[index]) {
+      if (direction > 0) {
+        queue = null;
+        playerStatus.textContent = 'Fim da playlist.';
+        renderPlaylists();
+      }
+      return false;
+    }
+    return playPlaylistAt(item.id, index);
+  }
 
   function attachPlayer() {
     if (!window.YT?.Player || ytPlayer || !player.src) return;
@@ -29,6 +200,7 @@
         },
         onStateChange(event) {
           if (event.data === window.YT.PlayerState.PLAYING) playerStatus.textContent = '';
+          if (event.data === window.YT.PlayerState.ENDED && queue) advancePlaylist();
         },
         onError(event) {
           if (!currentTrack) return;
@@ -38,6 +210,12 @@
           }
           if (![5, 100, 101, 150].includes(event.data) || unavailable.has(currentTrack.id)) return;
           unavailable.add(currentTrack.id);
+          if (queue) {
+            const next = advancePlaylist();
+            if (next) playerStatus.textContent = 'Esta faixa não abriu aqui. Pulando para a próxima da playlist…';
+            else playerStatus.textContent = 'Esta faixa não abriu aqui. Escolha outra ou abra no YouTube.';
+            return;
+          }
           const next = playableTracks.find(track => track.kind === 'video' && !unavailable.has(track.id)) ||
             playableTracks.find(track => !unavailable.has(track.id));
           if (next && fallbackCount < 3) {
@@ -96,8 +274,12 @@
     return data;
   }
 
-  function chooseTrack(track, { scroll = true, autoplay = true, resetFallback = true } = {}) {
+  function chooseTrack(track, { scroll = true, autoplay = true, resetFallback = true, keepQueue = false } = {}) {
     if (!/^[A-Za-z0-9_-]{11}$/.test(track.id)) return;
+    if (!keepQueue && queue) {
+      queue = null;
+      renderPlaylists();
+    }
     if (resetFallback) {
       fallbackCount = 0;
       unavailable.delete(track.id);
@@ -143,7 +325,9 @@
       const actions = document.createElement('div'); actions.className = 'track-actions';
       const play = document.createElement('button'); play.type = 'button'; play.textContent = 'Ouvir'; play.setAttribute('aria-label', `Ouvir ${track.title}`);
       play.addEventListener('click', () => chooseTrack(track));
-      actions.append(play); row.append(number, info, actions); fragment.append(row);
+      const add = document.createElement('button'); add.type = 'button'; add.textContent = '+ Playlist'; add.setAttribute('aria-label', `Adicionar ${track.title} à playlist selecionada`);
+      add.addEventListener('click', () => addToPlaylist(track));
+      actions.append(play, add); row.append(number, info, actions); fragment.append(row);
     });
     results.append(fragment);
     return playable[0];
@@ -163,10 +347,9 @@
       if (request.signal.aborted) return;
       const firstTrack = render(data.tracks);
       if (firstTrack) {
-        chooseTrack(firstTrack, { scroll: false, autoplay: false });
         results.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }
-      status.textContent = firstTrack ? `${data.tracks.length} músicas encontradas. A primeira já está no player.` : 'Nenhuma música encontrada.';
+      status.textContent = firstTrack ? `${data.tracks.length} músicas encontradas. Clique em Ouvir ou adicione à playlist.` : 'Nenhuma música encontrada.';
     } catch (cause) {
       if (request.signal.aborted) return;
       status.textContent = cause.message;
@@ -175,4 +358,48 @@
       if (currentRequest === request) form.querySelector('button').disabled = false;
     }
   });
+
+  playlistForm.addEventListener('submit', event => {
+    event.preventDefault();
+    const name = playlistNameInput.value.trim().slice(0, 60);
+    if (!name) {
+      playlistStatus.textContent = 'Digite um nome para a playlist.';
+      return;
+    }
+    if (playlists.length >= 30) {
+      playlistStatus.textContent = 'Você já tem 30 playlists neste navegador.';
+      return;
+    }
+    if (playlists.some(item => item.name.toLocaleLowerCase('pt-BR') === name.toLocaleLowerCase('pt-BR'))) {
+      playlistStatus.textContent = 'Já existe uma playlist com esse nome.';
+      return;
+    }
+    const id = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 9)}`;
+    playlists.push({ id, name, tracks: [] });
+    selectedPlaylistId = id;
+    playlistNameInput.value = '';
+    const saved = savePlaylists();
+    renderPlaylists();
+    if (saved) playlistStatus.textContent = `Playlist “${name}” criada. Use + Playlist nos resultados da busca.`;
+  });
+
+  playlistPlay.addEventListener('click', () => {
+    const active = selectedPlaylist();
+    if (active?.tracks.length) playPlaylistAt(active.id, 0);
+  });
+  playlistPrevious.addEventListener('click', () => advancePlaylist(-1));
+  playlistNext.addEventListener('click', () => advancePlaylist(1));
+  playlistDelete.addEventListener('click', () => {
+    const active = selectedPlaylist();
+    if (!active || !window.confirm(`Excluir a playlist “${active.name}”?`)) return;
+    playlists = playlists.filter(item => item.id !== active.id);
+    if (queue?.playlistId === active.id) queue = null;
+    selectedPlaylistId = playlists[0]?.id || null;
+    const saved = savePlaylists();
+    renderPlaylists();
+    if (saved) playlistStatus.textContent = 'Playlist excluída.';
+  });
+
+  loadPlaylists();
+  renderPlaylists();
 })();

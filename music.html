@@ -17,6 +17,7 @@
     <header class="music-header">
       <a class="back-link" href="index.html" aria-label="Voltar ao início">← <span>Início</span></a>
       <a class="music-brand" href="music.html" aria-label="DuckMusic, página inicial"><span class="brand-mark" aria-hidden="true">♪</span> Duck<span>Music</span></a>
+      <a class="playlist-nav" href="#playlists-title">Minhas playlists</a>
     </header>
 
     <main>
@@ -54,6 +55,30 @@
           <a id="music-source" class="music-source" href="#" target="_blank" rel="noopener noreferrer" hidden>Abrir no YouTube ↗</a>
         </aside>
       </div>
+
+      <section class="playlist-panel" aria-labelledby="playlists-title">
+        <div class="section-heading"><div><p class="eyebrow">SUA MÚSICA</p><h2 id="playlists-title">Minhas playlists</h2></div></div>
+        <p class="playlist-hint">Crie listas e salve músicas da busca. Elas ficam guardadas neste navegador.</p>
+        <form id="playlist-create" class="playlist-create">
+          <label class="sr-only" for="playlist-new-name">Nome da nova playlist</label>
+          <input id="playlist-new-name" type="text" maxlength="60" placeholder="Nome da nova playlist" required>
+          <button type="submit">Criar playlist</button>
+        </form>
+        <div class="playlist-layout">
+          <nav id="playlist-list" class="playlist-list" aria-label="Playlists criadas"></nav>
+          <div class="playlist-detail">
+            <div class="playlist-detail-header"><h3 id="playlist-current-name">Escolha uma playlist</h3><span id="playlist-count"></span></div>
+            <div class="playlist-controls">
+              <button id="playlist-play" type="button" disabled>▶ Reproduzir</button>
+              <button id="playlist-previous" type="button" disabled>Anterior</button>
+              <button id="playlist-next" type="button" disabled>Próxima</button>
+              <button id="playlist-delete" type="button" disabled>Excluir playlist</button>
+            </div>
+            <div id="playlist-tracks" class="playlist-tracks"><p class="playlist-empty">Crie uma playlist para começar.</p></div>
+          </div>
+        </div>
+        <p id="playlist-status" class="playlist-status" role="status" aria-live="polite"></p>
+      </section>
     </main>
     <footer>DuckMusic é uma seção do DuckFlix.</footer>
   </div>
