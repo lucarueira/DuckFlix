@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="DuckMusic: encontre e ouça músicas para o seu momento.">
+  <title>DuckMusic · Música para o seu momento</title>
+  <link rel="icon" type="image/png" href="img/favicon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="music.css">
+  <script defer src="music.js"></script>
+</head>
+<body>
+  <div class="music-shell">
+    <header class="music-header">
+      <a class="back-link" href="index.html" aria-label="Voltar ao início">← <span>Início</span></a>
+      <a class="music-brand" href="music.html" aria-label="DuckMusic, página inicial"><span class="brand-mark" aria-hidden="true">♪</span> Duck<span>Music</span></a>
+    </header>
+
+    <main>
+      <section class="music-hero" aria-labelledby="music-title">
+        <div class="hero-copy">
+          <p class="eyebrow">DUCKMUSIC · DESCUBRA NOVOS SONS</p>
+          <h1 id="music-title">Encontre sua<br><em>próxima música.</em></h1>
+          <p>Busque músicas e artistas para ouvir gratuitamente.</p>
+          <form id="music-search" class="search-form" role="search">
+            <label class="sr-only" for="music-query">Música ou artista</label>
+            <input id="music-query" name="q" type="search" minlength="2" maxlength="100" placeholder="Música, artista ou álbum" autocomplete="off" required>
+            <button type="submit">Buscar <span aria-hidden="true">→</span></button>
+          </form>
+          <p id="music-status" class="search-status" role="status" aria-live="polite">Digite o nome de uma música ou artista para começar.</p>
+        </div>
+        <div class="hero-art" aria-hidden="true"><div class="disc"><div class="disc-inner"><span>♪</span></div></div><span class="art-note note-one">♫</span><span class="art-note note-two">♪</span></div>
+      </section>
+
+      <div class="content-grid">
+        <section class="catalog-panel" aria-labelledby="catalog-title">
+          <div class="section-heading"><div><p class="eyebrow">DESCUBRA</p><h2 id="catalog-title">Catálogo de músicas</h2></div></div>
+          <div id="music-results" class="music-results">
+            <div class="empty-state"><span aria-hidden="true">♫</span><h3>Sua busca começa aqui</h3><p>Os resultados do catálogo aparecerão neste espaço.</p></div>
+          </div>
+        </section>
+
+        <aside class="player-panel" aria-labelledby="player-title">
+          <div class="section-heading"><div><p class="eyebrow">OUÇA AQUI</p><h2 id="player-title">Player do YouTube</h2></div></div>
+          <div class="player-frame">
+            <div id="player-placeholder" class="player-placeholder">Busque uma música para abrir o player.</div>
+            <iframe id="music-player" title="Player de música" loading="lazy" allow="autoplay; encrypted-media; picture-in-picture" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen hidden></iframe>
+          </div>
+          <div class="now-playing"><span class="live-dot" aria-hidden="true"></span><div><strong id="playing-title">Escolha uma música</strong><p id="playing-artist">Os resultados aparecem após a busca.</p></div></div>
+          <p id="player-status" class="player-status" role="status" aria-live="polite"></p>
+          <a id="music-source" class="music-source" href="#" target="_blank" rel="noopener noreferrer" hidden>Abrir no YouTube ↗</a>
+        </aside>
+      </div>
+    </main>
+    <footer>DuckMusic é uma seção do DuckFlix.</footer>
+  </div>
+</body>
+</html>

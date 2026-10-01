@@ -4,6 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const crypto = require('node:crypto');
 const { position } = require('./together-sync');
+const { searchMusic } = require('./youtube-music-catalog.cjs');
 const token = () => crypto.randomBytes(24).toString('base64url');
 const fail = (status, message) => Object.assign(new Error(message), { status });
 const name = value => String(value || 'Visitante').replace(/[\x00-\x1f]/g, '').trim().slice(0, 30) || 'Visitante';
@@ -47,9 +48,12 @@ function createServer({ now = Date.now, allowedOrigins = [], root = __dirname, a
     res.setHeader('X-Content-Type-Options', 'nosniff'); res.setHeader('Referrer-Policy', 'no-referrer');
     const origin = req.headers.origin;
     if (origin) {
-      let host;
-      try { host = new URL(origin).host; } catch {}
-      if (host !== req.headers.host && !allowedOrigins.includes(origin)) return json(res, 403, { error: 'Origem não autorizada.' });
+      let originUrl, requestHost;
+      try { originUrl = new URL(origin); requestHost = new URL(`http://${req.headers.host}`).hostname; } catch {}
+      const localMusicPreview = /^\/api\/music\/search(?:\?|$)/.test(req.url || '') &&
+        ['localhost', '127.0.0.1'].includes(originUrl?.hostname) &&
+        ['localhost', '127.0.0.1'].includes(requestHost) && originUrl.protocol === 'http:';
+      if (originUrl?.host !== req.headers.host && !allowedOrigins.includes(origin) && !localMusicPreview) return json(res, 403, { error: 'Origem não autorizada.' });
       res.setHeader('Access-Control-Allow-Origin', origin); res.setHeader('Vary', 'Origin');
       res.setHeader('Access-Control-Allow-Headers', 'Authorization, Content-Type');
       res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
@@ -57,6 +61,10 @@ function createServer({ now = Date.now, allowedOrigins = [], root = __dirname, a
     if (req.method === 'OPTIONS') { res.writeHead(204); res.end(); return; }
     try {
       const url = new URL(req.url, 'http://localhost');
+      if (url.pathname === '/api/music/search' && req.method === 'GET') {
+        throttle(req);
+        return json(res, 200, await searchMusic(url.searchParams.get('q')));
+      }
       if (url.pathname === '/api/together/clock' && req.method === 'GET') return json(res, 200, { serverTime: now(), service: 'duck-together' });
       if (url.pathname === '/api/together/rooms' && req.method === 'POST') {
         throttle(req);

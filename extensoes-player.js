@@ -104,9 +104,9 @@
       $('stream-list').replaceChildren();
       for (const source of [...verified, ...extensionChoices]) {
         const waitingExtension = source.requiresExtension && !globalThis.DuckFlixExtension?.connected;
-        const label = source.requiresExtension
+        const label = (source.origin === 'Nuvio' ? 'Nuvio · ' : '') + (source.requiresExtension
           ? waitingExtension ? `HTTP HLS · Ative a extensão · ${source.language} · ${source.quality}` : `HTTP HLS · Extensão · ${source.language} · ${source.quality}`
-          : `${source.language} · ${source.quality} · Opção ${source.number}`;
+          : `${source.language} · ${source.quality} · Opção ${source.number}`);
         const button = node('button', label, `stream-option${source.requiresExtension ? ' stream-option-http' : ''}${waitingExtension ? ' stream-option-awaiting' : ''}`);
         button.type = 'button'; button.setAttribute('aria-pressed', String(source === currentSource));
         if (waitingExtension) button.title = 'Esta fonte precisa da extensão. Ative-a e recarregue o DuckFlix.';
@@ -116,13 +116,13 @@
     }
     function updateScanStatus(state) {
       if (state !== scanState || state.controller.signal.aborted) return;
-      const busy = !state.fetched || state.active > 0;
-      const remaining = state.queue.length > 0;
+      const busy = !state.fetched || state.active > 0 || state.nuvioActive;
+      const remaining = state.queue.length > 0 || state.nuvioQueue.length > 0;
       if (!busy && !verified.length && queueToken !== null && !movieFinished) {
         if (remaining && state.attempted < 36) { state.limit = Math.min(36, state.limit + 12); pump(state); return; }
         finishMovie('failed'); return;
       }
-      $('scan-more').hidden = busy || !remaining;
+      $('scan-more').hidden = busy || !state.queue.length;
       const httpHint = extensionChoices.length && !globalThis.DuckFlixExtension?.connected
         ? ` ${extensionChoices.length} fonte(s) HTTP HLS aguardam a extensão.` : '';
       status('stream-status', busy ? `Verificando reprodução… ${verified.length ? `${verified.length} opções disponíveis.` : ''}${httpHint}` : verified.length ? `${verified.length} ${verified.length === 1 ? 'opção pronta' : 'opções prontas'} para assistir.${httpHint}` : httpHint || 'Nenhuma opção reproduziu imagem neste navegador.');
@@ -134,6 +134,7 @@
       verified = verified.filter(entry => entry !== source);
       resumeAt = at;
       stopPlayback(); drawSources();
+      if (source.origin === 'Nuvio' && scanState) { scanState.nuvioFound = false; pumpNuvio(scanState); }
       status('play-message', 'A reprodução falhou. Tentando outra opção…');
       if (verified.length) playSource(verified[0], at);
       else if (scanState && !scanState.controller.signal.aborted) {
@@ -189,11 +190,29 @@
       }
       updateScanStatus(state);
     }
+    function pumpNuvio(state) {
+      if (state !== scanState || state.controller.signal.aborted || state.nuvioActive || state.nuvioFound) return;
+      if (state.nuvioAttempted >= 4) { state.nuvioQueue.length = 0; updateScanStatus(state); return; }
+      const source = state.nuvioQueue.shift();
+      if (!source) { updateScanStatus(state); return; }
+      state.nuvioActive = true;
+      state.nuvioAttempted++;
+      media.probe(source, { signal: state.controller.signal }).then(result => {
+        if (state !== scanState || state.controller.signal.aborted || !result?.ok) return;
+        state.nuvioFound = true;
+        const ready = { ...source, mode: result.mode, requiresExtension: Boolean(source.requiresExtension && source.url.startsWith('http:')), number: ++sourceNumber };
+        verified.push(ready); drawSources();
+        if (!currentSource) playSource(ready, resumeAt);
+      }).catch(() => {}).finally(() => {
+        state.nuvioActive = false;
+        if (state === scanState && !state.controller.signal.aborted) { pumpNuvio(state); updateScanStatus(state); }
+      });
+    }
     async function loadStreams() {
       scanAbort?.abort(); stopPlayback(); verified = []; extensionChoices = []; extensionChoiceIds = new Set(); sourceNumber = 0; resumeAt = 0; drawSources();
       $('scan-more').hidden = true; status('play-message', ''); placeholder('Encontrando a melhor reprodução para você…');
       const controller = new AbortController(); scanAbort = controller;
-      const state = { controller, queue: [], seen: new Set(), active: 0, attempted: 0, limit: 12, target: 3, fetched: false }; scanState = state;
+      const state = { controller, queue: [], nuvioQueue: [], nuvioActive: false, nuvioFound: false, nuvioAttempted: 0, seen: new Set(), active: 0, attempted: 0, limit: 12, target: 3, fetched: false }; scanState = state;
       status('stream-status', 'Procurando vídeos…');
       const id = episodes.length ? episodes[episodeIndex].id : item.id;
       try {
@@ -201,20 +220,23 @@
           if (controller.signal.aborted) return;
           for (const stream of streams) {
             const source = media.candidate(stream);
-            if (source?.requiresExtension && !globalThis.DuckFlixExtension?.connected) {
+            if (source?.origin !== 'Nuvio' && source?.requiresExtension && !globalThis.DuckFlixExtension?.connected) {
               const directHTTP = { ...source, url: source.httpURL || source.url, mode: 'hls', number: undefined };
               if (!extensionChoiceIds.has(directHTTP.url)) {
                 extensionChoiceIds.add(directHTTP.url); extensionChoices.push(directHTTP); drawSources();
               }
             }
             if (!source || state.seen.has(source.url)) continue;
-            state.seen.add(source.url); state.queue.push({ ...source, priority: stream.priority || 0 });
+            state.seen.add(source.url);
+            if (source.origin === 'Nuvio') {
+              if (state.nuvioQueue.length < 4) state.nuvioQueue.push(source);
+            } else state.queue.push({ ...source, priority: stream.priority || 0 });
           }
           const score = source => source.priority * 10 + (/4K|2160/.test(source.quality) ? 2 : /CAM/.test(source.quality) ? 4 : 0);
-          state.queue.sort((a, b) => score(a) - score(b)); pump(state);
+          state.queue.sort((a, b) => score(a) - score(b)); pump(state); pumpNuvio(state);
         });
       } catch { /* O estado vazio oferece uma nova verificação. */ }
-      finally { if (!controller.signal.aborted) { state.fetched = true; pump(state); updateScanStatus(state); } }
+      finally { if (!controller.signal.aborted) { state.fetched = true; pump(state); pumpNuvio(state); updateScanStatus(state); } }
     }
     function drawEpisodes() {
       $('episode-list').replaceChildren();

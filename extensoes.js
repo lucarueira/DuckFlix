@@ -2,6 +2,7 @@
 (function () {
   'use strict';
   const FENIX = 'https://fenixflix.fenixhub.online/manifest.json';
+  const NUVIO = 'https://nuvio.lumusimc.co.uk/manifest.json';
   const FIXED_ADDONS = Object.freeze([
     { name: 'FenixFlix', url: FENIX },
     { name: 'BestCine', url: 'https://bestcine.dpdns.org/manifest.json' },
@@ -82,7 +83,8 @@
       if (controller.signal.aborted) throw new Error('O servidor demorou para responder. Tente novamente.');
       // Keep successful direct requests intact; retry only fixed addon network failures.
       const extension = globalThis.DuckFlixExtension;
-      const fixedResource = FIXED_ADDONS.some(addon => url.startsWith(addon.url.slice(0, -'manifest.json'.length)));
+      const fixedResource = FIXED_ADDONS.some(addon => url.startsWith(addon.url.slice(0, -'manifest.json'.length))) ||
+        url.startsWith(NUVIO.slice(0, -'manifest.json'.length));
       if (error instanceof TypeError && fixedResource && extension?.connected && extension.fetchJSON) {
         return await extension.fetchJSON(url, { signal: controller.signal });
       }
@@ -93,7 +95,7 @@
       signal?.removeEventListener('abort', abort);
     }
   }
-  const api = { FENIX, FIXED_ADDONS, CINEMETA, manifestURL, resourceURL, validateManifest, supports, streamCompatibility, tmdbURL, tmdbItems, requestJSON };
+  const api = { FENIX, NUVIO, FIXED_ADDONS, CINEMETA, manifestURL, resourceURL, validateManifest, supports, streamCompatibility, tmdbURL, tmdbItems, requestJSON };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   if (typeof document === 'undefined') return;
 

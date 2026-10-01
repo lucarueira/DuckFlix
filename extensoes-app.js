@@ -14,6 +14,7 @@
     const manifest = api.validateManifest(await api.requestJSON(addon.url));
     if (!manifest.behaviorHints?.configurationRequired) addons.set(addon.url, { ...addon, priority, manifest });
   }));
+  const nuvioReady = api.requestJSON(api.NUVIO).then(api.validateManifest).catch(() => null);
 
   /* ========================
      MODO LIVRE (+18 FILTRO)
@@ -208,10 +209,21 @@
     async getStreams(id, type, signal, onBatch) {
       await addonsReady;
       if (signal.aborted) return;
-      await Promise.allSettled([...addons.values()].filter(addon => api.supports(addon.manifest, 'stream', type, id)).map(async addon => {
+      const requests = [...addons.values()].filter(addon => api.supports(addon.manifest, 'stream', type, id)).map(async addon => {
         const data = await api.requestJSON(api.resourceURL(addon.url, 'stream', type, id), signal);
         if (!signal.aborted && Array.isArray(data.streams)) onBatch(data.streams.map(stream => ({ ...stream, priority: addon.priority })));
+      });
+      requests.push(nuvioReady.then(async nuvioManifest => {
+        if (!nuvioManifest || !api.supports(nuvioManifest, 'stream', type, id) || signal.aborted) return;
+        const data = await api.requestJSON(api.resourceURL(api.NUVIO, 'stream', type, id), signal);
+        if (signal.aborted || !Array.isArray(data.streams)) return;
+        // O addon oferece muitos arquivos MKV para aplicativos nativos. O player web só recebe links que ele pode verificar.
+        const browserStreams = data.streams.filter(stream => stream?.url && !stream.behaviorHints?.notWebReady &&
+          !/\.mkv(?:$|[?#])/i.test(stream.url) && !/\.mkv\b/i.test(stream.title || '') &&
+          !stream.infoHash && !Object.keys(stream.behaviorHints?.proxyHeaders?.request || {}).length);
+        if (browserStreams.length) onBatch(browserStreams.map(stream => ({ ...stream, origin: 'Nuvio' })));
       }));
+      await Promise.allSettled(requests);
     }
   });
 
