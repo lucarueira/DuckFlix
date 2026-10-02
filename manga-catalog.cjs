@@ -71,15 +71,35 @@ async function catalog(action, query = {}) {
   if (action === 'chapters') {
     const mangaId = id(query.id);
     const offset = Math.max(0, Math.min(9500, Number.parseInt(query.offset, 10) || 0));
+    const language = ['pt-br', 'en', 'es', 'all'].includes(query.language) ? query.language : 'pt-br';
     const params = new URLSearchParams({ limit: '100', offset: String(offset), 'order[chapter]': 'asc' });
-    params.append('translatedLanguage[]', 'pt-br');
+    if (language !== 'all') params.append('translatedLanguage[]', language);
     params.append('includes[]', 'scanlation_group');
     const data = await request(`/manga/${mangaId}/feed`, params, 60000);
-    return { total: data.total || 0, offset, items: (data.data || []).filter(item => !item.attributes?.externalUrl && !item.attributes?.isUnavailable && item.attributes?.pages > 0).map(item => ({
-      id: item.id, number: item.attributes.chapter || '', volume: item.attributes.volume || '', title: item.attributes.title || '', pages: item.attributes.pages,
-      group: item.relationships?.find(value => value.type === 'scanlation_group')?.attributes?.name || 'Grupo não informado',
-      groupId: item.relationships?.find(value => value.type === 'scanlation_group')?.id || null
-    })) };
+    const entries = data.data || [];
+    const items = entries.flatMap(item => {
+      if (item.attributes?.isUnavailable) return [];
+      let externalUrl = null, externalLabel = null;
+      if (item.attributes?.externalUrl) {
+        externalUrl = `https://mangadex.org/chapter/${item.id}`;
+        externalLabel = 'MangaDex';
+        try {
+          const external = new URL(item.attributes.externalUrl);
+          if (external.protocol === 'https:' && external.hostname === 'mangaplus.shueisha.co.jp' && !external.username && !external.password) {
+            externalUrl = external.href; externalLabel = 'MANGA Plus';
+          }
+        } catch {}
+      }
+      if (!externalUrl && !(item.attributes?.pages > 0 && !item.attributes?.externalUrl)) return [];
+      return [{
+        id: item.id, number: item.attributes.chapter || '', volume: item.attributes.volume || '', title: item.attributes.title || '', pages: item.attributes.pages || 0,
+        language: item.attributes.translatedLanguage || '',
+        group: item.relationships?.find(value => value.type === 'scanlation_group')?.attributes?.name || (externalUrl ? 'Publicação externa' : 'Grupo não informado'),
+        groupId: item.relationships?.find(value => value.type === 'scanlation_group')?.id || null,
+        externalUrl, externalLabel
+      }];
+    });
+    return { total: data.total || 0, offset, limit: entries.length, hiddenCount: entries.length - items.length, items };
   }
   if (action === 'pages') {
     const chapterId = id(query.id);

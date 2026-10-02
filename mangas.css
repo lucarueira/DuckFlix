@@ -26,6 +26,15 @@ h1 span { color: #b39bff; }
 .search-form input:focus { border-color: #ab8cff; box-shadow: 0 0 0 3px #ab8cff26; }
 .search-form button, .more-button, .reader-controls button, .primary-button { padding: 13px 20px; border: 0; border-radius: 11px; background: #8f64fa; color: white; font-weight: 700; }
 .search-form button:hover, .more-button:hover, .reader-controls button:hover:not(:disabled), .primary-button:hover { background: #a583ff; }
+.official-source { display: grid; grid-template-columns: 54px 1fr auto; align-items: center; gap: 20px; margin: -18px 0 44px; padding: 22px; border: 1px solid #ffffff24; border-radius: 18px; background: linear-gradient(110deg, #211827, #14151e 70%); }
+.official-source-mark { display: grid; place-items: center; width: 54px; height: 54px; border-radius: 15px; background: #b72f5c30; color: #ff91b1; font-size: 30px; }
+.official-source .eyebrow { color: #ff91b1; margin-bottom: 6px; }
+.official-source h2 { margin: 0; font-size: 20px; }
+.official-source p:last-child { margin: 7px 0 0; color: #b6b0c2; font-size: 13px; line-height: 1.5; }
+.official-source-links { display: grid; gap: 8px; }
+.official-source-links a { display: block; padding: 10px 14px; border: 1px solid #ff91b156; border-radius: 9px; color: #ffe4ec; text-decoration: none; font-size: 13px; white-space: nowrap; }
+.official-source-links a:first-child { background: #9c3156; border-color: #9c3156; color: white; font-weight: 700; }
+.official-source-links a:hover { background: #b3426a; color: white; }
 .section { margin: 40px 0 70px; }
 .section-head { display: flex; align-items: end; justify-content: space-between; gap: 16px; margin-bottom: 18px; }
 .section-head h2 { font-size: 27px; margin: 0; letter-spacing: -.7px; }
@@ -51,8 +60,11 @@ h1 span { color: #b39bff; }
 .secondary-button { padding: 12px 17px; color: #e5dafd; border: 1px solid #a98cfb70; background: #241c36; border-radius: 10px; }
 .source-link { display: inline-block; margin-top: 20px; color: #c4b0ff; text-underline-offset: 4px; }
 .chapter-head { margin-top: 38px; }
+.chapter-options { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin: 0 0 18px; color: #b7b1ca; font-size: 14px; }
+.chapter-options select { padding: 10px 12px; border: 1px solid #ffffff30; border-radius: 9px; background: #191723; color: #f5f5fa; }
 .chapter-list { display: grid; gap: 9px; }
 .chapter-item { width: 100%; padding: 15px 18px; text-align: left; display: flex; justify-content: space-between; align-items: center; gap: 12px; border: 1px solid #ffffff16; border-radius: 11px; background: #15151e; color: #eeeaf9; }
+.chapter-item[href] { text-decoration: none; }
 .chapter-item:hover { border-color: #a98cfb; background: #211b31; }
 .chapter-item strong { display: block; font-weight: 600; }
 .chapter-item small { display: block; margin-top: 3px; color: #a9a4bc; }
@@ -64,11 +76,23 @@ h1 span { color: #b39bff; }
 .reader-toolbar p { margin: 5px 0 0; color: #b8b0cc; font-size: 12px; }
 .reader-pages { margin: 28px auto; max-width: 850px; min-height: 320px; text-align: center; }
 .reader-pages img { display: block; width: 100%; height: auto; margin: auto; background: #181822; }
-.reader-pages.cascade img { margin: 0 auto; }
+.reader-pages.cascade img { margin: 0 auto; aspect-ratio: auto 2 / 3; }
 .reader-controls { display: flex; align-items: center; justify-content: center; gap: 20px; }
 .reader-controls button:disabled { opacity: .45; cursor: default; }
 .library-hint { color: #aaa5bd; }
+.library-tools { display: flex; flex-wrap: wrap; gap: 10px; }
+.library-tools label { cursor: pointer; }
+.continue-section { margin-top: 22px; }
+.reading-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(245px, 1fr)); gap: 14px; }
+.reading-card { display: flex; gap: 13px; min-width: 0; padding: 12px; border: 1px solid #ffffff1e; border-radius: 14px; background: #181722; }
+.reading-card .manga-cover { width: 76px; height: 104px; aspect-ratio: auto; flex: none; border-radius: 8px; font-size: 20px; }
+.reading-card-info { min-width: 0; display: flex; flex-direction: column; align-items: flex-start; }
+.reading-card-info strong { overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; font-size: 14px; }
+.reading-card-info small { color: #a9a4bc; margin-top: 5px; }
+.reading-card-info button { margin-top: auto; border: 0; background: transparent; padding: 8px 0 0; color: #c8b3ff; font-weight: 700; text-align: left; }
+.library-group { margin-top: 34px; }
+.library-group h3 { margin: 0 0 14px; font-size: 19px; }
 footer { border-top: 1px solid #ffffff18; padding: 30px 0 42px; margin-top: 50px; color: #88869a; font-size: 12px; text-align: center; }
 footer a { color: #b9a2ff; }
-@media (max-width: 650px) { .manga-shell { width: min(100% - 28px,1200px); } .topbar { height: 70px; } .brand { font-size: 19px; } .brand-icon { width: 25px; height: 25px; font-size: 16px; } .home-link { font-size: 12px; } .plain-button { font-size: 12px; padding: 9px; } .hero { margin-top: 20px; padding: 28px 20px; } .search-form { flex-direction: column; } .manga-grid { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 10px; } .detail-hero { grid-template-columns: 115px 1fr; gap: 15px; padding: 14px; } .detail-hero h1 { font-size: 23px; } .detail-hero > .detail-description, .detail-hero > .source-link { grid-column: 1/-1; } .reader-toolbar > div { order: 3; width: 100%; } .reader-controls { gap: 10px; } .reader-controls button { padding: 10px; } }
+@media (max-width: 650px) { .manga-shell { width: min(100% - 28px,1200px); } .topbar { height: 70px; } .brand { font-size: 19px; } .brand-icon { width: 25px; height: 25px; font-size: 16px; } .home-link { font-size: 12px; } .plain-button { font-size: 12px; padding: 9px; } .hero { margin-top: 20px; padding: 28px 20px; } .search-form { flex-direction: column; } .official-source { grid-template-columns: 42px 1fr; gap: 12px; padding: 17px; margin-top: -20px; } .official-source-mark { width: 42px; height: 42px; font-size: 24px; } .official-source-links { grid-column: 1/-1; grid-template-columns: 1fr 1fr; } .official-source-links a { white-space: normal; } .manga-grid { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 10px; } .detail-hero { grid-template-columns: 115px 1fr; gap: 15px; padding: 14px; } .detail-hero h1 { font-size: 23px; } .detail-hero > .detail-description, .detail-hero > .source-link { grid-column: 1/-1; } .reader-toolbar > div { order: 3; width: 100%; } .reader-controls { gap: 10px; } .reader-controls button { padding: 10px; } }
 @media (prefers-reduced-motion: reduce) { .manga-card { transition: none; } }

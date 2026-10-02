@@ -31,6 +31,22 @@
             <button type="submit">Buscar</button>
           </form>
         </div>
+        <section class="official-source" aria-labelledby="official-source-title">
+          <div class="official-source-mark" aria-hidden="true">✦</div>
+          <div class="official-source-copy">
+            <p class="eyebrow">OUTRA FONTE DE LEITURA</p>
+            <h2 id="official-source-title">MANGA Plus by SHUEISHA</h2>
+            <p>Mais lançamentos oficiais, com idiomas e capítulos disponíveis conforme a obra e a região. A leitura abre no site da editora.</p>
+          </div>
+          <div class="official-source-links">
+            <a id="mangaplus-search" href="https://mangaplus.shueisha.co.jp/updates" target="_blank" rel="noopener noreferrer">Ver lançamentos ↗</a>
+            <a href="https://mangaplus.shueisha.co.jp/titles/500008" target="_blank" rel="noopener noreferrer">Abrir obra enviada ↗</a>
+          </div>
+        </section>
+        <section id="continue-section" class="section continue-section" aria-labelledby="continue-title" hidden>
+          <div class="section-head"><div><p class="eyebrow">SUA LEITURA</p><h2 id="continue-title">Continue de onde parou</h2></div></div>
+          <div id="continue-results" class="reading-grid"></div>
+        </section>
         <section aria-labelledby="results-title" class="section">
           <div class="section-head"><div><p class="eyebrow">DESCUBRA</p><h2 id="results-title">Mangás populares</h2></div><span id="result-count"></span></div>
           <p id="catalog-status" class="status" role="status" aria-live="polite"></p>
@@ -41,7 +57,8 @@
       <section id="detail-view" class="section" hidden>
         <button id="back-to-catalog" class="back-button" type="button">← Voltar ao catálogo</button>
         <div id="manga-detail"></div>
-        <div class="section-head chapter-head"><div><p class="eyebrow">LEITURA</p><h2>Capítulos em português</h2></div><span id="chapter-count"></span></div>
+        <div class="section-head chapter-head"><div><p class="eyebrow">LEITURA</p><h2>Capítulos disponíveis</h2></div><span id="chapter-count"></span></div>
+        <div class="chapter-options"><label for="chapter-language">Idioma dos capítulos</label><select id="chapter-language"><option value="pt-br">Português (BR)</option><option value="en">Inglês</option><option value="es">Espanhol</option><option value="all">Todos os idiomas</option></select></div>
         <p id="chapter-status" class="status" role="status" aria-live="polite"></p>
         <div id="chapter-list" class="chapter-list"></div>
         <button id="more-chapters" class="more-button" type="button" hidden>Mostrar mais capítulos</button>
@@ -56,8 +73,14 @@
       <section id="library-view" class="section" hidden>
         <button id="back-from-library" class="back-button" type="button">← Voltar ao catálogo</button>
         <div class="section-head"><div><p class="eyebrow">SEUS FAVORITOS</p><h2>Minha leitura</h2></div></div>
-        <p class="library-hint">Favoritos e último capítulo lido ficam salvos neste navegador.</p>
-        <div id="library-results" class="manga-grid"></div>
+        <p class="library-hint">Favoritos e última página lida ficam salvos neste navegador e neste endereço do site.</p>
+        <div class="library-tools">
+          <button id="library-export" class="secondary-button" type="button">Baixar backup</button>
+          <label class="secondary-button" for="library-import">Restaurar backup</label>
+          <input id="library-import" class="sr-only" type="file" accept="application/json,.json">
+        </div>
+        <p id="library-status" class="status" role="status" aria-live="polite"></p>
+        <div id="library-results"></div>
       </section>
     </main>
     <footer>DuckMangás usa o catálogo e as páginas do <a href="https://mangadex.org/" target="_blank" rel="noopener noreferrer">MangaDex</a>. Cada capítulo mostra o grupo responsável pela tradução.</footer>
