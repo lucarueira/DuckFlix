@@ -70,10 +70,11 @@
       <div class="adult-sources" role="group" aria-label="Escolher catálogo adulto">
         <button type="button" data-source="notxo" class="active" aria-pressed="true">Notxo</button>
         <button type="button" data-source="animeShorts" aria-pressed="false">Adult Anime &amp; Shorts</button>
+        <button type="button" data-source="encrypted" aria-pressed="false">Vídeos incorporados</button>
       </div>
-      <p class="adult-extension-note">Estas fontes entregam vídeo MP4 direto. Se uma opção não carregar, escolha outra qualidade ou tente o outro catálogo.</p>
+      <p class="adult-extension-note">Os addons usam vídeo direto. A lista de vídeos incorporados abre o player do site de origem depois que você informa a chave.</p>
       <p data-extension-status class="adult-extension-status" hidden role="status" aria-live="polite"></p>
-      <section class="adult-browser" aria-label="Catálogos adultos">
+      <section id="adult-browser" class="adult-browser" aria-label="Catálogos adultos">
         <div class="adult-catalogs" id="adult-catalogs"></div>
         <div class="adult-results-wrap">
           <div class="adult-results-heading"><h2 id="adult-catalog-title">Escolha um catálogo</h2><span id="adult-result-count"></span></div>
@@ -83,11 +84,24 @@
           <button id="adult-load-more" class="adult-load-more" type="button" hidden>Mostrar mais 100 resultados</button>
         </div>
       </section>
+      <section id="adult-encrypted" class="adult-encrypted" hidden aria-label="Vídeos incorporados">
+        <form id="adult-key-form" class="adult-key-form">
+          <label for="adult-key">Chave usada no Invertexto</label>
+          <div class="adult-key-controls">
+            <input id="adult-key" type="password" autocomplete="off" maxlength="32" required>
+            <button class="primary" type="submit">Abrir lista</button>
+          </div>
+        </form>
+        <p id="adult-key-status" role="status" aria-live="polite">Digite a chave para abrir os vídeos deste arquivo.</p>
+        <div id="adult-encrypted-results" class="adult-results"></div>
+      </section>
       <section id="adult-player-section" class="adult-player-section" hidden aria-label="Reprodutor da área adulta">
         <div class="adult-player-heading"><h2 id="adult-player-title"></h2><button id="adult-player-close" class="secondary" type="button">Fechar player</button></div>
         <video id="adult-video" controls playsinline preload="none"></video>
+        <iframe id="adult-embed" title="Vídeo incorporado" loading="lazy" referrerpolicy="no-referrer" allow="autoplay; fullscreen; picture-in-picture" sandbox="allow-scripts allow-same-origin allow-forms allow-presentation" allowfullscreen hidden></iframe>
         <button id="adult-play-button" class="primary adult-play-button" type="button" hidden>▶ Reproduzir</button>
         <p id="adult-player-status" role="status" aria-live="polite"></p>
+        <a id="adult-embed-fallback" class="adult-back" target="_blank" rel="noopener noreferrer" hidden>Abrir no site de origem ↗</a>
         <div id="adult-streams" class="adult-streams"></div>
       </section>
     </section>

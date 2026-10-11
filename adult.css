@@ -20,7 +20,8 @@
 .adult-status { min-height: 24px; color: #c2c2d0; line-height: 1.6; }
 .adult-extension-note, .adult-extension-status { padding: 12px 14px; border: 1px solid #ffffff14; border-radius: 10px; color: #c2c2d0; background: #111119; font-size: 13px; line-height: 1.6; }
 .adult-extension-note a { color: #ff8299; }
-.adult-sources { display: flex; gap: 8px; margin: 22px 0; border-bottom: 1px solid var(--line); }
+.adult-sources { display: flex; gap: 8px; margin: 22px 0; border-bottom: 1px solid var(--line); overflow-x: auto; }
+.adult-sources button { flex: 0 0 auto; }
 .adult-sources button, .adult-catalogs button, .adult-streams button { min-height: 44px; border: 1px solid var(--line); border-radius: 10px; color: #c7c7d4; background: #14141d; padding: 10px 16px; }
 .adult-sources button.active, .adult-catalogs button[aria-pressed="true"] { color: white; border-color: #ff174477; background: #ff17441c; }
 .adult-browser { display: grid; grid-template-columns: minmax(190px, 260px) minmax(0, 1fr); gap: 24px; align-items: start; }
@@ -47,6 +48,14 @@
 #adult-player-status { min-height: 24px; color: var(--muted); font-size: 13px; line-height: 1.6; }
 .adult-streams { display: flex; flex-wrap: wrap; gap: 8px; }
 .adult-streams button:hover { border-color: #ff174477; color: white; }
+.adult-encrypted[hidden], .adult-browser[hidden], #adult-video[hidden], #adult-embed[hidden], #adult-embed-fallback[hidden] { display: none; }
+.adult-key-form { max-width: 520px; }
+.adult-key-form label { display: block; margin-bottom: 8px; color: var(--muted); font-size: 13px; }
+.adult-key-controls { display: flex; gap: 10px; }
+.adult-key-controls input { flex: 1; min-width: 0; min-height: 46px; padding: 10px 13px; border: 1px solid var(--line); border-radius: 10px; background: #111119; color: white; }
+.adult-key-controls button { min-height: 46px; white-space: nowrap; }
+#adult-key-status { min-height: 24px; margin: 14px 0; color: var(--muted); font-size: 13px; line-height: 1.6; }
+#adult-embed { display: block; width: 100%; aspect-ratio: 16/9; border: 0; background: #000; }
 .adult-entry { width: min(100%, 340px); margin: 0 auto 22px; padding: 12px 16px; border: 1px solid #ffffff14; border-radius: 12px; background: #111117; text-align: left; }
 .adult-entry summary { color: #a0a0ae; cursor: pointer; font-size: 12px; list-style-position: inside; }
 .adult-entry p { margin: 10px 0 4px; color: var(--muted); }
@@ -61,4 +70,5 @@
   .adult-catalogs button { width: auto; flex: 0 0 auto; }
   .adult-heading { align-items: flex-start; flex-direction: column; gap: 0; }
   .adult-heading .adult-back { margin-top: 0; }
+  .adult-key-controls { flex-direction: column; }
 }

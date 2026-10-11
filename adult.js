@@ -6,6 +6,8 @@
   const catalogsNode = byId('adult-catalogs'), resultsNode = byId('adult-results');
   const sourceTabs = [...document.querySelectorAll('[data-source]')];
   const video = byId('adult-video'), playerSection = byId('adult-player-section');
+  const embed = byId('adult-embed'), embedFallback = byId('adult-embed-fallback'), encryptedSection = byId('adult-encrypted');
+  const encryptedResults = byId('adult-encrypted-results'), keyStatus = byId('adult-key-status');
   const ADDONS = Object.freeze({
     notxo: {
       name: 'Notxo', base: 'https://notxo.vercel.app',
@@ -17,6 +19,7 @@
     }
   });
   let authenticated = false;
+  let entryKey = '';
   try { authenticated = sessionStorage.getItem('duckflix.adult.auth') === 'true'; } catch {}
   const state = { enabled: false, confirmed: false, selectedSource: 'notxo', manifests: new Map(), catalogs: [], items: [], visibleCount: 100, request: null, playback: null, epoch: 0 };
   const noop = () => {};
@@ -27,6 +30,8 @@
   function clearPlayer() {
     state.playback?.dispose(); state.playback = null;
     video.pause(); video.removeAttribute('src'); video.load();
+    video.hidden = false; embed.removeAttribute('src'); embed.hidden = true;
+    embedFallback.hidden = true; embedFallback.removeAttribute('href');
     byId('adult-play-button').hidden = true;
     byId('adult-streams').replaceChildren(); playerSection.hidden = true;
   }
@@ -36,6 +41,8 @@
     catalogsNode.replaceChildren(); resultsNode.replaceChildren();
     byId('adult-filter').value = ''; byId('adult-catalog-title').textContent = 'Escolha um catálogo';
     byId('adult-result-count').textContent = '';
+    entryKey = ''; byId('adult-key').value = ''; encryptedResults.replaceChildren();
+    keyStatus.textContent = 'Digite a chave para abrir os vídeos deste arquivo.';
     for (const [key] of state.manifests) state.manifests.delete(key);
   }
   function showState() {
@@ -118,6 +125,9 @@
     byId('adult-filter').value = ''; byId('adult-catalog-title').textContent = 'Catálogos';
     byId('adult-result-count').textContent = '';
     sourceTabs.forEach(tab => { const active = tab.dataset.source === source; tab.classList.toggle('active', active); tab.setAttribute('aria-pressed', String(active)); });
+    const encrypted = source === 'encrypted';
+    byId('adult-browser').hidden = encrypted; encryptedSection.hidden = !encrypted;
+    if (encrypted) { loadEncrypted(entryKey, epoch, controller.signal); return; }
     status.textContent = `Carregando ${ADDONS[source].name}…`;
     try {
       const result = state.manifests.get(source) || await loadManifest(source, controller.signal);
@@ -126,6 +136,78 @@
       status.textContent = `${ADDONS[source].name}: ${result.catalogs.length} catálogos adultos.`;
     } catch (error) {
       if (!controller.signal.aborted && epoch === state.epoch) status.textContent = `${ADDONS[source].name} indisponível agora (${error.message}).`;
+    }
+  }
+  async function decryptInvertexto(code, password) {
+    if (!/^[A-Za-z0-9_-]{22,2048}$/.test(code) || !password || !window.crypto?.subtle) throw new Error('Código ou chave inválidos.');
+    const raw = atob(code.replace(/-/g, '+').replace(/_/g, '/').padEnd(Math.ceil(code.length / 4) * 4, '='));
+    if (!raw.length || raw.length % 16) throw new Error('Código inválido.');
+    const bytes = Uint8Array.from(raw, char => char.charCodeAt(0));
+    const keyBytes = new Uint8Array(16);
+    keyBytes.set(new TextEncoder().encode(password).subarray(0, 16));
+    const key = await window.crypto.subtle.importKey('raw', keyBytes, 'AES-CBC', false, ['encrypt', 'decrypt']);
+    const iv = new Uint8Array(16), output = new Uint8Array(bytes.length);
+    // Web Crypto não expõe AES-ECB. Cada bloco ECB é decifrado como o primeiro
+    // bloco CBC; o segundo bloco construído garante padding válido.
+    for (let offset = 0; offset < bytes.length; offset += 16) {
+      const paddingInput = bytes.slice(offset, offset + 16).map(byte => byte ^ 16);
+      const paddingCipher = new Uint8Array(await window.crypto.subtle.encrypt({ name: 'AES-CBC', iv }, key, paddingInput));
+      const pair = new Uint8Array(32);
+      pair.set(bytes.subarray(offset, offset + 16)); pair.set(paddingCipher.subarray(0, 16), 16);
+      const plain = new Uint8Array(await window.crypto.subtle.decrypt({ name: 'AES-CBC', iv }, key, pair));
+      output.set(plain, offset);
+    }
+    let length = output.length;
+    while (length && output[length - 1] === 0) length--;
+    return new TextDecoder('utf-8', { fatal: true }).decode(output.subarray(0, length));
+  }
+  function xhamsterEmbed(value) {
+    let url;
+    try { url = new URL(value); } catch { return null; }
+    if (url.protocol !== 'https:' || !['xhamster.com', 'www.xhamster.com'].includes(url.hostname) || url.port || url.username || url.password) return null;
+    const match = url.pathname.match(/^\/videos\/[a-z0-9-]+-([a-z0-9]+)\/?$/i) || url.pathname.match(/^\/embed\/([a-z0-9]+)\/?$/i);
+    return match ? `https://xhamster.com/embed/${match[1]}` : null;
+  }
+  function playEmbed(item) {
+    if (!state.confirmed || !state.enabled || safeModeOn() || state.selectedSource !== 'encrypted') return;
+    clearPlayer(); video.hidden = true; embed.hidden = false;
+    byId('adult-player-title').textContent = item.title;
+    byId('adult-player-status').textContent = 'Player do site de origem. Se não iniciar, o próprio site pode estar bloqueando a incorporação.';
+    embedFallback.href = item.original; embedFallback.hidden = false;
+    playerSection.hidden = false; embed.src = item.url;
+    playerSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+  async function loadEncrypted(password, epoch, signal) {
+    encryptedResults.replaceChildren();
+    if (!password) { status.textContent = 'Vídeos incorporados'; keyStatus.textContent = 'Digite a chave usada no Invertexto para abrir a lista.'; return; }
+    status.textContent = 'Abrindo vídeos incorporados…'; keyStatus.textContent = 'Lendo códigos criptografados…';
+    try {
+      const response = await fetch('adult-videos.txt', { signal, credentials: 'omit', cache: 'no-store' });
+      if (!response.ok) throw new Error('Arquivo de vídeos indisponível.');
+      const text = await response.text();
+      if (text.length > 100000) throw new Error('Arquivo de vídeos muito grande.');
+      const codes = text.split(/\r?\n/).map(line => line.trim()).filter(line => line && !line.startsWith('#')).slice(0, 100);
+      const items = [];
+      for (const code of codes) {
+        try {
+          const original = await decryptInvertexto(code, password);
+          const url = xhamsterEmbed(original);
+          if (url) items.push({ url, original, title: `Vídeo ${items.length + 1}` });
+        } catch {}
+      }
+      if (signal.aborted || epoch !== state.epoch || safeModeOn()) return;
+      if (!items.length) { status.textContent = 'Vídeos incorporados'; keyStatus.textContent = 'Nenhum vídeo foi aberto. Confira a chave usada no Invertexto e os códigos do arquivo.'; return; }
+      for (const item of items) {
+        const card = document.createElement('article'); card.className = 'adult-card';
+        const button = document.createElement('button'); button.type = 'button';
+        const title = document.createElement('strong'); title.textContent = item.title;
+        button.append(title); button.addEventListener('click', () => playEmbed(item));
+        card.append(button); encryptedResults.append(card);
+      }
+      status.textContent = 'Vídeos incorporados';
+      keyStatus.textContent = `${items.length} vídeo(s) disponível(is). Escolha um para carregar o player.`;
+    } catch (error) {
+      if (!signal.aborted && epoch === state.epoch) { status.textContent = 'Vídeos incorporados'; keyStatus.textContent = error.message || 'Não foi possível abrir a lista.'; }
     }
   }
   function drawItems() {
@@ -217,6 +299,7 @@
     state.playback?.dispose(); state.playback = null;
     const media = window.DuckFlixMedia;
     if (!media || safeModeOn() || !state.confirmed) return;
+    embed.removeAttribute('src'); embed.hidden = true; video.hidden = false;
     byId('adult-play-button').hidden = true;
     byId('adult-player-status').textContent = 'Carregando e conferindo a fonte…';
     state.playback = media.connect(video, source, {
@@ -242,6 +325,7 @@
       byId('adult-password').select(); return;
     }
     authenticated = true;
+    entryKey = byId('adult-password').value;
     byId('adult-login-status').textContent = '';
     byId('adult-user').value = '';
     byId('adult-password').value = '';
@@ -255,6 +339,14 @@
   consent.addEventListener('change', () => { enter.disabled = !consent.checked; });
   enter.addEventListener('click', enterAdult);
   sourceTabs.forEach(tab => tab.addEventListener('click', () => selectSource(tab.dataset.source)));
+  byId('adult-key-form').addEventListener('submit', event => {
+    event.preventDefault();
+    if (!state.confirmed || !state.enabled || safeModeOn() || state.selectedSource !== 'encrypted') return;
+    entryKey = byId('adult-key').value;
+    byId('adult-key').value = '';
+    const epoch = ++state.epoch, controller = makeRequest();
+    clearPlayer(); loadEncrypted(entryKey, epoch, controller.signal);
+  });
   byId('adult-filter').addEventListener('input', () => { state.visibleCount = 100; drawItems(); });
   byId('adult-load-more').addEventListener('click', () => { state.visibleCount += 100; drawItems(); });
   byId('adult-player-close').addEventListener('click', clearPlayer);
