@@ -68,11 +68,11 @@
       </div>
       <p id="adult-status" class="adult-status" role="status" aria-live="polite"></p>
       <div class="adult-sources" role="group" aria-label="Escolher catálogo adulto">
-        <button type="button" data-source="notxo" class="active" aria-pressed="true">Notxo</button>
+        <button type="button" data-source="encrypted" class="active" aria-pressed="true">Vídeos do arquivo</button>
+        <button type="button" data-source="notxo" aria-pressed="false">Notxo</button>
         <button type="button" data-source="animeShorts" aria-pressed="false">Adult Anime &amp; Shorts</button>
-        <button type="button" data-source="encrypted" aria-pressed="false">Vídeos incorporados</button>
       </div>
-      <p class="adult-extension-note">Os addons usam vídeo direto. A lista de vídeos incorporados abre o player do site de origem depois que você informa a chave.</p>
+      <p class="adult-extension-note">Os vídeos do arquivo aparecem aqui automaticamente. Escolha um para abrir o player incorporado.</p>
       <p data-extension-status class="adult-extension-status" hidden role="status" aria-live="polite"></p>
       <section id="adult-browser" class="adult-browser" aria-label="Catálogos adultos">
         <div class="adult-catalogs" id="adult-catalogs"></div>
@@ -85,15 +85,16 @@
         </div>
       </section>
       <section id="adult-encrypted" class="adult-encrypted" hidden aria-label="Vídeos incorporados">
-        <form id="adult-key-form" class="adult-key-form">
-          <label for="adult-key">Chave usada no Invertexto</label>
+        <h2>Vídeos do arquivo</h2>
+        <p id="adult-key-status" role="status" aria-live="polite">Carregando vídeos…</p>
+        <div id="adult-encrypted-results" class="adult-results"></div>
+        <form id="adult-key-form" class="adult-key-form" hidden>
+          <label for="adult-key">Chave dos códigos antigos</label>
           <div class="adult-key-controls">
             <input id="adult-key" type="password" autocomplete="off" maxlength="32" required>
-            <button class="primary" type="submit">Abrir lista</button>
+            <button class="secondary" type="submit">Abrir códigos restantes</button>
           </div>
         </form>
-        <p id="adult-key-status" role="status" aria-live="polite">Digite a chave para abrir os vídeos deste arquivo.</p>
-        <div id="adult-encrypted-results" class="adult-results"></div>
       </section>
       <section id="adult-player-section" class="adult-player-section" hidden aria-label="Reprodutor da área adulta">
         <div class="adult-player-heading"><h2 id="adult-player-title"></h2><button id="adult-player-close" class="secondary" type="button">Fechar player</button></div>

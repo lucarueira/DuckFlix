@@ -49,12 +49,14 @@
 .adult-streams { display: flex; flex-wrap: wrap; gap: 8px; }
 .adult-streams button:hover { border-color: #ff174477; color: white; }
 .adult-encrypted[hidden], .adult-browser[hidden], #adult-video[hidden], #adult-embed[hidden], #adult-embed-fallback[hidden] { display: none; }
-.adult-key-form { max-width: 520px; }
+.adult-encrypted h2 { margin: 0; font-size: 20px; }
+#adult-key-status { min-height: 24px; margin: 14px 0; color: var(--muted); font-size: 13px; line-height: 1.6; }
+.adult-key-form { max-width: 520px; margin-top: 22px; }
+.adult-key-form[hidden] { display: none; }
 .adult-key-form label { display: block; margin-bottom: 8px; color: var(--muted); font-size: 13px; }
 .adult-key-controls { display: flex; gap: 10px; }
 .adult-key-controls input { flex: 1; min-width: 0; min-height: 46px; padding: 10px 13px; border: 1px solid var(--line); border-radius: 10px; background: #111119; color: white; }
 .adult-key-controls button { min-height: 46px; white-space: nowrap; }
-#adult-key-status { min-height: 24px; margin: 14px 0; color: var(--muted); font-size: 13px; line-height: 1.6; }
 #adult-embed { display: block; width: 100%; aspect-ratio: 16/9; border: 0; background: #000; }
 .adult-entry { width: min(100%, 340px); margin: 0 auto 22px; padding: 12px 16px; border: 1px solid #ffffff14; border-radius: 12px; background: #111117; text-align: left; }
 .adult-entry summary { color: #a0a0ae; cursor: pointer; font-size: 12px; list-style-position: inside; }
