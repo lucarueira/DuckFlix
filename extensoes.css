@@ -866,3 +866,12 @@ select { font: inherit; color: #ececf0; border: 1px solid #3a3f4a; background: #
   html { scroll-behavior: auto; }
   * { transition: none !important; animation: none !important; }
 }
+
+/* Controles do player: ícones SVG nítidos em qualquer tamanho. */
+.icon-button svg { width: 24px; height: 24px; fill: currentColor; stroke: none; pointer-events: none; }
+.icon-button svg .stroke { fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+.icon-button small { top: 50%; left: 50%; transform: translate(-50%, -42%); font-size: 7.5px; font-weight: 800; line-height: 1; pointer-events: none; }
+.icon-button:hover, .icon-button:focus-visible { background: #ffffff1f; border-radius: 10px; }
+.icon-button[hidden] { display: none; }
+.video-controls { backdrop-filter: blur(2px); }
+@media (max-width: 768px) { .icon-button svg { width: 21px; height: 21px; } .icon-button small { left: 50%; top: 50%; font-size: 7px; } }

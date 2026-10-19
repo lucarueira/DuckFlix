@@ -85,7 +85,27 @@
       hls.loadSource(source.url); hls.attachMedia(video);
       return true;
     };
-    const failed = () => { if (!disposed && !ready && mode === 'auto' && startHLS()) return; fail(); };
+    let nativeRecoveries = 0;
+    const failed = () => {
+      if (disposed) return;
+      if (ready) {
+        // Erro no meio da reprodução: recarrega a mesma fonte na posição atual antes de desistir dela.
+        if (engine === 'native' && nativeRecoveries < 2) {
+          nativeRecoveries++;
+          const at = Number(video.currentTime) || 0;
+          video.addEventListener('loadedmetadata', () => { if (!disposed) { if (at > 0) video.currentTime = at; play(); } }, { once: true });
+          video.src = source.url; video.load();
+          return;
+        }
+        fail(); return;
+      }
+      if (mode === 'auto' && startHLS()) return;
+      fail();
+    };
+    const recover = () => {
+      if (disposed || !ready || !hls) return;
+      try { hls.recoverMediaError?.(); hls.startLoad?.(-1); } catch {}
+    };
     video.addEventListener('loadeddata', loaded);
     video.addEventListener('error', failed);
     video.preload = 'auto'; video.playsInline = true;
@@ -98,7 +118,7 @@
         if (mode === 'auto' && Hls?.isSupported()) stageTimer = setTimeout(() => { if (!ready) startHLS(); }, Math.floor(timeoutMs / 2));
       }
     } catch { fail(); }
-    return { dispose, play, get hls() { return hls; } };
+    return { dispose, play, recover, get hls() { return hls; } };
   }
   function probe(source, { signal, createVideo = () => document.createElement('video'), Hls = globalThis.Hls, timeoutMs = 14000 } = {}) {
     if (signal?.aborted) return Promise.resolve(null);

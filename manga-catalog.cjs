@@ -1,5 +1,6 @@
 'use strict';
 
+const flix = require('./mangaflix-catalog.cjs');
 const API = 'https://api.mangadex.org';
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const FILE = /^[a-zA-Z0-9-]+\.(?:jpg|jpeg|png|webp|gif)$/;
@@ -49,6 +50,7 @@ function manga(item) {
 }
 
 async function catalog(action, query = {}) {
+  if (query.source === 'mangaflix' || String(query.id || '').startsWith(flix.PREFIX)) return flix.catalog(action, query);
   if (action === 'search') {
     const title = String(query.q || '').trim().slice(0, 100);
     const offset = Math.max(0, Math.min(9500, Number.parseInt(query.offset, 10) || 0));
@@ -123,6 +125,7 @@ async function atHome(chapterId) {
 }
 
 async function image(query = {}) {
+  if (query.kind === 'mf') return flix.image(query);
   let url;
   if (query.kind === 'cover') {
     const mangaId = id(query.id), file = String(query.file || '');

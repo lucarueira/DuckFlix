@@ -26,6 +26,8 @@
           <h1>Abra um mangá.<br><span>Entre em outro mundo.</span></h1>
           <p>Explore obras com capítulos traduzidos para português e continue de onde parou.</p>
           <form id="search-form" class="search-form">
+            <label class="sr-only" for="manga-source">Fonte</label>
+            <select id="manga-source" aria-label="Fonte dos mangás"><option value="mangaflix">MangaFlix (PT-BR)</option><option value="mangadex">MangaDex</option></select>
             <label class="sr-only" for="search-input">Nome do mangá</label>
             <input id="search-input" type="search" maxlength="100" placeholder="Busque pelo nome do mangá" autocomplete="off">
             <button type="submit">Buscar</button>

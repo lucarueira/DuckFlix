@@ -22,6 +22,14 @@
       clearTimeout(movieTimer);
       if (queueToken !== null) movieTimer = setTimeout(() => finishMovie('failed'), 90000);
     }
+    const ICONS = {
+      play: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.5-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5Z"/></svg>',
+      pause: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="5" width="4.5" height="14" rx="1.2"/><rect x="13.5" y="5" width="4.5" height="14" rx="1.2"/></svg>',
+      volume: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9.5v5h3.5l4.5 3.8V5.7L7.5 9.5H4Z"/><path class="stroke" d="M15.5 8.5a5 5 0 0 1 0 7M18 6a8.5 8.5 0 0 1 0 12"/></svg>',
+      muted: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9.5v5h3.5l4.5 3.8V5.7L7.5 9.5H4Z"/><path class="stroke" d="m16 9.5 5 5m0-5-5 5"/></svg>'
+    };
+    const setIcon = (id, name) => { const el = $(id); if (el && el.dataset.icon !== name) { el.dataset.icon = name; el.innerHTML = ICONS[name]; } };
+    let fullscreenExitedAt = 0;
     let controlsTimer = null, isInteracting = false, lastTouchTime = 0;
     const node = (tag, text, cls) => { const el = document.createElement(tag); if (text !== undefined) el.textContent = text; if (cls) el.className = cls; return el; };
     const status = (id, text) => { $(id).textContent = text; };
@@ -333,7 +341,12 @@
       else if (video.webkitEnterFullscreen) video.webkitEnterFullscreen();
     }
     $('close-player').addEventListener('click', close);
-    dialog.addEventListener('cancel', event => { event.preventDefault(); close(); });
+    dialog.addEventListener('cancel', event => {
+      event.preventDefault();
+      // O Esc que sai da tela cheia não pode fechar o player inteiro.
+      if (document.fullscreenElement || Date.now() - fullscreenExitedAt < 700) return;
+      close();
+    });
     dialog.addEventListener('close', () => { clearTimeout(movieTimer); queueToken = null; onClose(); detailAbort?.abort(); scanAbort?.abort(); stopPlayback(); });
     $('retry-streams').addEventListener('click', () => { if (detailsReady) loadStreams(); else open(item); });
     $('scan-more').addEventListener('click', () => { if (scanState) { scanState.limit += 12; scanState.target = verified.length + 3; pump(scanState); } });
@@ -368,14 +381,18 @@
       showControls(true);
       if (stallTimer) return;
       const source = currentSource, version = playbackVersion;
-      if (source && connection) stallTimer = setTimeout(() => {
-        stallTimer = null;
-        if (source === currentSource && version === playbackVersion && !video.paused) failedSource(source, Number(video.currentTime) || 0);
-      }, 25000);
+      if (source && connection) {
+        // Primeiro tenta reanimar a mesma fonte; só troca de opção se o travamento continuar.
+        const nudge = setTimeout(() => { if (source === currentSource && version === playbackVersion && stallTimer) connection?.recover?.(); }, 10000);
+        stallTimer = setTimeout(() => {
+          clearTimeout(nudge); stallTimer = null;
+          if (source === currentSource && version === playbackVersion && !video.paused) failedSource(source, Number(video.currentTime) || 0);
+        }, 45000);
+      }
     }
     video.addEventListener('waiting', waitingForVideo);
     for (const event of ['play', 'pause']) video.addEventListener(event, () => {
-      $('toggle-play').textContent = video.paused ? '▶' : 'Ⅱ';
+      setIcon('toggle-play', video.paused ? 'play' : 'pause');
       $('toggle-play').setAttribute('aria-label', video.paused ? 'Reproduzir' : 'Pausar');
       if (video.paused) {
         clearTimeout(stallTimer); stallTimer = null; setBuffering(false);
@@ -395,7 +412,7 @@
     $('video-seek').addEventListener('change', () => showControls(true));
     $('video-volume').addEventListener('input', () => { video.volume = Number($('video-volume').value); video.muted = video.volume === 0; showControls(false); });
     $('toggle-mute').addEventListener('click', () => { video.muted = !video.muted; showControls(true); });
-    video.addEventListener('volumechange', () => { $('toggle-mute').textContent = video.muted ? '×♪' : '♪'; $('toggle-mute').setAttribute('aria-label', video.muted ? 'Ativar som' : 'Silenciar'); });
+    video.addEventListener('volumechange', () => { setIcon('toggle-mute', video.muted || video.volume === 0 ? 'muted' : 'volume'); $('video-volume').value = video.muted ? '0' : String(video.volume); $('toggle-mute').setAttribute('aria-label', video.muted ? 'Ativar som' : 'Silenciar'); });
     $('video-speed').addEventListener('change', () => { video.playbackRate = Number($('video-speed').value); showControls(true); });
     $('fullscreen').addEventListener('click', fullscreen);
     if (shell) {
@@ -438,6 +455,7 @@
       controls.addEventListener('focusout', () => { isInteracting = false; showControls(true); });
     }
     document.addEventListener('fullscreenchange', () => {
+      if (!document.fullscreenElement) fullscreenExitedAt = Date.now();
       const focused = document.activeElement;
       if (focused && controls?.contains(focused)) focused.blur?.();
       isInteracting = false;
@@ -450,13 +468,28 @@
         showControls(true);
       }
     });
-    shell.addEventListener('keydown', event => {
-      if (['INPUT', 'SELECT', 'BUTTON'].includes(event.target.tagName)) return;
-      if ([' ', 'ArrowLeft', 'ArrowRight', 'f'].includes(event.key)) event.preventDefault();
-      showControls(true);
-      if (event.key === ' ') togglePlay(); else if (event.key === 'ArrowLeft') seek(-10); else if (event.key === 'ArrowRight') seek(10); else if (event.key === 'f') fullscreen();
+    function togglePip() {
+      if (document.pictureInPictureElement) document.exitPictureInPicture?.().catch(() => {});
+      else if (document.pictureInPictureEnabled && video.requestPictureInPicture) video.requestPictureInPicture().catch(() => status('play-message', 'Picture-in-Picture indisponível para este vídeo.'));
+    }
+    const pip = $('pip'); if (pip) { pip.hidden = !document.pictureInPictureEnabled; pip.addEventListener('click', togglePip); }
+    function setVolume(delta) { video.muted = false; video.volume = Math.max(0, Math.min(1, Math.round((video.volume + delta) * 20) / 20)); }
+    function setSpeed(delta) { video.playbackRate = Math.max(0.5, Math.min(2, video.playbackRate + delta)); const select = $('video-speed'); if (select) select.value = String(video.playbackRate); }
+    dialog.addEventListener('keydown', event => {
+      if (!currentSource || event.ctrlKey || event.metaKey || event.altKey) return;
+      const tag = event.target.tagName;
+      if (['INPUT', 'SELECT', 'TEXTAREA'].includes(tag)) return;
+      if (tag === 'BUTTON' && [' ', 'Enter'].includes(event.key)) return;
+      const key = event.key.length === 1 ? event.key.toLowerCase() : event.key;
+      if (/^[0-9]$/.test(key) && Number.isFinite(video.duration)) { event.preventDefault(); video.currentTime = video.duration * Number(key) / 10; showControls(true); return; }
+      const handled = { ' ': togglePlay, k: togglePlay, ArrowLeft: () => seek(-10), j: () => seek(-10), ArrowRight: () => seek(10), l: () => seek(10),
+        ArrowUp: () => setVolume(0.05), ArrowDown: () => setVolume(-0.05), m: () => { video.muted = !video.muted; }, f: fullscreen, p: togglePip,
+        Home: () => { video.currentTime = 0; }, '>': () => setSpeed(0.25), '<': () => setSpeed(-0.25) }[key];
+      if (!handled) return;
+      event.preventDefault(); handled(); showControls(true);
     });
     video.controls = false;
+    setIcon('toggle-play', 'play'); setIcon('toggle-mute', 'volume');
     return { open, close,
       detachQueue() { queueToken = null; clearTimeout(movieTimer); },
       haltQueueMovie() { clearTimeout(movieTimer); movieFinished = true; detailAbort?.abort(); scanAbort?.abort(); stopPlayback(); }

@@ -234,14 +234,14 @@ async function renderHistorico() {
       : "Filme";
     div.innerHTML = `
       <div class="continuar-poster-wrap">
-        <img src="https://image.tmdb.org/t/p/w300${item.poster}" alt="${item.title}">
+        <img src="https://image.tmdb.org/t/p/w300${encodeURI(String(item.poster ?? ""))}" alt="${esc(item.title)}">
         <span class="continuar-play-badge">▶</span>
         <button class="continuar-remove-btn" title="Remover do histórico" aria-label="Remover">✕</button>
         <div class="progress-bar-track"><div class="progress-bar-fill"></div></div>
       </div>
       <div class="continuar-info-home">
-        <strong>${item.title}</strong>
-        <small>${sub}</small>
+        <strong>${esc(item.title)}</strong>
+        <small>${esc(sub)}</small>
       </div>
     `;
     div.onclick = () => {
@@ -336,17 +336,22 @@ async function abrirPlayer(item) {
   tituloPlayer.innerText = item.title;
   playerArea.classList.remove("hidden");
   overlay.classList.remove("hidden");
+  proporcaoManual = null;
   carregarPlayer();
+  descobrirAnoDoFilme(item);
   addHistorico(item);
 
   setTimeout(() => playerArea.scrollIntoView({ behavior: "smooth" }), 100);
 }
+
+const esc = value => String(value ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
 /* ========================
    FECHAR PLAYER
 ======================== */
 function fecharPlayer() {
   playerRequest++;
+  if (document.fullscreenElement) document.exitFullscreen?.().catch(() => {});
   playerArea.classList.add("hidden");
   episodeControls.classList.add("hidden");
   player.innerHTML = "";
@@ -395,7 +400,43 @@ function carregarPlayer() {
   frame.allow = "autoplay; fullscreen; picture-in-picture; encrypted-media";
   frame.addEventListener("load", () => loading.classList.add("is-ready"), { once: true });
   player.append(loading, frame);
+  aplicarProporcao();
 }
+
+/* ========================
+   PROPORÇÃO DO PLAYER (filmes antigos em 4:3)
+   O embed é cross-origin, então não dá para ler o vídeo; usamos o ano do
+   filme (TMDB) para sugerir 4:3 e deixamos o usuário alternar manualmente.
+======================== */
+const PROPORCOES = ["auto", "4/3", "16/9", "21/9"];
+let proporcaoManual = null;
+function proporcaoAutomatica() {
+  const ano = Number(currentItem?.year);
+  return currentItem?.type === "filme" && ano && ano < 1960 ? "4/3" : "16/9";
+}
+function aplicarProporcao() {
+  const modo = proporcaoManual || "auto";
+  const efetiva = modo === "auto" ? proporcaoAutomatica() : modo;
+  const [w, h] = efetiva.split("/").map(Number);
+  player.style.setProperty("--player-ratio", efetiva);
+  player.style.setProperty("--player-ratio-num", String(w / h));
+  player.dataset.ratio = efetiva.replace("/", "x");
+  const btn = document.getElementById("btnProporcao");
+  if (btn) btn.textContent = `Formato: ${modo === "auto" ? `Auto (${efetiva.replace("/", ":")})` : efetiva.replace("/", ":")}`;
+}
+async function descobrirAnoDoFilme(item) {
+  if (item.type !== "filme" || item.year) return;
+  try {
+    const d = await safety.fetch(`https://api.themoviedb.org/3/movie/${item.id}?api_key=${apiKey}&language=pt-BR`).then(r => r.json());
+    const ano = Number((d.release_date || "").slice(0, 4));
+    if (currentItem && currentItem.id === item.id && ano) { currentItem.year = ano; aplicarProporcao(); }
+  } catch {}
+}
+document.getElementById("btnProporcao").onclick = () => {
+  const atual = proporcaoManual || "auto";
+  proporcaoManual = PROPORCOES[(PROPORCOES.indexOf(atual) + 1) % PROPORCOES.length];
+  aplicarProporcao();
+};
 
 async function atualizarEpInfo() {
   numTemporada.textContent = currentSeason;
@@ -642,7 +683,7 @@ function criarCard(container, item, tipoForcado = null) {
   const favBtn = card.querySelector(".fav-btn");
   card.onclick = () => {
     fecharTodasSecoes();
-    abrirPlayer({ id: item.id, title, type, poster: item.poster_path });
+    abrirPlayer({ id: item.id, title, type, poster: item.poster_path, year: Number(ano) || undefined });
   };
   favBtn.onclick = (e) => {
     e.stopPropagation();

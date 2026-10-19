@@ -18,6 +18,10 @@ A disponibilidade de capítulos e páginas depende do MangaDex. A lista usa pagi
 
 O [MANGA Plus by SHUEISHA](https://mangaplus.shueisha.co.jp/updates) é uma fonte oficial separada do MangaDex. O DuckMangás oferece links para lançamentos, busca no site da editora e a obra enviada pelo usuário. A leitura ocorre no MANGA Plus; as páginas e imagens não são copiadas para o DuckMangás. Os [termos do MANGA Plus](https://mangaplus.shueisha.co.jp/terms_web/eng/) restringem a republicação de conteúdo.
 
+## MangaFlix (padrão)
+
+A fonte padrão é o MangaFlix, portada da extensão Keiyoushi (`mangaflix-catalog.cjs`): API JSON pública com capítulos em português. Obras adultas são sempre filtradas. A fonte MangaDex continua disponível no seletor da busca. O Mangá Livre da Keiyoushi não foi portado porque exige verificação humana no leitor.
+
 ## Extensões do Tachiyomi/Mihon
 
 O [guia do Tachimanga](https://tachimanga.app/help/guides/extensions_guide.html) e o [repositório Keiyoushi](https://github.com/keiyoushi/extensions) descrevem extensões Kotlin compiladas para aplicativos Android. Elas não são plugins JavaScript instaláveis no navegador. O formato pode servir de referência para futuros adaptadores de fonte do DuckMangás, desde que cada site permita o acesso e a integração seja implementada separadamente.

@@ -93,7 +93,7 @@ test('a frozen movie times out even when timeupdate fires without playback progr
   app.video.dispatchEvent(new app.window.Event('waiting'));
   app.video.dispatchEvent(new app.window.Event('timeupdate'));
   app.video.dispatchEvent(new app.window.Event('stalled'));
-  const waiting = [...app.timers].filter(([, timer]) => timer.delay === 25000);
+  const waiting = [...app.timers].filter(([, timer]) => timer.delay === 45000);
   assert.equal(waiting.length, 1);
   const [id, timer] = waiting[0]; app.timers.delete(id); timer.callback(); await settle();
   assert.deepEqual(app.played, ['tmdb:1', 'tmdb:2']);
