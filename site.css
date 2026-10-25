@@ -107,6 +107,17 @@ main > .intro.tv-hero-cinematic { margin-inline: calc(-1 * var(--page-gutter)); 
 #player:fullscreen, #player:-webkit-full-screen { display: grid; place-items: center; width: 100vw; height: 100dvh; max-height: none; aspect-ratio: auto; border-radius: 0; background: #000; }
 /* Em tela cheia o iframe mantém a proporção escolhida (barras pretas), evitando que o embed dê zoom e corte a legenda. */
 #player:fullscreen iframe, #player:-webkit-full-screen iframe { width: min(100vw, calc(100dvh * var(--player-ratio-num, 1.7778))); height: min(100dvh, calc(100vw / var(--player-ratio-num, 1.7778))); }
+/* Navegadores de TV antigos não têm aspect-ratio/inset: sem isso o #player fica com altura 0 e o iframe não aparece. */
+@supports not (aspect-ratio: 1) {
+  #player { height: 0; padding-top: calc(100% / var(--player-ratio-num, 1.7778)); max-height: none; }
+  #player iframe, #player .home-player-loading { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+  #player:fullscreen, #player:-webkit-full-screen { padding-top: 0; height: 100vh; }
+}
+.home-player-loading { top: 0; left: 0; right: 0; bottom: 0; }
+@supports not (height: 1dvh) {
+  #player { max-height: 78vh; }
+  #player:fullscreen, #player:-webkit-full-screen { height: 100vh; }
+}
 .home-watch-layout { order: 1; display: grid; grid-template-columns: minmax(0, 1fr); gap: 0; }
 .home-watch-layout:has(.home-episode-panel:not(.hidden)) { grid-template-columns: minmax(0, 1fr) 300px; }
 .home-episode-panel { padding: 18px; background: #14141e; border-left: 1px solid var(--line); }
