@@ -28,20 +28,34 @@
   const gameById = id => GAMES.find(game => game.id === id);
 
   // Release mais recente pelo GitHub (link direto do arquivo). Guardado por 10 min para não estourar o limite da API.
+  const fixed = game => (game.downloads || []).map(d => ({ name: d.name, size: d.size || 0, url: d.url }));
+  // Windows primeiro; Linux/macOS/depuração depois.
+  function platformRank(name) {
+    if (/win/i.test(name) && !/pdb/i.test(name)) return 0;
+    if (/pdb|debug|symbols|src|source/i.test(name)) return 3;
+    if (/linux|appimage|flatpak|mac|osx|arm64/i.test(name)) return 2;
+    return 1;
+  }
   async function loadRelease(game) {
-    if (!game.repo) return { assets: (game.downloads || []).map(d => ({ name: d.name, size: d.size || 0, url: d.url })) };
-    const key = `duckSteam.release.${game.repo}`;
+    if (!game.repo) return { assets: fixed(game) };
+    try { return await fetchRelease(game); }
+    catch (error) { if (fixed(game).length) return { assets: fixed(game) }; throw error; }
+  }
+  async function fetchRelease(game) {
+    const key = `duckSteam.release.${game.repo}.${game.tag || 'latest'}`;
     try {
       const cached = JSON.parse(sessionStorage.getItem(key));
       if (cached && Date.now() - cached.at < 600000) return cached.data;
     } catch { /* sem cache */ }
-    const response = await fetch(`https://api.github.com/repos/${game.repo}/releases/latest`, { headers: { Accept: 'application/vnd.github+json' } });
+    const response = await fetch(`https://api.github.com/repos/${game.repo}/releases/${game.tag ? `tags/${game.tag}` : 'latest'}`, { headers: { Accept: 'application/vnd.github+json' } });
     if (!response.ok) throw new Error(response.status === 403 ? 'O GitHub limitou as consultas por agora. Tente novamente em alguns minutos.' : 'Nenhuma versão publicada foi encontrada.');
     const json = await response.json();
     const data = {
       tag: json.tag_name, title: json.name, published: json.published_at, page: json.html_url,
       assets: (json.assets || []).map(a => ({ name: a.name, size: a.size, url: a.browser_download_url, count: a.download_count }))
+        .sort((a, b) => platformRank(a.name) - platformRank(b.name))
     };
+    if (!data.assets.length && fixed(game).length) data.assets = fixed(game);
     try { sessionStorage.setItem(key, JSON.stringify({ at: Date.now(), data })); } catch { /* sem cache */ }
     return data;
   }
@@ -101,7 +115,7 @@
     if (hash.startsWith('#/biblioteca')) return 'library';
     return 'store';
   }
-  function cover(game) { return `<img src="${esc(game.cover)}" alt="" loading="lazy" referrerpolicy="no-referrer">`; }
+  function cover(game) { return `<img src="${esc(game.cover)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.visibility='hidden'">`; }
 
   function renderStore(query = '') {
     const q = query.trim().toLowerCase();
@@ -132,10 +146,11 @@
     view.innerHTML = `
       <a class="st-crumb" href="#/">← Loja</a>
       <section class="st-game">
-        <div class="st-game-head"><h1>${esc(game.name)}</h1></div>
+        <div class="st-game-head">${game.icon ? `<img class="st-icon" src="${esc(game.icon)}" alt="" referrerpolicy="no-referrer" onerror="this.remove()">` : ''}<h1>${esc(game.name)}</h1></div>
         <div class="st-game-top">
           <div class="st-game-art">${cover(game)}</div>
           <div class="st-game-side">
+            ${game.poster ? `<img class="st-poster" src="${esc(game.poster)}" alt="Capa de ${esc(game.name)}" referrerpolicy="no-referrer">` : ''}
             <p>${esc(game.tagline)}</p>
             <dl><dt>Desenvolvedor</dt><dd>${esc(game.author)}</dd><dt>Licença</dt><dd>${esc(game.license || '—')}</dd></dl>
             <div class="st-tags">${game.tags.map(t => `<span>${esc(t)}</span>`).join('')}</div>
@@ -147,6 +162,7 @@
             <h2>Sobre o jogo</h2>${game.description.map(p => `<p>${esc(p)}</p>`).join('')}
             <h2>Recursos</h2><ul class="st-list">${game.features.map(f => `<li>${esc(f)}</li>`).join('')}</ul>
             <h2>Como instalar</h2><ol class="st-steps">${game.steps.map(s => `<li>${esc(s)}</li>`).join('')}</ol>
+            ${game.controls ? `<h2>Controles</h2><p>${esc(game.controls)}</p>` : ''}
             ${game.online ? `<h2>Jogar online</h2><p>${esc(game.online)}</p>` : ''}
             ${game.issues ? `<h2>Problemas conhecidos</h2><p>${esc(game.issues)}</p>` : ''}
           </div>
@@ -163,7 +179,7 @@
       if (location.hash !== `#/jogo/${id}`) return;
       if (!release.assets.length) throw new Error('Esta versão não tem arquivos para baixar.');
       buy.innerHTML = `<div class="st-buy-head"><strong>Baixar ${esc(game.name)}</strong>${release.tag ? `<small>Versão ${esc(release.tag)} · ${esc(formatDate(release.published))}</small>` : ''}</div>
-        ${release.assets.map((a, i) => `<div class="st-asset"><div><b>${esc(a.name)}</b><small>${formatBytes(a.size)}${a.count ? ` · ${a.count.toLocaleString('pt-BR')} downloads` : ''}</small></div>
+        ${release.assets.map((a, i) => `<div class="st-asset"><div><b>${esc(a.name)}</b><small>${platformRank(a.name) === 0 ? 'Windows · ' : ''}${formatBytes(a.size)}${a.count ? ` · ${a.count.toLocaleString('pt-BR')} downloads` : ''}</small></div>
           <button type="button" data-asset="${i}">Baixar</button></div>`).join('')}
         <p class="st-note">${desktop ? 'O download acontece dentro do DuckFlix, com progresso, velocidade e tempo restante. O arquivo vai para a pasta Downloads\\DuckSteam.' : 'O download usa o gerenciador do seu navegador. Para acompanhar progresso e tempo restante aqui no site, use o DuckFlix para Windows.'}</p>`;
       buy.querySelectorAll('[data-asset]').forEach(btn => btn.addEventListener('click', () => startDownload(game, release.assets[Number(btn.dataset.asset)])));
