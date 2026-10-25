@@ -1,6 +1,8 @@
 /* O mesmo decodificador é usado na verificação e na reprodução. */
 (function () {
   'use strict';
+  // TVs (webOS/Tizen) só têm um decodificador de hardware e muitas vezes só disparam loadeddata depois de play().
+  const isTV = /Web0S|webOS|SmartTV|Tizen|HbbTV/i.test(globalThis.navigator?.userAgent || '');
   function candidate(stream) {
     if (!stream || stream.infoHash || Object.keys(stream.behaviorHints?.proxyHeaders?.request || {}).length) return null;
     let url;
@@ -16,7 +18,7 @@
     const language = /dublad|portugu[eê]s|pt-br|🇧🇷/i.test(text) ? 'Dublado' : /legendad/i.test(text) ? 'Legendado' : 'Áudio original';
     return { url: url.href, httpURL, requiresExtension: Boolean(httpURL), quality, language, mode: isHLS ? 'hls' : 'auto', origin: stream.origin === 'Nuvio' ? 'Nuvio' : null };
   }
-  function connect(video, source, { Hls = globalThis.Hls, onReady = () => {}, onError = () => {}, onBlocked = () => {}, timeoutMs = 14000, autoplay = false, startAt = 0, mode = source.mode } = {}) {
+  function connect(video, source, { Hls = globalThis.Hls, onReady = () => {}, onError = () => {}, onBlocked = () => {}, timeoutMs = isTV ? 25000 : 14000, autoplay = false, startAt = 0, mode = source.mode } = {}) {
     let disposed = false, ready = false, hls, timer, stageTimer, triedHLS = false;
     let networkRecoveries = 0, mediaRecoveries = 0;
     let engine = 'native';
@@ -28,6 +30,9 @@
       if (disposed) return;
       disposed = true; clearTimeout(timer); clearTimeout(stageTimer);
       video.removeEventListener('loadeddata', loaded);
+      video.removeEventListener('canplay', loaded);
+      video.removeEventListener('playing', loaded);
+      video.removeEventListener('loadedmetadata', kick);
       video.removeEventListener('error', failed);
       clearMedia();
     };
@@ -48,6 +53,7 @@
       onReady({ mode: engine });
       if (autoplay && !disposed) play();
     };
+    const kick = () => { if (isTV && !disposed && !ready) { try { Promise.resolve(video.play()).catch(() => {}); } catch {} } };
     const startHLS = () => {
       if (disposed || triedHLS || !Hls?.isSupported()) return false;
       triedHLS = true; engine = 'hls'; clearTimeout(stageTimer);
@@ -107,6 +113,9 @@
       try { hls.recoverMediaError?.(); hls.startLoad?.(-1); } catch {}
     };
     video.addEventListener('loadeddata', loaded);
+    video.addEventListener('canplay', loaded);
+    video.addEventListener('playing', loaded);
+    video.addEventListener('loadedmetadata', kick);
     video.addEventListener('error', failed);
     video.preload = 'auto'; video.playsInline = true;
     timer = setTimeout(fail, timeoutMs);
@@ -144,7 +153,7 @@
       ids.add(ep.id); return true;
     }).sort((a, b) => Number(a.season) - Number(b.season) || Number(a.episode) - Number(b.episode));
   }
-  const api = { candidate, connect, probe, orderedEpisodes };
+  const api = { candidate, connect, probe, orderedEpisodes, isTV };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else globalThis.DuckFlixMedia = api;
 })();

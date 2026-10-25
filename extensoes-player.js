@@ -182,7 +182,7 @@
     }
     function pump(state) {
       if (state !== scanState || state.controller.signal.aborted) return;
-      while (state.active < 2 && state.queue.length && state.attempted < state.limit && verified.length < state.target) {
+      while (state.active < (media.isTV ? 1 : 2) && !(media.isTV && currentSource) && state.queue.length && state.attempted < state.limit && verified.length < state.target) {
         const source = state.queue.shift(); state.active++; state.attempted++;
         media.probe(source, { signal: state.controller.signal }).then(result => {
           if (state !== scanState || state.controller.signal.aborted) return;
