@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="DuckSteam: jogos feitos pela comunidade com download direto e instruções em português.">
+  <title>DuckSteam · Jogos da comunidade</title>
+  <link rel="icon" type="image/png" href="img/favicon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="steam.css">
+  <script defer src="steam-games.js"></script>
+  <script defer src="steam.js"></script>
+</head>
+<body>
+  <header class="st-header">
+    <a class="st-back" href="index.html" aria-label="Voltar ao início">← <span>Início</span></a>
+    <a class="st-brand" href="steam.html"><span class="st-mark" aria-hidden="true">▶</span> Duck<span>Steam</span></a>
+    <nav class="st-tabs" aria-label="Seções do DuckSteam">
+      <a href="#/" data-tab="store">Loja</a>
+      <a href="#/biblioteca" data-tab="library">Biblioteca</a>
+      <a href="#/downloads" data-tab="downloads">Downloads <span id="st-badge" class="st-badge" hidden>0</span></a>
+    </nav>
+  </header>
+
+  <main id="st-view" class="st-shell" aria-live="polite"></main>
+
+  <aside id="st-bar" class="st-bar" hidden aria-label="Download em andamento">
+    <div class="st-bar-info"><strong id="st-bar-name"></strong><small id="st-bar-detail"></small></div>
+    <div class="st-progress"><span id="st-bar-fill"></span></div>
+    <a href="#/downloads">Ver downloads</a>
+  </aside>
+
+  <footer class="st-footer">DuckSteam é uma seção do DuckFlix. Os jogos pertencem aos seus autores; cada página traz o link para o projeto original.</footer>
+</body>
+</html>

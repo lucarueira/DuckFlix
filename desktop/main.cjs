@@ -1,4 +1,4 @@
-const { app, BrowserWindow, dialog, ipcMain } = require('electron');
+const { app, BrowserWindow, dialog, ipcMain, session } = require('electron');
 const fs = require('node:fs');
 const path = require('node:path');
 
@@ -61,6 +61,76 @@ ipcMain.handle('duckflix:request', async (event, message) => {
 
 ipcMain.on('duckflix:cancel', (event, id) => { if (isTrusted(event) && typeof id === 'string') pending.get(id)?.abort(); });
 
+
+// DuckSteam: downloads de jogos com progresso, velocidade e tempo restante.
+const gameDownloads = new Map();
+const TRUSTED_DOWNLOAD_HOSTS = new Set(['github.com']);
+function sendDownload(payload) { if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send('duckflix:download-event', payload); }
+
+ipcMain.handle('duckflix:download-start', async (event, message) => {
+  if (!isTrusted(event) || !message || typeof message.id !== 'string' || message.id.length > 100) throw new Error('Solicitação inválida.');
+  let url;
+  try { url = new URL(message.url); } catch { throw new Error('Endereço de download inválido.'); }
+  if (url.protocol !== 'https:' || url.username || url.password) throw new Error('O download precisa usar HTTPS sem credenciais.');
+  if (gameDownloads.has(message.id)) throw new Error('Este download já está em andamento.');
+  if (!TRUSTED_DOWNLOAD_HOSTS.has(url.hostname)) {
+    const { response } = await dialog.showMessageBox(mainWindow, {
+      type: 'question', buttons: ['Baixar', 'Cancelar'], defaultId: 1, cancelId: 1,
+      title: 'Autorizar download', message: `Baixar um arquivo de ${url.origin}?`,
+      detail: 'Só baixe jogos de fontes em que você confia.'
+    });
+    if (response !== 0) throw new Error('Download cancelado.');
+  }
+  gameDownloads.set(message.id, { pendingUrl: url.href, item: null });
+  mainWindow.webContents.downloadURL(url.href);
+  return { ok: true };
+});
+
+function control(id, action) {
+  const entry = gameDownloads.get(id);
+  if (!entry?.item) return;
+  if (action === 'pause' && !entry.item.isPaused()) entry.item.pause();
+  if (action === 'resume' && entry.item.canResume()) entry.item.resume();
+  if (action === 'cancel') entry.item.cancel();
+}
+ipcMain.on('duckflix:download-control', (event, id, action) => {
+  if (isTrusted(event) && typeof id === 'string' && ['pause', 'resume', 'cancel'].includes(action)) control(id, action);
+});
+ipcMain.handle('duckflix:download-show', (event, id) => {
+  if (!isTrusted(event)) return false;
+  const savePath = gameDownloads.get(id)?.savePath;
+  if (savePath) require('electron').shell.showItemInFolder(savePath);
+  return Boolean(savePath);
+});
+
+function watchDownloads() {
+  session.defaultSession.on('will-download', (event, item) => {
+    const url = item.getURLChain()[0];
+    const id = [...gameDownloads].find(([, entry]) => !entry.item && entry.pendingUrl === url)?.[0];
+    if (!id) return;
+    const entry = gameDownloads.get(id);
+    const folder = path.join(app.getPath('downloads'), 'DuckSteam');
+    fs.mkdirSync(folder, { recursive: true });
+    entry.item = item;
+    entry.savePath = path.join(folder, path.basename(item.getFilename()));
+    item.setSavePath(entry.savePath);
+    let lastBytes = 0, lastTime = Date.now(), speed = 0;
+    const report = state => {
+      const received = item.getReceivedBytes(), total = item.getTotalBytes();
+      const now = Date.now();
+      if (now - lastTime >= 700) { speed = ((received - lastBytes) / (now - lastTime)) * 1000; lastBytes = received; lastTime = now; }
+      sendDownload({ id, state, received, total, speed, filename: path.basename(entry.savePath), eta: speed > 0 && total ? (total - received) / speed : null });
+    };
+    report('progressing');
+    item.on('updated', (e, state) => report(state === 'interrupted' ? 'interrupted' : item.isPaused() ? 'paused' : 'progressing'));
+    item.once('done', (e, state) => {
+      sendDownload({ id, state: state === 'completed' ? 'completed' : state, received: item.getReceivedBytes(), total: item.getTotalBytes(), speed: 0, eta: 0, filename: path.basename(entry.savePath) });
+      entry.item = null;
+      if (state !== 'completed') gameDownloads.delete(id);
+    });
+  });
+}
+
 function createWindow() {
   mainWindow = new BrowserWindow({
     width: 1440, height: 900, minWidth: 960, minHeight: 650, title: 'DuckFlix', backgroundColor: '#070b16',
@@ -79,6 +149,7 @@ function createWindow() {
 }
 
 app.whenReady().then(() => {
+  watchDownloads();
   createWindow();
   app.on('activate', () => { if (!BrowserWindow.getAllWindows().length) createWindow(); });
 });
