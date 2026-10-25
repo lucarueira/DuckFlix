@@ -2,6 +2,15 @@
   'use strict';
   const api = window.DuckFlixExtensions;
   const $ = id => document.getElementById(id);
+  // Em TVs o erro de um script não aparece: mostra na tela em vez de ficar "Carregando…" para sempre.
+  function showFatal(message) {
+    const status = document.getElementById('catalog-status');
+    if (status && /^(Carregando|Pesquisando)/.test(status.textContent)) status.textContent = 'Não foi possível iniciar: ' + message + ' Tente atualizar.';
+  }
+  window.addEventListener('error', event => showFatal(event.message || 'erro desconhecido.'));
+  window.addEventListener('unhandledrejection', event => showFatal(String(event.reason && event.reason.message || event.reason || 'erro desconhecido.')));
+  setTimeout(() => showFatal('o catálogo demorou demais para responder.'), 25000);
+  if (!api) { showFatal('o módulo de extensões não carregou.'); return; }
   let category = 'movie', page = 0, items = [], hasMore = false, catalogAbort, searchTimer;
   const addons = new Map(), identityCache = new Map();
   function node(tag, text, cls) { const el = document.createElement(tag); if (text !== undefined) el.textContent = text; if (cls) el.className = cls; return el; }

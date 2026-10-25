@@ -5,7 +5,7 @@
   function request(type, payload = {}, signal) {
     return new Promise((resolve, reject) => {
       if (signal?.aborted) { reject(new DOMException('Aborted', 'AbortError')); return; }
-      const id = crypto.randomUUID();
+      const id = crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2);
       const abort = () => {
         window.postMessage({ channel: 'duckflix-http-request', id, type: 'cancel' }, location.origin);
         finish(new DOMException('Aborted', 'AbortError'));
